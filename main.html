@@ -301,177 +301,469 @@
     </section>
 
     <script>
+        // ==================== CONFIG & CONSTANTS ====================
+        // These make the code easier to maintain and tune
+        const CONFIG = {
+            ANSWER_FEEDBACK_DELAY: 1800,        // How long to show answer feedback (ms)
+            PASSING_SCORE_PERCENTAGE: 60,       // Score needed to unlock next quest (%)
+            PRELOADER_DURATION: 1500,           // How long to show the loading screen (ms)
+            PRELOADER_FADE_DURATION: 600,       // Fade-out duration (ms)
+        };
+
+        // ==================== QUEST DATA ====================
+        // Complete quiz data for all three eras
+        const quizData = [
+            // Era 1: Ancient Philippine Era
+            [
+                { 
+                    q: "What was the ancient writing system used in the Philippines before the Spaniards arrived?", 
+                    a: "Baybayin", 
+                    o: ["Alibata", "Baybayin", "Sanskrit", "Hieroglyphics"] 
+                },
+                { 
+                    q: "Who was the first Filipino hero who defeated Ferdinand Magellan in 1521?", 
+                    a: "Lapu-Lapu", 
+                    o: ["Rajah Sulayman", "Datu Puti", "Lapu-Lapu", "Rajah Humabon"] 
+                },
+                { 
+                    q: "What is the ancient burial jar featuring two figures rowing a boat?", 
+                    a: "Manunggul Jar", 
+                    o: ["Maitum Jar", "Manunggul Jar", "Calatagan Pot", "Tapayan"] 
+                }
+            ],
+            // Era 2: Spanish Era
+            [
+                { 
+                    q: "Which trade route connected Manila and Acapulco during the Spanish era?", 
+                    a: "Galleon Trade", 
+                    o: ["Silk Road", "Galleon Trade", "Spice Route", "Pacific Trade"] 
+                },
+                { 
+                    q: "Who is the author of Noli Me Tangere?", 
+                    a: "Jose Rizal", 
+                    o: ["Andres Bonifacio", "Emilio Aguinaldo", "Jose Rizal", "Apolinario Mabini"] 
+                },
+                { 
+                    q: "What was the primary religion introduced by the Spaniards?", 
+                    a: "Catholicism", 
+                    o: ["Islam", "Buddhism", "Catholicism", "Protestantism"] 
+                }
+            ],
+            // Era 3: The Revolution
+            [
+                { 
+                    q: "Who founded the secret society called Katipunan?", 
+                    a: "Andres Bonifacio", 
+                    o: ["Emilio Aguinaldo", "Jose Rizal", "Andres Bonifacio", "Antonio Luna"] 
+                },
+                { 
+                    q: "Where was the Philippine Independence declared in 1898?", 
+                    a: "Kawit, Cavite", 
+                    o: ["Malolos, Bulacan", "Kawit, Cavite", "Luneta, Manila", "Biak-na-Bato"] 
+                },
+                { 
+                    q: "Who was known as the Sublime Paralytic and Brains of the Revolution?", 
+                    a: "Apolinario Mabini", 
+                    o: ["Apolinario Mabini", "Emilio Jacinto", "Marcelo H. del Pilar", "Gregorio Aglipay"] 
+                }
+            ]
+        ];
+
+        // ==================== GAME STATE ====================
+        // Track the player's progress through quests and questions
+        let gameState = {
+            currentEra: 0,           // Which quest (0-2)
+            questionIndex: 0,        // Which question within the quest
+            score: 0,               // How many correct answers this quest
+            unlockedQuests: [true, false, false]  // Which quests are unlocked
+        };
+
+        // ==================== UI FUNCTIONS ====================
+        
+        /**
+         * Toggle the mobile navigation menu
+         */
         function toggleMenu() {
-            document.getElementById('nav-menu').classList.toggle('open');
+            const menu = document.getElementById('nav-menu');
+            if (!menu) {
+                console.error('Navigation menu element not found!');
+                return;
+            }
+            menu.classList.toggle('open');
         }
 
+        /**
+         * Display a toast notification (temporary message at top-right)
+         * @param {string} msg - Message to display
+         * @param {boolean} isError - If true, shows error color; if false, shows success color
+         */
         function showToast(msg, isError = false) {
             const toast = document.getElementById('toast');
+            if (!toast) {
+                console.error('Toast element not found!');
+                return;
+            }
+            
             toast.innerText = msg;
             toast.style.background = isError ? 'var(--error)' : 'var(--success)';
             toast.style.transform = 'translateX(0)';
+            
+            // Hide after 3 seconds
             setTimeout(() => {
                 toast.style.transform = 'translateX(150%)';
             }, 3000);
         }
 
+        /**
+         * Navigate to a different page/section
+         * @param {string} pageId - The ID of the section to show (e.g., 'home', 'quests', 'ar', 'teacher')
+         * @param {HTMLElement} btn - Optional: the button that was clicked, to highlight it
+         */
         function navigate(pageId, btn = null) {
-            document.querySelectorAll('section').forEach(s => s.classList.remove('active-section'));
-            document.getElementById(pageId).classList.add('active-section');
-            
-            document.getElementById('nav-menu').classList.remove('open');
+            // Validate page exists
+            const targetPage = document.getElementById(pageId);
+            if (!targetPage) {
+                console.error(`Page "${pageId}" not found. Check your section IDs!`);
+                return;
+            }
 
-            if(btn) {
+            // Hide all sections, show only the target one
+            document.querySelectorAll('section').forEach(s => s.classList.remove('active-section'));
+            targetPage.classList.add('active-section');
+            
+            // Close mobile menu if open
+            const navMenu = document.getElementById('nav-menu');
+            if (navMenu) {
+                navMenu.classList.remove('open');
+            }
+
+            // Highlight the active nav button
+            if (btn) {
+                // User passed a button, so use it directly
                 document.querySelectorAll('.nav-links button').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
             } else {
+                // Find and highlight the matching button
                 document.querySelectorAll('.nav-links button').forEach(b => {
                     b.classList.remove('active');
-                    if(b.innerText.toLowerCase().includes(pageId.toLowerCase())) b.classList.add('active');
+                    if (b.innerText.toLowerCase().includes(pageId.toLowerCase())) {
+                        b.classList.add('active');
+                    }
                 });
             }
+            
+            // Scroll smoothly to top
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
+        // ==================== AR FUNCTIONS ====================
+        
+        /**
+         * Request camera access and initialize AR scene
+         */
         async function requestCameraAccess() {
             try {
+                // Request camera permission from browser
                 const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-                stream.getTracks().forEach(track => track.stop()); 
                 
-                document.getElementById('ar-perm-box').style.display = 'none';
-                document.getElementById('ar-overlay-text').style.display = 'block';
+                // Stop the stream immediately (we're just checking permission)
+                stream.getTracks().forEach(track => track.stop());
                 
+                // Hide the permission prompt, show tracking indicator
+                const permBox = document.getElementById('ar-perm-box');
+                const overlayText = document.getElementById('ar-overlay-text');
+                
+                if (!permBox || !overlayText) {
+                    console.error('AR UI elements not found!');
+                    return;
+                }
+
+                permBox.style.display = 'none';
+                overlayText.style.display = 'block';
+                
+                // Create and inject the AR scene
                 const arScene = `
                 <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false; trackingMethod: best;">
                     <a-marker preset="hiro">
                         <a-entity position="0 0.5 0" animation="property: rotation; to: 0 360 0; loop: true; dur: 5000; easing: linear;">
+                            <!-- Golden Manunggul Jar cylinder body -->
                             <a-cylinder radius="0.6" height="1.2" color="#E2A72F" roughness="0.3" metalness="0.8"></a-cylinder>
+                            <!-- Sphere top (jar opening) -->
                             <a-sphere position="0 0.7 0" radius="0.65" color="#E2A72F" roughness="0.3" metalness="0.8"></a-sphere>
+                            <!-- Jar handle -->
                             <a-cylinder position="0 1.2 0" radius="0.3" height="0.4" color="#E2A72F"></a-cylinder>
                         </a-entity>
-                        <a-text value="Manunggul Jar\\n890-710 BC" position="-1 2 0" color="#FFFFFF" align="center" width="5" font="mozillavr"></a-text>
+                        <!-- Label text above artifact -->
+                        <a-text value="Manunggul Jar\n890-710 BC" position="-1 2 0" color="#FFFFFF" align="center" width="5" font="mozillavr"></a-text>
                     </a-marker>
                     <a-entity camera></a-entity>
                 </a-scene>`;
                 
-                document.getElementById('ar-frame').insertAdjacentHTML('beforeend', arScene);
+                // Insert the AR scene into the page
+                const arFrame = document.getElementById('ar-frame');
+                if (arFrame) {
+                    arFrame.insertAdjacentHTML('beforeend', arScene);
+                }
+
                 showToast("Camera granted! Sheesh, AR activated.");
 
             } catch (err) {
+                console.error('Camera access error:', err);
+                
+                const permBox = document.getElementById('ar-perm-box');
+                if (!permBox) {
+                    console.error('AR permission box not found!');
+                    return;
+                }
+
+                // Show user-friendly error message
+                permBox.innerHTML = `
+                    <h3 style="color:var(--error);">Camera Access Denied 💀</h3>
+                    <p style="color: #555; margin-top: 15px;">
+                        We need camera permission to show AR artifacts. 
+                        Check your browser settings and try again!
+                    </p>
+                `;
+                
                 showToast("Awit, bawal camera? Di gagana AR natin bro.", true);
-                document.getElementById('ar-perm-box').innerHTML = '<h3 style="color:var(--error);">Camera Access Denied 💀</h3><p>Pa-allow muna sa settings ng browser mo para ma-experience yung AR.</p>';
             }
         }
 
-        let currentEra = 0;
-        let questionIndex = 0;
-        let score = 0;
-        let unlocked = [true, false, false];
+        // ==================== QUIZ FUNCTIONS ====================
+        
+        /**
+         * Create a single answer button for a quiz option
+         * @param {string} optionText - The answer option text
+         * @param {string} correctAnswer - The correct answer
+         * @returns {HTMLElement} The button element
+         */
+        function createOptionButton(optionText, correctAnswer) {
+            const btn = document.createElement('button');
+            btn.className = 'option-btn';
+            btn.innerText = optionText;
+            btn.setAttribute('aria-label', `Answer option: ${optionText}`);
+            btn.onclick = () => validateAnswer(optionText, correctAnswer, btn);
+            return btn;
+        }
 
-        const quizData = [
-            [
-                { q: "What was the ancient writing system used in the Philippines before the Spaniards arrived?", a: "Baybayin", o: ["Alibata", "Baybayin", "Sanskrit", "Hieroglyphics"] },
-                { q: "Who was the first Filipino hero who defeated Ferdinand Magellan in 1521?", a: "Lapu-Lapu", o: ["Rajah Sulayman", "Datu Puti", "Lapu-Lapu", "Rajah Humabon"] },
-                { q: "What is the ancient burial jar featuring two figures rowing a boat?", a: "Manunggul Jar", o: ["Maitum Jar", "Manunggul Jar", "Calatagan Pot", "Tapayan"] }
-            ],
-            [
-                { q: "Which trade route connected Manila and Acapulco during the Spanish era?", a: "Galleon Trade", o: ["Silk Road", "Galleon Trade", "Spice Route", "Pacific Trade"] },
-                { q: "Who is the author of Noli Me Tangere?", a: "Jose Rizal", o: ["Andres Bonifacio", "Emilio Aguinaldo", "Jose Rizal", "Apolinario Mabini"] },
-                { q: "What was the primary religion introduced by the Spaniards?", a: "Catholicism", o: ["Islam", "Buddhism", "Catholicism", "Protestantism"] }
-            ],
-            [
-                { q: "Who founded the secret society called Katipunan?", a: "Andres Bonifacio", o: ["Emilio Aguinaldo", "Jose Rizal", "Andres Bonifacio", "Antonio Luna"] },
-                { q: "Where was the Philippine Independence declared in 1898?", a: "Kawit, Cavite", o: ["Malolos, Bulacan", "Kawit, Cavite", "Luneta, Manila", "Biak-na-Bato"] },
-                { q: "Who was known as the Sublime Paralytic and Brains of the Revolution?", a: "Apolinario Mabini", o: ["Apolinario Mabini", "Emilio Jacinto", "Marcelo H. del Pilar", "Graciano Lopez Jaena"] }
-            ]
-        ];
+        /**
+         * Start a quest by showing its questions
+         * @param {number} questId - Which quest to start (0-2)
+         */
+        function initiateQuest(questId) {
+            // Validate quest ID
+            if (questId < 0 || questId >= quizData.length) {
+                showToast("Uhm, that quest doesn't exist lol 💀", true);
+                console.error(`Invalid quest ID: ${questId}`);
+                return;
+            }
 
-        function initiateQuest(id) {
-            if (!unlocked[id]) {
+            // Check if quest is unlocked
+            if (!gameState.unlockedQuests[questId]) {
                 showToast("Awit! Locked pa 'to, boss. Grind mo muna yung previous quest.", true);
                 return;
             }
-            currentEra = id;
-            questionIndex = 0;
-            score = 0;
-            document.getElementById('quiz-block').style.display = 'block';
-            document.getElementById('quiz-badge').innerText = `QUEST ${id + 1}`;
+
+            // Reset game state for this quest
+            gameState.currentEra = questId;
+            gameState.questionIndex = 0;
+            gameState.score = 0;
+
+            // Show quiz container
+            const quizBlock = document.getElementById('quiz-block');
+            if (!quizBlock) {
+                console.error('Quiz block element not found!');
+                return;
+            }
+
+            quizBlock.style.display = 'block';
+            
+            // Update quest badge
+            const badge = document.getElementById('quiz-badge');
+            if (badge) {
+                badge.innerText = `QUEST ${questId + 1}`;
+            }
+
+            // Render first question
             renderQuestion();
             
+            // Scroll to quiz area
             setTimeout(() => {
-                document.getElementById('quiz-block').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                quizBlock.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }, 100);
         }
 
+        /**
+         * Render the current question and its answer options
+         */
         function renderQuestion() {
-            const data = quizData[currentEra][questionIndex];
-            document.getElementById('quiz-tracker').innerText = `${questionIndex + 1} / ${quizData[currentEra].length}`;
-            document.getElementById('q-text').innerText = data.q;
-            
+            const eraQuestions = quizData[gameState.currentEra];
+            if (!eraQuestions) {
+                console.error('No questions found for current era');
+                return;
+            }
+
+            const currentQuestion = eraQuestions[gameState.questionIndex];
+            if (!currentQuestion) {
+                console.error('Question not found at index:', gameState.questionIndex);
+                return;
+            }
+
+            // Update question counter
+            const tracker = document.getElementById('quiz-tracker');
+            if (tracker) {
+                tracker.innerText = `${gameState.questionIndex + 1} / ${eraQuestions.length}`;
+            }
+
+            // Set question text
+            const questionText = document.getElementById('q-text');
+            if (questionText) {
+                questionText.innerText = currentQuestion.q;
+            }
+
+            // Clear old options and create new ones
             const optionsContainer = document.getElementById('q-options');
+            if (!optionsContainer) {
+                console.error('Options container not found!');
+                return;
+            }
+
             optionsContainer.innerHTML = '';
             
-            data.o.forEach(opt => {
-                const btn = document.createElement('button');
-                btn.className = 'option-btn';
-                btn.innerText = opt;
-                btn.onclick = () => validateAnswer(opt, data.a, btn);
+            // Create a button for each answer option
+            currentQuestion.o.forEach(option => {
+                const btn = createOptionButton(option, currentQuestion.a);
                 optionsContainer.appendChild(btn);
             });
         }
 
+        /**
+         * Check if the user's answer is correct and provide feedback
+         * @param {string} selected - The option the user clicked
+         * @param {string} correct - The correct answer
+         * @param {HTMLElement} btnElement - The button that was clicked
+         */
         function validateAnswer(selected, correct, btnElement) {
+            // Lock all answer buttons so user can't change their answer
             const allBtns = document.querySelectorAll('.option-btn');
             allBtns.forEach(b => b.style.pointerEvents = 'none');
 
             if (selected === correct) {
+                // Answer is CORRECT!
                 btnElement.classList.add('correct');
-                score++;
+                gameState.score++;
                 showToast("Sheesh! Tumpak, lodi. Slayed that question.");
             } else {
+                // Answer is WRONG - show the correct answer
                 btnElement.classList.add('wrong');
+                
+                // Highlight the correct answer so user learns
                 allBtns.forEach(b => {
-                    if(b.innerText === correct) b.classList.add('correct');
+                    if (b.innerText === correct) {
+                        b.classList.add('correct');
+                    }
                 });
+                
                 showToast("Delulu is not trululu. Mali pards, we're cooked!", true);
             }
 
+            // After showing feedback, move to next question or finish quest
             setTimeout(() => {
-                questionIndex++;
-                if (questionIndex < quizData[currentEra].length) {
+                gameState.questionIndex++;
+                const eraQuestions = quizData[gameState.currentEra];
+                
+                if (gameState.questionIndex < eraQuestions.length) {
+                    // More questions in this quest
                     renderQuestion();
                 } else {
+                    // Quest finished!
                     finishQuest();
                 }
-            }, 1800);
+            }, CONFIG.ANSWER_FEEDBACK_DELAY);
         }
 
+        /**
+         * Calculate results and unlock next quest if player passes
+         */
         function finishQuest() {
-            document.getElementById('quiz-block').style.display = 'none';
-            const percentage = (score / quizData[currentEra].length) * 100;
+            // Hide quiz container
+            const quizBlock = document.getElementById('quiz-block');
+            if (quizBlock) {
+                quizBlock.style.display = 'none';
+            }
+
+            // Calculate percentage score
+            const eraQuestions = quizData[gameState.currentEra];
+            const percentage = (gameState.score / eraQuestions.length) * 100;
             
-            if (percentage >= 60) {
-                document.getElementById(`prog-${currentEra}`).style.width = '100%';
-                showToast(`Dasurv! Score: ${score}/${quizData[currentEra].length}. Next era unlocked!`);
-                if (currentEra + 1 < unlocked.length) {
-                    unlocked[currentEra + 1] = true;
-                    const nextCard = document.getElementById(`quest-${currentEra + 1}`);
-                    nextCard.classList.remove('locked');
-                    nextCard.querySelector('.lock-icon').innerText = '✅';
+            // Check if player passed
+            if (percentage >= CONFIG.PASSING_SCORE_PERCENTAGE) {
+                // PASS: Update progress bar and unlock next quest
+                const progressBar = document.getElementById(`prog-${gameState.currentEra}`);
+                if (progressBar) {
+                    progressBar.style.width = '100%';
+                }
+
+                showToast(`Dasurv! Score: ${gameState.score}/${eraQuestions.length}. Next era unlocked!`);
+
+                // Unlock the next quest
+                if (gameState.currentEra + 1 < gameState.unlockedQuests.length) {
+                    gameState.unlockedQuests[gameState.currentEra + 1] = true;
+                    
+                    // Update UI to show next quest is unlocked
+                    const nextCard = document.getElementById(`quest-${gameState.currentEra + 1}`);
+                    if (nextCard) {
+                        nextCard.classList.remove('locked');
+                        const lockIcon = nextCard.querySelector('.lock-icon');
+                        if (lockIcon) {
+                            lockIcon.innerText = '✅';
+                        }
+                    }
                 }
             } else {
-                document.getElementById(`prog-${currentEra}`).style.width = '0%';
-                showToast(`Skill issue? Score: ${score}/${quizData[currentEra].length}. Try again bro!`, true);
+                // FAIL: Reset progress bar
+                const progressBar = document.getElementById(`prog-${gameState.currentEra}`);
+                if (progressBar) {
+                    progressBar.style.width = '0%';
+                }
+
+                showToast(`Skill issue? Score: ${gameState.score}/${eraQuestions.length}. Try again bro!`, true);
             }
         }
 
+        // ==================== INITIALIZATION ====================
+        
+        /**
+         * Hide the preloader when page finishes loading
+         */
         window.addEventListener('load', () => {
             setTimeout(() => {
                 const preloader = document.getElementById('preloader');
-                preloader.style.opacity = '0';
-                setTimeout(() => preloader.remove(), 600);
-            }, 1500);
+                if (preloader) {
+                    preloader.style.opacity = '0';
+                    
+                    // Remove preloader after fade completes
+                    setTimeout(() => {
+                        if (preloader.parentElement) {
+                            preloader.remove();
+                        }
+                    }, CONFIG.PRELOADER_FADE_DURATION);
+                }
+            }, CONFIG.PRELOADER_DURATION);
+        });
+
+        /**
+         * Add keyboard support for accessibility
+         * Allow Enter key to select the first answer option
+         */
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                const firstOption = document.querySelector('.option-btn');
+                if (firstOption && firstOption.style.pointerEvents !== 'none') {
+                    firstOption.click();
+                }
+            }
         });
     </script>
 </body>
-  </html>
+</html>
