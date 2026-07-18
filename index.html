@@ -157,20 +157,30 @@
             box-shadow: var(--shadow); display: flex; align-items: center; justify-content: center;
         }
         
+        /* 🔥 This is the CSS fix that prevents AR.js from breaking out of the box 🔥 */
         #ar-frame video, #ar-frame .a-canvas {
-            object-fit: cover !important; width: 100% !important; height: 100% !important;
-            top: 0 !important; left: 0 !important; margin: 0 !important; position: absolute !important;
+            object-fit: cover !important; 
+            width: 100% !important; 
+            height: 100% !important;
+            top: 0 !important; 
+            left: 0 !important; 
+            right: 0 !important; 
+            bottom: 0 !important; 
+            margin: 0 !important; 
+            padding: 0 !important;
+            position: absolute !important;
+            z-index: 1 !important;
         }
         
         .ar-permissions-box {
             background: var(--surface); padding: 40px; border-radius: 20px; text-align: center;
-            max-width: 90%; width: 400px; box-shadow: var(--shadow); z-index: 10;
+            max-width: 90%; width: 400px; box-shadow: var(--shadow); z-index: 10; position: relative;
         }
 
         .ar-overlay {
             position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
             background: rgba(45, 45, 45, 0.85); color: white; padding: 12px 25px;
-            border-radius: 30px; font-size: clamp(0.8rem, 2vw, 0.95rem); z-index: 10; text-align: center; font-weight: 600;
+            border-radius: 30px; font-size: clamp(0.8rem, 2vw, 0.95rem); z-index: 20; text-align: center; font-weight: 600;
             backdrop-filter: blur(5px); white-space: nowrap; display: none;
         }
 
@@ -590,6 +600,24 @@
         function navigate(pageId, btn = null) {
             const targetPage = document.getElementById(pageId);
             if (!targetPage) return;
+            
+            // CLEANUP: If navigating away from AR, turn off the camera immediately to save battery!
+            if (pageId !== 'ar') {
+                const existingVideos = document.querySelectorAll('video');
+                existingVideos.forEach(el => {
+                    if (el.srcObject) el.srcObject.getTracks().forEach(t => t.stop());
+                    el.remove();
+                });
+                const existingScenes = document.querySelectorAll('a-scene');
+                existingScenes.forEach(s => s.remove());
+                
+                // Reset AR UI back to the button
+                const permBox = document.getElementById('ar-perm-box');
+                const overlayText = document.getElementById('ar-overlay-text');
+                if (permBox) permBox.style.display = 'block';
+                if (overlayText) overlayText.style.display = 'none';
+            }
+
             document.querySelectorAll('section').forEach(s => s.classList.remove('active-section'));
             targetPage.classList.add('active-section');
             
@@ -620,9 +648,15 @@
             permBox.style.display = 'none';
             overlayText.style.display = 'block';
             
-            const existingScenes = arFrame.querySelectorAll('a-scene, video');
+            const existingScenes = document.querySelectorAll('a-scene');
             existingScenes.forEach(el => el.remove());
+            const existingVideos = document.querySelectorAll('video');
+            existingVideos.forEach(el => {
+                if (el.srcObject) el.srcObject.getTracks().forEach(t => t.stop());
+                el.remove();
+            });
 
+            // The 3D AR Scene
             const arScene = `
                 <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false; trackingMethod: best;">
                     <a-marker preset="hiro">
@@ -633,13 +667,24 @@
                             <a-sphere position="0.4 1.1 0" radius="0.25" color="#8B7355"></a-sphere>
                             <a-animation attribute="rotation" to="0 360 0" dur="6000" easing="linear" repeat="indefinite"></a-animation>
                         </a-entity>
-                        <a-text value="Manunggul Jar\n890-710 BC" position="0 2.5 0" color="#FFFFFF" align="center" width="4" font="mozillavr"></a-text>
+                        <a-text value="Manunggul Jar\\n890-710 BC" position="0 2.5 0" color="#FFFFFF" align="center" width="4" font="mozillavr"></a-text>
                     </a-marker>
                     <a-entity camera></a-entity>
                 </a-scene>`;
             
             arFrame.insertAdjacentHTML('beforeend', arScene);
             showToast("AR initializing! Point at Hiro marker... 📱✨");
+
+            // ⚡ THE FIX: "Snatch" the video AR.js creates and force it into our container!
+            let checkVideo = setInterval(() => {
+                let video = document.querySelector('video');
+                if (video) {
+                    if (video.parentElement !== arFrame) {
+                        arFrame.appendChild(video);
+                    }
+                    clearInterval(checkVideo);
+                }
+            }, 100);
         }
 
         function createOptionButton(optionText, correctAnswer) {
@@ -814,4 +859,4 @@
         });
     </script>
 </body>
-</html>
+                    </html>
