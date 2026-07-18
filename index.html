@@ -24,65 +24,26 @@
 
         * { margin: 0; padding: 0; box-sizing: border-box; outline: none; }
         
-        body { 
-            font-family: 'Outfit', sans-serif; 
-            background-color: var(--bg); 
-            color: var(--text);
-            overflow-x: hidden;
-            line-height: 1.6;
-            width: 100%;
-        }
+        body { font-family: 'Outfit', sans-serif; background-color: var(--bg); color: var(--text); overflow-x: hidden; line-height: 1.6; width: 100%; }
 
-        #preloader {
-            position: fixed; inset: 0; background: var(--primary); z-index: 9999;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            color: var(--accent); transition: opacity 0.6s ease;
-        }
-
+        #preloader { position: fixed; inset: 0; background: var(--primary); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--accent); transition: opacity 0.6s ease; }
         #preloader h1 { font-family: 'Playfair Display', serif; font-size: clamp(2rem, 8vw, 4rem); }
 
-        #toast {
-            position: fixed; top: 90px; right: 5%; padding: 15px 25px;
-            border-radius: 12px; color: white; font-weight: 600;
-            transform: translateX(150%); transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            z-index: 2000; box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-            max-width: 90%;
-        }
+        #toast { position: fixed; top: 90px; right: 5%; padding: 15px 25px; border-radius: 12px; color: white; font-weight: 600; transform: translateX(150%); transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 2000; box-shadow: 0 5px 15px rgba(0,0,0,0.2); max-width: 90%; }
 
-        nav {
-            position: fixed; top: 0; width: 100%; height: 75px;
-            background: var(--glass); backdrop-filter: blur(12px);
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 0 5%; z-index: 1000; border-bottom: 1px solid rgba(226, 167, 47, 0.2);
-        }
-        
+        nav { position: fixed; top: 0; width: 100%; height: 75px; background: var(--glass); backdrop-filter: blur(12px); display: flex; align-items: center; justify-content: space-between; padding: 0 5%; z-index: 1000; border-bottom: 1px solid rgba(226, 167, 47, 0.2); }
         .logo { font-family: 'Playfair Display', serif; font-size: clamp(1.2rem, 4vw, 1.8rem); font-weight: 700; color: var(--primary); cursor: pointer; }
         .logo span { color: var(--accent); }
-        
         .hamburger { display: none; background: none; border: none; font-size: 1.8rem; color: var(--primary); cursor: pointer; }
 
         .nav-links { display: flex; gap: 5px; }
-        .nav-links button {
-            background: none; border: none; padding: 10px 18px;
-            font-family: 'Outfit', sans-serif; font-weight: 600; font-size: clamp(0.8rem, 2vw, 1rem);
-            cursor: pointer; color: var(--primary); transition: 0.3s;
-            border-radius: 8px;
-        }
-        
+        .nav-links button { background: none; border: none; padding: 10px 18px; font-family: 'Outfit', sans-serif; font-weight: 600; font-size: clamp(0.8rem, 2vw, 1rem); cursor: pointer; color: var(--primary); transition: 0.3s; border-radius: 8px; }
         .nav-links button:hover { background: rgba(226, 167, 47, 0.1); }
         .nav-links button.active { background: var(--primary); color: white; box-shadow: 0 4px 10px rgba(74, 51, 45, 0.2); }
 
-        section { 
-            display: none; padding: 120px 5% 80px; min-height: 100vh;
-            max-width: 1200px; margin: auto; animation: fadeUp 0.6s ease forwards;
-        }
-        
+        section { display: none; padding: 120px 5% 80px; min-height: 100vh; max-width: 1200px; margin: auto; animation: fadeUp 0.6s ease forwards; }
         .active-section { display: block; }
-        
-        @keyframes fadeUp { 
-            from { opacity: 0; transform: translateY(30px); } 
-            to { opacity: 1; transform: translateY(0); } 
-        }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
 
         .hero-flex { display: flex; align-items: center; justify-content: space-between; gap: 40px; margin-top: 20px; flex-wrap: wrap; }
         .hero-text { flex: 1; min-width: 300px; }
@@ -93,119 +54,93 @@
         .hero-image-container img { width: 100%; max-width: 400px; border-radius: 30px; transform: rotate(3deg); box-shadow: var(--shadow); transition: 0.3s; }
         .hero-image-container img:hover { transform: rotate(0deg) scale(1.05); }
 
-        .btn-main {
-            background: var(--primary); color: white; padding: 16px 45px;
-            border: none; border-radius: 50px; font-family: 'Outfit', sans-serif; font-weight: 600; font-size: clamp(0.9rem, 2vw, 1.1rem);
-            cursor: pointer; box-shadow: 0 8px 25px rgba(74, 51, 45, 0.3); transition: 0.3s; width: fit-content;
-            text-decoration: none; display: inline-block;
-        }
+        .btn-main { background: var(--primary); color: white; padding: 16px 45px; border: none; border-radius: 50px; font-family: 'Outfit', sans-serif; font-weight: 600; font-size: clamp(0.9rem, 2vw, 1.1rem); cursor: pointer; box-shadow: 0 8px 25px rgba(74, 51, 45, 0.3); transition: 0.3s; width: fit-content; text-decoration: none; display: inline-block; }
         .btn-main:hover { transform: translateY(-4px); background: var(--accent); box-shadow: 0 12px 30px rgba(226, 167, 47, 0.4); color: white; }
 
         .quest-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 25px; margin-top: 40px; }
-        .quest-card {
-            background: var(--surface); border-radius: 24px; padding: 35px; position: relative;
-            box-shadow: var(--shadow); transition: 0.4s; border: 2px solid transparent; cursor: pointer;
-        }
+        .quest-card { background: var(--surface); border-radius: 24px; padding: 35px; position: relative; box-shadow: var(--shadow); transition: 0.4s; border: 2px solid transparent; cursor: pointer; }
         .quest-card:hover { border-color: var(--accent); transform: translateY(-8px); box-shadow: 0 20px 40px rgba(226, 167, 47, 0.15); }
         .quest-card h3 { margin: 20px 0 10px; font-family: 'Playfair Display', serif; font-size: clamp(1.2rem, 4vw, 1.6rem); color: var(--primary); }
-        
         .progress-track { background: #F0F0F0; height: 10px; border-radius: 10px; margin-top: 25px; overflow: hidden; }
         .progress-fill { background: var(--accent); height: 100%; width: 0%; transition: width 1s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-        
         .locked { filter: grayscale(1); opacity: 0.6; pointer-events: none; }
         .lock-icon { position: absolute; top: 25px; right: 25px; font-size: 1.6rem; }
 
         .quiz-container { background: var(--surface); border-radius: 24px; padding: clamp(20px, 5vw, 45px); box-shadow: var(--shadow); margin-top: 40px; display: none; }
-        .quiz-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; flex-wrap: wrap; gap: 10px; }
-        .quiz-tag { background: rgba(226, 167, 47, 0.2); color: var(--primary); padding: 8px 16px; border-radius: 20px; font-weight: 800; font-size: 0.9rem; }
-        .quiz-hint { background: rgba(46, 125, 50, 0.1); color: var(--success); padding: 10px 15px; border-radius: 12px; font-size: 0.85rem; margin-bottom: 20px; border-left: 4px solid var(--success); }
         
-        .option-btn {
-            display: block; width: 100%; padding: clamp(12px, 3vw, 18px) 25px; margin-bottom: 15px;
-            border: 2px solid #EBEBEB; border-radius: 16px; text-align: left;
-            background: var(--surface); cursor: pointer; font-family: 'Outfit', sans-serif; font-size: clamp(0.9rem, 2.5vw, 1.1rem); 
-            transition: all 0.2s; color: var(--text); font-weight: 600;
-        }
+        .rpg-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: #222; padding: 15px 25px; border-radius: 16px; color: white; flex-wrap: wrap; gap: 15px;}
+        .player-hp { font-size: 1.5rem; letter-spacing: 5px; }
+        .boss-bar-container { flex: 1; min-width: 200px; max-width: 400px; display: flex; flex-direction: column; gap: 5px; }
+        .boss-bar-bg { width: 100%; height: 12px; background: #444; border-radius: 10px; overflow: hidden; border: 2px solid #555; }
+        .boss-bar-fill { width: 100%; height: 100%; background: #C62828; transition: width 0.5s ease; }
+        .boss-title { font-size: 0.8rem; font-weight: 800; color: #BBB; text-transform: uppercase; letter-spacing: 2px; }
+
+        .quiz-hint { background: rgba(226, 167, 47, 0.1); color: #B27B16; padding: 10px 15px; border-radius: 12px; font-size: 0.85rem; margin-bottom: 20px; border-left: 4px solid var(--accent); font-weight: 600;}
+        #q-text { font-size: clamp(1.2rem, 4vw, 1.8rem); margin-bottom: 35px; color: var(--primary); font-family: 'Playfair Display', serif; }
+
+        /* MCQ */
+        .option-btn { display: block; width: 100%; padding: clamp(12px, 3vw, 18px) 25px; margin-bottom: 15px; border: 2px solid #EBEBEB; border-radius: 16px; text-align: left; background: var(--surface); cursor: pointer; font-family: 'Outfit', sans-serif; font-size: clamp(0.9rem, 2.5vw, 1.1rem); transition: all 0.2s; color: var(--text); font-weight: 600; }
         .option-btn:hover { border-color: var(--accent); background: #FFFAF0; transform: translateX(5px); }
         .option-btn.correct { background: #E8F5E9; border-color: var(--success); color: var(--success); }
         .option-btn.wrong { background: #FFEBEE; border-color: var(--error); color: var(--error); }
 
-        .lore-box {
-            display: none; background: #FFFBF0; border: 2px solid var(--accent); border-radius: 16px; 
-            padding: 25px; margin-top: 25px; animation: fadeUp 0.5s ease forwards;
-        }
+        /* Fact or Cap */
+        .fact-cap-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .fc-btn { padding: 30px; font-size: 1.5rem; font-weight: 800; border-radius: 20px; border: none; cursor: pointer; transition: 0.3s; color: white; font-family: 'Outfit', sans-serif; }
+        .btn-fact { background: var(--success); box-shadow: 0 10px 0 #1B5E20; }
+        .btn-fact:active { transform: translateY(10px); box-shadow: 0 0 0 #1B5E20; }
+        .btn-cap { background: var(--error); box-shadow: 0 10px 0 #b71c1c; }
+        .btn-cap:active { transform: translateY(10px); box-shadow: 0 0 0 #b71c1c; }
+
+        /* GeoGuessr Map */
+        .map-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; max-width: 500px; margin: 0 auto; position: relative;}
+        .map-region { background: #EBEBEB; border: 3px solid #CCC; padding: 40px 20px; text-align: center; border-radius: 16px; font-weight: 800; font-size: 1.2rem; cursor: pointer; transition: 0.3s; color: #555; }
+        .map-region:hover { background: var(--accent); color: white; border-color: var(--primary); transform: scale(1.05); }
+        .map-luzon { grid-column: 1 / 3; }
+        .map-palawan { grid-column: 1 / 2; }
+        .map-visayas { grid-column: 2 / 3; }
+        .map-mindanao { grid-column: 1 / 3; }
+
+        /* Baybayin Cipher */
+        .cipher-box { background: var(--primary); padding: 25px; border-radius: 16px; color: white; text-align: center; margin-bottom: 20px; }
+        .ancient-text { font-size: 3rem; letter-spacing: 10px; color: var(--accent); margin-bottom: 15px; }
+        .cipher-key { display: flex; justify-content: center; gap: 15px; flex-wrap: wrap; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px; font-family: monospace; font-size: 1.1rem; }
+        .cipher-input { width: 100%; padding: 15px; font-size: 1.2rem; border: 2px solid var(--accent); border-radius: 12px; text-align: center; text-transform: uppercase; font-family: 'Outfit', sans-serif; font-weight: 800; margin-bottom: 15px; }
+
+        /* Timeline Drag Drop */
+        .timeline-container { display: flex; flex-direction: column; gap: 10px; }
+        .drag-item { background: #FFFBF0; border: 2px dashed var(--accent); padding: 15px 20px; border-radius: 12px; cursor: grab; font-weight: 600; display: flex; align-items: center; gap: 15px; transition: 0.2s; }
+        .drag-item:active { cursor: grabbing; scale: 0.98; }
+        .drag-item.dragging { opacity: 0.5; background: var(--accent); color: white; border: 2px solid var(--primary); }
+        .drag-icon { font-size: 1.5rem; opacity: 0.5; }
+
+        /* Lore Box */
+        .lore-box { display: none; background: #FFFBF0; border: 2px solid var(--accent); border-radius: 16px; padding: 25px; margin-top: 25px; animation: fadeUp 0.5s ease forwards; }
         .lore-title { font-family: 'Playfair Display', serif; color: var(--primary); font-size: 1.4rem; margin-bottom: 10px; display: flex; align-items: center; gap: 10px; }
         .lore-text { color: #444; font-size: 1rem; margin-bottom: 20px; line-height: 1.7; }
         .lore-actions { display: flex; gap: 15px; flex-wrap: wrap; align-items: center; justify-content: space-between; }
-        
-        .btn-link {
-            background: transparent; color: var(--primary); padding: 10px 20px; border: 2px solid var(--primary); 
-            border-radius: 12px; text-decoration: none; font-weight: 600; font-size: 0.9rem; transition: 0.3s;
-        }
+        .btn-link { background: transparent; color: var(--primary); padding: 10px 20px; border: 2px solid var(--primary); border-radius: 12px; text-decoration: none; font-weight: 600; font-size: 0.9rem; transition: 0.3s; }
         .btn-link:hover { background: var(--primary); color: white; }
-        
-        .btn-next {
-            background: var(--success); color: white; padding: 12px 30px; border: none;
-            border-radius: 12px; font-weight: 600; font-size: 1rem; cursor: pointer; transition: 0.3s;
-            box-shadow: 0 4px 15px rgba(46, 125, 50, 0.3); font-family: 'Outfit', sans-serif;
-        }
+        .btn-next { background: var(--success); color: white; padding: 12px 30px; border: none; border-radius: 12px; font-weight: 600; font-size: 1rem; cursor: pointer; transition: 0.3s; box-shadow: 0 4px 15px rgba(46, 125, 50, 0.3); font-family: 'Outfit', sans-serif; }
         .btn-next:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(46, 125, 50, 0.4); }
 
-        #ar-frame { 
-            width: 100%; height: clamp(400px, 60vh, 600px); border-radius: 24px; overflow: hidden; 
-            position: relative; background: #111; border: 4px solid var(--primary);
-            box-shadow: var(--shadow); display: flex; align-items: center; justify-content: center;
-        }
+        #ar-frame { width: 100%; height: clamp(400px, 60vh, 600px); border-radius: 24px; overflow: hidden; position: relative; background: #111; border: 4px solid var(--primary); box-shadow: var(--shadow); display: flex; align-items: center; justify-content: center; }
         
-        /* 🔥 This is the CSS fix that prevents AR.js from breaking out of the box 🔥 */
-        #ar-frame video, #ar-frame .a-canvas {
-            object-fit: cover !important; 
-            width: 100% !important; 
-            height: 100% !important;
-            top: 0 !important; 
-            left: 0 !important; 
-            right: 0 !important; 
-            bottom: 0 !important; 
-            margin: 0 !important; 
-            padding: 0 !important;
-            position: absolute !important;
-            z-index: 1 !important;
-        }
+        /* The CSS Override to trap AR.js inside the box */
+        #ar-frame video, #ar-frame .a-canvas { object-fit: cover !important; width: 100% !important; height: 100% !important; top: 0 !important; left: 0 !important; margin: 0 !important; position: absolute !important; z-index: 1 !important;}
         
-        .ar-permissions-box {
-            background: var(--surface); padding: 40px; border-radius: 20px; text-align: center;
-            max-width: 90%; width: 400px; box-shadow: var(--shadow); z-index: 10; position: relative;
-        }
-
-        .ar-overlay {
-            position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
-            background: rgba(45, 45, 45, 0.85); color: white; padding: 12px 25px;
-            border-radius: 30px; font-size: clamp(0.8rem, 2vw, 0.95rem); z-index: 20; text-align: center; font-weight: 600;
-            backdrop-filter: blur(5px); white-space: nowrap; display: none;
-        }
-
-        .dash-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); gap: 20px; margin-bottom: 40px; }
-        .stat-box { background: var(--primary); color: white; padding: 30px; border-radius: 20px; text-align: center; box-shadow: var(--shadow); }
-        .stat-box h4 { color: var(--accent); font-size: clamp(2rem, 6vw, 2.8rem); font-family: 'Playfair Display', serif; line-height: 1; margin-bottom: 10px; }
-        
-        .table-container { width: 100%; overflow-x: auto; border-radius: 20px; box-shadow: var(--shadow); background: var(--surface); }
-        table { width: 100%; min-width: 600px; border-collapse: separate; border-spacing: 0; }
-        th, td { padding: 18px 25px; text-align: left; font-size: clamp(0.8rem, 2vw, 1rem); }
-        th { background: #F8F8F8; font-weight: 800; font-size: 0.85rem; color: #888; text-transform: uppercase; letter-spacing: 1.5px; }
-        tr:not(:last-child) td { border-bottom: 1px solid #F0F0F0; }
+        .ar-permissions-box { background: var(--surface); padding: 40px; border-radius: 20px; text-align: center; max-width: 90%; width: 400px; box-shadow: var(--shadow); z-index: 10; position: relative; }
+        .ar-overlay { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); background: rgba(45, 45, 45, 0.85); color: white; padding: 12px 25px; border-radius: 30px; font-size: clamp(0.8rem, 2vw, 0.95rem); z-index: 20; text-align: center; font-weight: 600; backdrop-filter: blur(5px); display: none; }
 
         @media (max-width: 768px) {
             .hamburger { display: block; }
-            .nav-links {
-                position: absolute; top: 75px; left: 0; width: 100%; background: var(--glass);
-                backdrop-filter: blur(12px); flex-direction: column; padding: 20px 5%;
-                border-bottom: 1px solid rgba(226, 167, 47, 0.2); transform: translateY(-150%);
-                transition: 0.3s ease; opacity: 0; pointer-events: none;
-            }
+            .nav-links { position: absolute; top: 75px; left: 0; width: 100%; background: var(--glass); backdrop-filter: blur(12px); flex-direction: column; padding: 20px 5%; border-bottom: 1px solid rgba(226, 167, 47, 0.2); transform: translateY(-150%); transition: 0.3s ease; opacity: 0; pointer-events: none; }
             .nav-links.open { transform: translateY(0); opacity: 1; pointer-events: all; }
             .nav-links button { width: 100%; text-align: left; padding: 15px; }
             .hero-flex { text-align: center; }
             .btn-main { margin: 0 auto; }
+            .rpg-header { flex-direction: column; align-items: flex-start; }
+            .boss-bar-container { width: 100%; max-width: 100%; }
         }
     </style>
 </head>
@@ -225,7 +160,6 @@
             <button onclick="navigate('home', this)" class="active">Home</button>
             <button onclick="navigate('quests', this)">Quests</button>
             <button onclick="navigate('ar', this)">WebAR</button>
-            <button onclick="navigate('teacher', this)">Teacher's POV</button>
         </div>
     </nav>
 
@@ -244,7 +178,7 @@
 
     <section id="quests">
         <h2 style="font-family: 'Playfair Display', serif; font-size: clamp(2rem, 6vw, 3rem); color: var(--primary);">Choose Your Era</h2>
-        <p style="color: #666; font-size: clamp(0.9rem, 2.5vw, 1.1rem); margin-top: 5px;">Flex your knowledge to unlock the next canon event.</p>
+        <p style="color: #666; font-size: clamp(0.9rem, 2.5vw, 1.1rem); margin-top: 5px;">Flex your knowledge to defeat the Era Bosses.</p>
 
         <div class="quest-grid">
             <div class="quest-card" onclick="initiateQuest(0)">
@@ -253,7 +187,6 @@
                 <p style="color: #666;">Golden death masks, mystic Babaylans, and copperplate inscriptions.</p>
                 <div class="progress-track"><div class="progress-fill" id="prog-0"></div></div>
             </div>
-
             <div class="quest-card locked" id="quest-1" onclick="initiateQuest(1)">
                 <span class="lock-icon">🔒</span>
                 <div style="font-size: clamp(2rem, 6vw, 3rem); margin-bottom: 10px;">⛪</div>
@@ -261,7 +194,6 @@
                 <p style="color: #666;">Wine monopolies, 85-year rebellions, and the Louisiana Manila Men.</p>
                 <div class="progress-track"><div class="progress-fill" id="prog-1"></div></div>
             </div>
-
             <div class="quest-card locked" id="quest-2" onclick="initiateQuest(2)">
                 <span class="lock-icon">🔒</span>
                 <div style="font-size: clamp(2rem, 6vw, 3rem); margin-bottom: 10px;">⚔️</div>
@@ -272,13 +204,18 @@
         </div>
 
         <div id="quiz-block" class="quiz-container">
-            <div class="quiz-header">
-                <span class="quiz-tag" id="quiz-badge">QUEST 1</span>
-                <span style="font-weight: 800; color: #888;" id="quiz-tracker">1 / 8</span>
+            <div class="rpg-header">
+                <div class="player-hp" id="player-hp">❤️❤️❤️</div>
+                <div class="boss-bar-container">
+                    <div class="boss-title" id="boss-title">Boss HP: Ancient Era</div>
+                    <div class="boss-bar-bg"><div class="boss-bar-fill" id="boss-hp"></div></div>
+                </div>
             </div>
+
             <div id="quiz-hint" class="quiz-hint" style="display: none;"></div>
-            <h2 id="q-text" style="font-size: clamp(1.2rem, 4vw, 1.8rem); margin-bottom: 35px; color: var(--primary); font-family: 'Playfair Display', serif;">Question text goes here</h2>
-            <div id="q-options"></div>
+            <h2 id="q-text">Question text goes here</h2>
+            
+            <div id="dynamic-quiz-content"></div>
             
             <div id="lore-block" class="lore-box">
                 <div class="lore-title">📜 The Lore Drop</div>
@@ -293,7 +230,7 @@
 
     <section id="ar">
         <h2 style="font-family: 'Playfair Display', serif; font-size: clamp(2rem, 6vw, 3rem); color: var(--primary);">AR Artifact Flex</h2>
-        <p style="color: #666; font-size: clamp(0.9rem, 2.5vw, 1.1rem); margin-top: 5px; margin-bottom: 40px;">Point your camera at a Hiro Marker to spawn artifacts IRL. Goated feature tbh.</p>
+        <p style="color: #666; font-size: clamp(0.9rem, 2.5vw, 1.1rem); margin-top: 5px; margin-bottom: 40px;">Point your camera at a Hiro Marker to spawn artifacts IRL.</p>
         
         <div id="ar-frame">
             <div class="ar-permissions-box" id="ar-perm-box">
@@ -305,558 +242,240 @@
         </div>
     </section>
 
-    <section id="teacher">
-        <h2 style="font-family: 'Playfair Display', serif; font-size: clamp(2rem, 6vw, 3rem); color: var(--primary); margin-bottom: 30px;">Teacher's POV / Analytics</h2>
-        
-        <div class="dash-stats">
-            <div class="stat-box"><h4>42</h4><p>Total Students</p></div>
-            <div class="stat-box"><h4>88%</h4><p>Class Average</p></div>
-            <div class="stat-box"><h4>12</h4><p>Finished the Grind</p></div>
-        </div>
-
-        <div class="table-container">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Student Name</th>
-                        <th>Current Arc</th>
-                        <th>Win Rate</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td style="font-weight: 600;">Santos, Maria Clara</td>
-                        <td>The Revolution</td>
-                        <td style="font-weight: 800; color: var(--accent);">95%</td>
-                        <td style="color: var(--success); font-weight: 600;">Slaying</td>
-                    </tr>
-                    <tr>
-                        <td style="font-weight: 600;">Dela Cruz, Juan</td>
-                        <td>Spanish Era</td>
-                        <td style="font-weight: 800; color: var(--accent);">60%</td>
-                        <td style="color: #E65100; font-weight: 600;">Grinding</td>
-                    </tr>
-                    <tr>
-                        <td style="font-weight: 600;">Rizal, Pepe</td>
-                        <td>Ancient PH Era</td>
-                        <td style="font-weight: 800; color: var(--accent);">0%</td>
-                        <td style="color: #9E9E9E; font-weight: 600;">AFK</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </section>
-
     <script>
-        const CONFIG = {
-            PASSING_SCORE_PERCENTAGE: 60,
-            PRELOADER_DURATION: 1500,
-            PRELOADER_FADE_DURATION: 600
-        };
+        const CONFIG = { PRELOADER_DURATION: 1500, PRELOADER_FADE_DURATION: 600 };
 
-        const expandedQuizData = [
+        // THE ULTIMATE 24-QUESTION DEEP-LORE DATABASE WITH ALL 5 MECHANICS
+        const gameDatabase = [
+            // ERA 1: ANCIENT
             [
-                { 
-                    q: "What is the oldest known written document found in the Philippines, dating back to 900 CE?", 
-                    a: "Laguna Copperplate Inscription", 
-                    o: ["Laguna Copperplate Inscription", "Boxer Codex", "Doctrina Christiana", "Urbana at Felisa"], 
-                    hint: "It cleared a man named Namwaran of a debt of gold.", 
-                    lore: "The Laguna Copperplate Inscription (LCI) blew historians' minds because it proved that ancient Filipinos weren't uneducated savages before the Spanish arrived. It was written in Old Malay using the Kawi script and references exact astronomical dates in the year 900 CE. It deals with clearing a debt of 1 kati and 8 suwarnas (about 865 grams of gold).",
-                    link: "https://en.wikipedia.org/wiki/Laguna_Copperplate_Inscription"
-                },
-                { 
-                    q: "In pre-colonial Visayas, what were the heavily tattooed warriors called by the Spaniards?", 
-                    a: "Pintados", 
-                    o: ["Maharlika", "Pintados", "Ilustrados", "Timawa"], 
-                    hint: "Literally translates to 'the painted ones'.", 
-                    lore: "To the ancient Visayans, tattoos weren't just for aesthetics—they were medals of honor. A warrior could only earn a tattoo after killing an enemy in battle or showing extreme bravery. The more tattoos you had, the higher your status. The Spanish colonizers called the Visayan islands 'Islas de los Pintados' (Islands of the Painted Ones).",
-                    link: "https://en.wikipedia.org/wiki/Pintados"
-                },
-                { 
-                    q: "What ancient gold artifacts were used to cover the eyes, nose, and mouth of the deceased?", 
-                    a: "Oton Death Mask", 
-                    o: ["Manunggul Jar", "Lingling-o", "Oton Death Mask", "Surigao Treasure"], 
-                    hint: "Found in Iloilo, made of pure gold.", 
-                    lore: "Ancient Filipinos believed that gold held powerful protective magic. When someone of high status died, gold death masks were placed over their eyes, nose, and mouth to prevent evil spirits from entering the corpse. The most famous one was discovered in a grave in Oton, Iloilo, proving that pre-colonial Filipinos were master goldsmiths.",
-                    link: "https://nationalmuseum.gov.ph/collections/archaeology/gold-death-mask/"
-                },
-                { 
-                    q: "Who were the primary spiritual leaders and healers in pre-colonial Philippine society, mostly comprised of women?", 
-                    a: "Babaylan", 
-                    o: ["Datu", "Catalonan", "Babaylan", "Rajah"], 
-                    hint: "They were highly respected, equal to the Datu in power.", 
-                    lore: "The Babaylan (or Catalonan in Tagalog regions) were the shamans, healers, and spiritual mediums of ancient barangays. They held immense political and social power, often advising the Datu. Most were women, but some were feminized men (Asog). The Spanish aggressively hunted them down because they posed the biggest threat to the spread of Catholicism.",
-                    link: "https://en.wikipedia.org/wiki/Babaylan"
-                },
-                { 
-                    q: "What is the name of the ancient Philippine wooden boat used for inter-island trade and navigation?", 
-                    a: "Balangay", 
-                    o: ["Galleon", "Vinta", "Balangay", "Karakoa"], 
-                    hint: "The term 'Barangay' was actually derived from this.", 
-                    lore: "The Balangay is the oldest known watercraft found in the Philippines, dating back to 320 CE. These massive, finely crafted wooden boats were built entirely without nails! Ancient Filipinos used them to cross oceans and trade with neighboring Asian empires. The Spanish were so impressed by them that they hired Filipino shipbuilders to build their Galleons.",
-                    link: "https://en.wikipedia.org/wiki/Balangay"
-                },
-                { 
-                    q: "What is the name of the ancient amulet shaped like a double-headed pendant, symbolizing fertility and virility?", 
-                    a: "Lingling-o", 
-                    o: ["Anting-anting", "Agimat", "Bulul", "Lingling-o"], 
-                    hint: "Often made of jade or gold, popular in the Cordilleras.", 
-                    lore: "The Lingling-o is an omega-shaped pendant that dates back to the metal age of the Philippines. It was a pan-Southeast Asian symbol of fertility and prosperity. While many were made of jade, Filipino craftsmen eventually started casting them in pure gold. They are still worn today by indigenous groups in the Cordillera mountains.",
-                    link: "https://en.wikipedia.org/wiki/Lingling-o"
-                },
-                { 
-                    q: "Which late 16th-century manuscript contains the earliest known illustrations of ancient Filipinos?", 
-                    a: "Boxer Codex", 
-                    o: ["Doctrina Christiana", "Boxer Codex", "Sucesos de las Islas Filipinas", "Code of Kalantiaw"], 
-                    hint: "Named after the scholar who acquired it in 1947.", 
-                    lore: "The Boxer Codex is a stunning manuscript from around 1590 that contains colored illustrations of various ethnic groups in the Philippines before heavy Spanish influence took over. It shows exactly how the Tagalogs, Visayans, and Zambals dressed, heavily draped in gold jewelry, colorful silks, and intricate tattoos.",
-                    link: "https://en.wikipedia.org/wiki/Boxer_Codex"
-                },
-                { 
-                    q: "In ancient Tagalog mythology, where does the supreme deity Bathala reside?", 
-                    a: "Kaluwalhatian", 
-                    o: ["Kasamaan", "Kaluwalhatian", "Ibong Adarna", "Mount Makiling"], 
-                    hint: "It translates to 'state of glory' or the skyworld.", 
-                    lore: "Before Catholicism, Tagalogs believed in a complex pantheon of gods ruled by Bathala Maykapal. He resided in Kaluwalhatian (the skyworld). The souls of good people who died in battle or lived honorable lives went there, while the wicked were sent to Kasamaan, a village of grief ruled by the evil deity Sitan.",
-                    link: "https://en.wikipedia.org/wiki/Bathala"
-                }
+                { type: 'mcq', q: "What is the oldest known written document found in the Philippines, dating back to 900 CE?", a: "Laguna Copperplate Inscription", o: ["Laguna Copperplate Inscription", "Boxer Codex", "Doctrina Christiana", "Urbana at Felisa"], hint: "It cleared a man named Namwaran of a debt of gold.", lore: "The Laguna Copperplate Inscription (LCI) blew historians' minds because it proved ancient Filipinos weren't uneducated savages. It deals with clearing a debt of 1 kati and 8 suwarnas (about 865 grams of gold).", link: "https://en.wikipedia.org/wiki/Laguna_Copperplate_Inscription" },
+                { type: 'fact_cap', q: "Fact or Cap: Ancient Visayan warriors were heavily tattooed from head to toe as medals of honor.", a: "fact", hint: "The Spanish called them the 'Pintados'.", lore: "FACT! To the ancient Visayans, tattoos were medals of honor. A warrior could only earn a tattoo after killing an enemy in battle. The Spanish colonizers called the Visayan islands 'Islas de los Pintados' (Islands of the Painted Ones).", link: "https://en.wikipedia.org/wiki/Pintados" },
+                { type: 'map', q: "Where was the famous Manunggul Burial Jar discovered?", a: "palawan", hint: "An island group on the far left of the Philippine map.", lore: "The Manunggul Jar was found in the Tabon Caves of Palawan. It features two figures rowing a boat into the afterlife, showing the deep spiritual beliefs of ancient Filipinos.", link: "https://en.wikipedia.org/wiki/Manunggul_Jar" },
+                { type: 'baybayin', q: "Escape Room Cipher: Decode this ancient word.", word: "ᜎᜑᜒ", a: "lahi", hint: "Look at the cheat sheet above! La - Ha - i", lore: "The word translates to 'Lahi', meaning race, heritage, or ancestry. Baybayin was an advanced script heavily used in Luzon and Visayas before the Spanish arrived.", link: "https://en.wikipedia.org/wiki/Baybayin" },
+                { type: 'timeline', q: "Arrange these ancient events chronologically (Oldest at the top):", order: ["Callao Man Existence", "Austronesian Arrival", "Laguna Copperplate Written"], lore: "Callao Man (67,000 years ago) is one of the oldest human remains in Asia. The Austronesians arrived around 4,000 BCE bringing farming and sailing, and the Laguna Copperplate was etched much later in 900 CE.", link: "https://en.wikipedia.org/wiki/History_of_the_Philippines" },
+                { type: 'mcq', q: "What ancient gold artifacts were used to cover the eyes, nose, and mouth of the deceased?", a: "Oton Death Mask", o: ["Manunggul Jar", "Lingling-o", "Oton Death Mask", "Surigao Treasure"], hint: "Found in Iloilo, made of pure gold.", lore: "Ancient Filipinos believed gold held powerful magic. Gold death masks were placed over the eyes and mouth to prevent evil spirits from entering the corpse.", link: "https://nationalmuseum.gov.ph/collections/archaeology/gold-death-mask/" },
+                { type: 'fact_cap', q: "Fact or Cap: The most powerful spiritual leaders in ancient barangays were mostly women or feminized men.", a: "fact", hint: "They were known as Babaylans.", lore: "FACT! The Babaylan (or Catalonan) were the shamans, healers, and spiritual mediums of ancient barangays. Most were women, but some were feminized men (Asog). The Spanish aggressively hunted them down.", link: "https://en.wikipedia.org/wiki/Babaylan" },
+                { type: 'mcq', q: "What is the name of the ancient Philippine wooden boat used for inter-island trade?", a: "Balangay", o: ["Galleon", "Vinta", "Balangay", "Karakoa"], hint: "The term 'Barangay' was actually derived from this.", lore: "The Balangay is the oldest known watercraft found in the Philippines, dating back to 320 CE. These massive, finely crafted wooden boats were built entirely without nails!", link: "https://en.wikipedia.org/wiki/Balangay" }
             ],
+            // ERA 2: SPANISH
             [
-                { 
-                    q: "Who led the longest rebellion in Philippine history, which lasted for exactly 85 years?", 
-                    a: "Francisco Dagohoy", 
-                    o: ["Diego Silang", "Apolinario de la Cruz", "Francisco Dagohoy", "Andres Malong"], 
-                    hint: "The rebellion took place in Bohol.", 
-                    lore: "Francisco Dagohoy started a massive rebellion in Bohol in 1744 after a Spanish priest refused to give his brother a Christian burial. Dagohoy set up an independent government in the mountains, and his forces successfully defeated 20 successive Spanish governors-general. The rebellion lasted for 85 years, long after Dagohoy died of old age.",
-                    link: "https://en.wikipedia.org/wiki/Dagohoy_rebellion"
-                },
-                { 
-                    q: "What was the cause of the 1807 Basi Revolt in Ilocos?", 
-                    a: "A Spanish monopoly on sugarcane wine", 
-                    o: ["Forced labor in galleon ships", "A Spanish monopoly on sugarcane wine", "Execution of a local priest", "Unfair tobacco taxes"], 
-                    hint: "It involves a local alcoholic drink.", 
-                    lore: "The Ilocanos loved their Basi (a traditional sugarcane wine). In 1786, the Spanish colonial government expropriated the manufacture and sale of basi, effectively banning the locals from making their own private stashes. By 1807, the Ilocanos had enough and launched a violent armed revolt purely for the right to brew their own alcohol.",
-                    link: "https://en.wikipedia.org/wiki/Basi_revolt"
-                },
-                { 
-                    q: "What were the first Filipinos who settled in Louisiana, USA around the 1760s called?", 
-                    a: "Manila Men", 
-                    o: ["Indios Bravos", "Manila Men", "Galleon Deserters", "Pensionados"], 
-                    hint: "They escaped from Spanish galleons.", 
-                    lore: "Decades before the American colonial period, Filipino sailors working as forced labor on Spanish Galleons jumped ship in Mexico, made their way to Louisiana, and established the fishing village of Saint Malo. Known as the 'Manila Men,' they introduced shrimp-drying to the US and even fought alongside Andrew Jackson in the Battle of New Orleans in 1815.",
-                    link: "https://en.wikipedia.org/wiki/Saint_Malo,_Louisiana"
-                },
-                { 
-                    q: "Which Muslim ruler successfully defended Mindanao against the Spanish Empire for over 50 years?", 
-                    a: "Sultan Kudarat", 
-                    o: ["Rajah Sulayman", "Sultan Kudarat", "Lapu-Lapu", "Tariq Suleiman"], 
-                    hint: "A province in Mindanao is named after him.", 
-                    lore: "Sultan Muhammad Dipatuan Kudarat was the absolute ruler of the Sultanate of Maguindanao. While Luzon and Visayas fell to the Spanish, Kudarat successfully united the Islamic forces of Mindanao and repelled Spanish invasions for decades. He was so powerful that the Spanish governor-general was forced to sign a peace treaty with him.",
-                    link: "https://en.wikipedia.org/wiki/Muhammad_Kudarat"
-                },
-                { 
-                    q: "Who is recognized as the first Filipino printer and the 'Prince of Filipino Typographers'?", 
-                    a: "Tomas Pinpin", 
-                    o: ["Juan Luna", "Tomas Pinpin", "Fernando Amorsolo", "Jose Rizal"], 
-                    hint: "He printed the first book written by a Filipino in 1610.", 
-                    lore: "Tomas Pinpin was a master printer in the 1600s. He didn't just print books for the Spanish friars; he actively wrote and printed a book in 1610 called 'Librong Pagaaralan nang manga Tagalog nang Uicang Castilla'. It was the very first book written and published by a Filipino, intended to help Tagalogs learn Spanish so they couldn't be easily exploited.",
-                    link: "https://en.wikipedia.org/wiki/Tomas_Pinpin"
-                },
-                { 
-                    q: "The Tamblot Uprising of 1621 was led by a Babaylan who urged his people to return to what?", 
-                    a: "The old pre-colonial religion", 
-                    o: ["Farming without taxes", "The old pre-colonial religion", "Fighting with guns instead of swords", "Trading with the Dutch"], 
-                    hint: "He rejected Catholicism completely.", 
-                    lore: "Tamblot was a Boholano Babaylan (shaman) who witnessed his culture being erased by Spanish Jesuits. In 1621, he challenged the Catholic priests, claiming that the ancient Diwatas (gods) were angry. He rallied 2,000 followers to burn churches and return to the old faith. It took heavily armed Spanish and allied troops to crush his rebellion.",
-                    link: "https://en.wikipedia.org/wiki/Tamblot_revolt"
-                },
-                { 
-                    q: "What massive Spanish galleon sank off the coast of Fortune Island in 1600 after battling the Dutch?", 
-                    a: "San Diego", 
-                    o: ["Nuestra Señora", "San Diego", "La Encarnacion", "Victoria"], 
-                    hint: "It was filled with Ming dynasty porcelain and gold.", 
-                    lore: "The San Diego was a merchant ship hastily converted into a warship to defend Manila from Dutch pirates in 1600. It was dangerously overloaded with cannons, soldiers, and treasure. During the battle, the incompetent Spanish commander refused to let go of the anchor, causing the ship to sink. Its treasure, completely preserved, was discovered in 1992.",
-                    link: "https://en.wikipedia.org/wiki/San_Diego_(ship)"
-                },
-                { 
-                    q: "What event in 1872 led to the unjust execution of three Filipino priests, deeply inspiring Jose Rizal?", 
-                    a: "Cavite Mutiny", 
-                    o: ["Cry of Pugad Lawin", "Cavite Mutiny", "Pact of Biak-na-Bato", "Malolos Congress"], 
-                    hint: "GOMBURZA was framed for this event.", 
-                    lore: "In 1872, arsenal workers in Cavite mutinied over having their wages unfairly taxed. The Spanish authorities crushed the mutiny and used it as an excuse to execute three innocent, highly educated Filipino priests: Gomez, Burgos, and Zamora (GOMBURZA). A young Jose Rizal witnessed the aftermath, dedicating his novel El Filibusterismo to them.",
-                    link: "https://en.wikipedia.org/wiki/1872_Cavite_mutiny"
-                }
+                { type: 'mcq', q: "Who led the longest rebellion in Philippine history, which lasted for exactly 85 years?", a: "Francisco Dagohoy", o: ["Diego Silang", "Apolinario de la Cruz", "Francisco Dagohoy", "Andres Malong"], hint: "The rebellion took place in Bohol.", lore: "Francisco Dagohoy started a massive rebellion in Bohol in 1744. He set up an independent government in the mountains and successfully defeated 20 successive Spanish governors-general.", link: "https://en.wikipedia.org/wiki/Dagohoy_rebellion" },
+                { type: 'fact_cap', q: "Fact or Cap: The first Filipinos to settle in the USA were sailors who escaped Spanish Galleons and lived in the Louisiana swamps.", a: "fact", hint: "They were called the 'Manila Men'.", lore: "FACT! Decades before the American colonial period, Filipino sailors jumped ship in Mexico, made their way to Louisiana, and established the fishing village of Saint Malo. They even fought alongside Andrew Jackson in the Battle of New Orleans in 1815.", link: "https://en.wikipedia.org/wiki/Saint_Malo,_Louisiana" },
+                { type: 'map', q: "In 1807, an armed revolt broke out because the Spanish banned locals from making their own Basi (sugarcane wine). Where did this happen?", a: "luzon", hint: "It happened in the Ilocos Region.", lore: "The Ilocanos of Northern Luzon loved their Basi. When the Spanish colonial government monopolized its production, the locals launched a violent armed revolt purely for the right to brew their own alcohol.", link: "https://en.wikipedia.org/wiki/Basi_revolt" },
+                { type: 'baybayin', q: "Escape Room Cipher: Decode this word.", word: "ᜇᜆᜓ", a: "datu", hint: "Da - Tu", lore: "Datu was the title for chiefs, sovereign princes, and monarchs in the pre-Hispanic Philippines. The Spanish later incorporated them into the colonial government as the 'Principalia' class.", link: "https://en.wikipedia.org/wiki/Datu" },
+                { type: 'timeline', q: "Arrange these Spanish era events chronologically (Oldest at the top):", order: ["Magellan arrives in Cebu", "Galleon Trade Begins", "Execution of Gomburza"], lore: "Magellan arrived in 1521. The Manila-Acapulco Galleon trade started in 1565 connecting Asia to the Americas. The Gomburza priests were executed much later in 1872, sparking the Propaganda movement.", link: "https://en.wikipedia.org/wiki/History_of_the_Philippines_(1565%E2%80%931898)" },
+                { type: 'mcq', q: "Which Muslim ruler successfully defended Mindanao against the Spanish Empire for over 50 years?", a: "Sultan Kudarat", o: ["Rajah Sulayman", "Sultan Kudarat", "Lapu-Lapu", "Tariq Suleiman"], hint: "A province in Mindanao is named after him.", lore: "While Luzon and Visayas fell to the Spanish, Sultan Kudarat successfully united the Islamic forces of Mindanao and repelled Spanish invasions for decades.", link: "https://en.wikipedia.org/wiki/Muhammad_Kudarat" },
+                { type: 'fact_cap', q: "Fact or Cap: The first book written by a Filipino was a guide teaching Tagalogs how to speak Spanish to avoid exploitation.", a: "fact", hint: "Written by Tomas Pinpin in 1610.", lore: "FACT! Tomas Pinpin wrote and printed a book in 1610 intended to help Tagalogs learn Spanish so they couldn't be easily exploited by the friars. He is known as the Prince of Filipino Typographers.", link: "https://en.wikipedia.org/wiki/Tomas_Pinpin" },
+                { type: 'mcq', q: "What massive Spanish galleon sank off the coast of Fortune Island in 1600 after battling the Dutch?", a: "San Diego", o: ["Nuestra Señora", "San Diego", "La Encarnacion", "Victoria"], hint: "It was filled with Ming dynasty porcelain and gold.", lore: "The San Diego was a merchant ship hastily converted into a warship. During a battle with the Dutch in 1600, the incompetent Spanish commander caused the ship to sink. Its treasure was discovered perfectly intact in 1992.", link: "https://en.wikipedia.org/wiki/San_Diego_(ship)" }
             ],
+            // ERA 3: REVOLUTION
             [
-                { 
-                    q: "Who was the female revolutionary leader from Iloilo known as the 'Joan of Arc of the Visayas'?", 
-                    a: "Teresa Magbanua", 
-                    o: ["Gabriela Silang", "Melchora Aquino", "Teresa Magbanua", "Marcela Agoncillo"], 
-                    hint: "She was a teacher who took up arms and led men into battle.", 
-                    lore: "Teresa Magbanua was a school teacher who shocked her family by joining the Katipunan. She proved to be a brilliant military tactician and a fierce fighter. She rode into battle on a white horse, successfully leading troops against the Spanish, the Americans, and even funding guerillas against the Japanese in WWII. Total badass.",
-                    link: "https://en.wikipedia.org/wiki/Teresa_Magbanua"
-                },
-                { 
-                    q: "Which revolutionary general continued the Philippine Republic after Aguinaldo surrendered, but was branded a 'bandit' by the Americans?", 
-                    a: "Macario Sakay", 
-                    o: ["Antonio Luna", "Artemio Ricarte", "Macario Sakay", "Miguel Malvar"], 
-                    hint: "He famously wore his hair very long.", 
-                    lore: "When Emilio Aguinaldo surrendered to the US, Macario Sakay refused to give up. He established the 'Republika ng Katagalugan' and continued fighting the Americans. To discredit him, the US military passed the Brigandage Act, branding Sakay and his legitimate army as mere thieves and bandits. He was tricked into surrendering and hanged in 1907.",
-                    link: "https://en.wikipedia.org/wiki/Macario_Sakay"
-                },
-                { 
-                    q: "What horrific 1901 event involved US troops taking church bells as trophies after a Filipino ambush?", 
-                    a: "Balangiga Massacre", 
-                    o: ["Battle of Tirad Pass", "Balangiga Massacre", "Fall of Bataan", "Manila Massacre"], 
-                    hint: "The bells were only returned to the Philippines in 2018.", 
-                    lore: "During the Philippine-American War, townspeople in Balangiga, Samar, successfully ambushed a US garrison by using church bells as a signal. In retaliation, US General Jacob Smith ordered his troops to kill everyone over the age of ten, turning Samar into a 'howling wilderness.' The Americans took the bells as trophies; they were finally returned in 2018.",
-                    link: "https://en.wikipedia.org/wiki/Balangiga_massacre"
-                },
-                { 
-                    q: "Who was the fierce, hot-tempered General known as the 'Alexander of the East'?", 
-                    a: "Antonio Luna", 
-                    o: ["Gregorio del Pilar", "Emilio Aguinaldo", "Antonio Luna", "Apolinario Mabini"], 
-                    hint: "He studied military science in Europe and was assassinated by his own men.", 
-                    lore: "General Antonio Luna was the most capable military commander of the Philippine-American war, having studied European military tactics. However, his strict discipline and explosive temper made him enemies within the Philippine ranks. He was brutally assassinated by troops loyal to Aguinaldo in Cabanatuan, dealing a massive blow to the revolution.",
-                    link: "https://en.wikipedia.org/wiki/Antonio_Luna"
-                },
-                { 
-                    q: "In 1898, a short-lived independent nation was established in the Visayas. What was it called?", 
-                    a: "Republic of Negros", 
-                    o: ["Zamboanga Republic", "Republic of Negros", "Visayan State", "Republika ng Katagalugan"], 
-                    hint: "It was formed after a bloodless revolution using fake cannons.", 
-                    lore: "In a massive bluff, the revolutionaries of Negros marched toward the Spanish capital carrying fake rifles carved from palm fronds and fake cannons made of rolled amakan mats painted black. The Spanish, thinking they were heavily outgunned, surrendered without a fight. The locals established the Cantonal Republic of Negros.",
-                    link: "https://en.wikipedia.org/wiki/Republic_of_Negros"
-                },
-                { 
-                    q: "What pen name did Antonio Luna use when writing critical articles for the newspaper La Solidaridad?", 
-                    a: "Taga-Ilog", 
-                    o: ["Plaridel", "Dimasalang", "Taga-Ilog", "Laong Laan"], 
-                    hint: "It translates to 'From the river'.", 
-                    lore: "Before he was a fearsome general, Antonio Luna was a brilliant pharmacist and writer in Europe. Working alongside Jose Rizal and Marcelo H. del Pilar in the Propaganda Movement, Luna wrote biting, sarcastic articles exposing the abuses of Spanish friars under the pseudonym 'Taga-Ilog' (which is also the root word for 'Tagalog').",
-                    link: "https://en.wikipedia.org/wiki/Antonio_Luna#Propaganda_Movement"
-                },
-                { 
-                    q: "For how much did Spain 'sell' the Philippines to the United States under the 1898 Treaty of Paris?", 
-                    a: "$20 million", 
-                    o: ["$10 million", "$20 million", "$50 million", "$100 million"], 
-                    hint: "It was part of the settlement after the Spanish-American War.", 
-                    lore: "Despite the Filipinos already declaring independence and defeating the Spanish forces across the archipelago, Spain and the US ignored them. In the Treaty of Paris, Spain effectively 'sold' the Philippines, Guam, and Puerto Rico to the United States for 20 million dollars, immediately sparking the bloody Philippine-American War.",
-                    link: "https://en.wikipedia.org/wiki/Treaty_of_Paris_(1898)"
-                },
-                { 
-                    q: "At the Battle of Tirad Pass, who delayed the Americans to allow Aguinaldo to escape?", 
-                    a: "Gregorio del Pilar", 
-                    o: ["Antonio Luna", "Gregorio del Pilar", "Miguel Malvar", "Vicente Lukban"], 
-                    hint: "He was one of the youngest generals, known as the 'Boy General'.", 
-                    lore: "General Gregorio del Pilar, only 24 years old, volunteered to hold the narrow Tirad Pass with just 60 men against over 500 heavily armed Americans. They held them off for hours, allowing Aguinaldo to escape deeper into the mountains. Del Pilar was shot in the neck and killed. An American officer retrieved his diary as a souvenir.",
-                    link: "https://en.wikipedia.org/wiki/Battle_of_Tirad_Pass"
-                }
+                { type: 'fact_cap', q: "Fact or Cap: Revolutionaries in Visayas won a bloodless revolution by using fake cannons made of rolled-up mats.", a: "fact", hint: "It resulted in the short-lived Republic of Negros.", lore: "FACT! In a massive bluff, the revolutionaries marched carrying fake rifles carved from palm fronds and fake cannons made of rolled amakan mats. The Spanish surrendered without a fight.", link: "https://en.wikipedia.org/wiki/Republic_of_Negros" },
+                { type: 'mcq', q: "Who was the fierce, hot-tempered General known as the 'Alexander of the East'?", a: "Antonio Luna", o: ["Gregorio del Pilar", "Emilio Aguinaldo", "Antonio Luna", "Apolinario Mabini"], hint: "He studied military science in Europe and was assassinated by his own men.", lore: "General Antonio Luna was the most capable military commander of the Philippine-American war. He was brutally assassinated by troops loyal to Aguinaldo, dealing a massive blow to the revolution.", link: "https://en.wikipedia.org/wiki/Antonio_Luna" },
+                { type: 'map', q: "Where did US troops massacre a town and steal their church bells as trophies in 1901?", a: "visayas", hint: "The town of Balangiga is located in Samar.", lore: "After a successful Filipino ambush, US General Jacob Smith ordered his troops to turn Samar into a 'howling wilderness.' The Americans took the church bells as trophies; they were finally returned in 2018.", link: "https://en.wikipedia.org/wiki/Balangiga_massacre" },
+                { type: 'baybayin', q: "Escape Room Cipher: Decode this revolutionary word.", word: "ᜀᜋ", a: "ama", hint: "A - Ma (Father)", lore: "Andres Bonifacio is often called the 'Ama ng Katipunan' (Father of the Katipunan). The Katipunan was the secret society that sparked the Philippine Revolution.", link: "https://en.wikipedia.org/wiki/Andres_Bonifacio" },
+                { type: 'timeline', q: "Arrange these revolutionary events chronologically (Oldest at top):", order: ["Cry of Pugad Lawin", "Declaration of Independence", "Battle of Tirad Pass"], lore: "The Cry of Pugad Lawin (1896) started the revolution. Independence was declared in Kawit (1898). The Battle of Tirad Pass (1899) happened during the war against the Americans.", link: "https://en.wikipedia.org/wiki/Philippine_Revolution" },
+                { type: 'mcq', q: "Who was the female revolutionary leader from Iloilo known as the 'Joan of Arc of the Visayas'?", a: "Teresa Magbanua", o: ["Gabriela Silang", "Melchora Aquino", "Teresa Magbanua", "Marcela Agoncillo"], hint: "She was a teacher who took up arms and led men into battle.", lore: "Teresa Magbanua rode into battle on a white horse, successfully leading troops against the Spanish, the Americans, and even funding guerillas against the Japanese in WWII. Total badass.", link: "https://en.wikipedia.org/wiki/Teresa_Magbanua" },
+                { type: 'fact_cap', q: "Fact or Cap: The US officially branded the remaining President of the Philippine Republic as a mere bandit and thief to discredit him.", a: "fact", hint: "His name was Macario Sakay.", lore: "FACT! When Aguinaldo surrendered, Macario Sakay continued the Republic. To discredit him, the US passed the Brigandage Act, branding Sakay and his army as mere thieves and bandits before hanging him in 1907.", link: "https://en.wikipedia.org/wiki/Macario_Sakay" },
+                { type: 'mcq', q: "At the Battle of Tirad Pass, who delayed the Americans to allow Aguinaldo to escape?", a: "Gregorio del Pilar", o: ["Antonio Luna", "Gregorio del Pilar", "Miguel Malvar", "Vicente Lukban"], hint: "He was one of the youngest generals, known as the 'Boy General'.", lore: "General Gregorio del Pilar, only 24 years old, volunteered to hold the narrow Tirad Pass with just 60 men against over 500 heavily armed Americans. He held them off for hours before being killed.", link: "https://en.wikipedia.org/wiki/Battle_of_Tirad_Pass" }
             ]
         ];
 
-        let gameState = {
-            currentEra: 0,
-            questionIndex: 0,
-            score: 0,
-            unlockedQuests: [true, false, false]
-        };
+        let gameState = { currentEra: 0, questionIndex: 0, hp: 3, unlockedQuests: [true, false, false] };
 
-        const loadQuizData = () => {
-            try {
-                if ('localStorage' in window) {
-                    const stored = localStorage.getItem('lahiQuestData');
-                    if (stored) return JSON.parse(stored);
-                }
-            } catch (err) {}
-            return expandedQuizData;
-        };
-
-        let quizData = loadQuizData();
-
-        try {
-            if ('localStorage' in window) {
-                localStorage.setItem('lahiQuestData', JSON.stringify(expandedQuizData));
-            }
-        } catch (err) {}
-
-        function toggleMenu() {
-            const menu = document.getElementById('nav-menu');
-            if (menu) menu.classList.toggle('open');
-        }
-
+        function toggleMenu() { document.getElementById('nav-menu')?.classList.toggle('open'); }
         function showToast(msg, isError = false) {
             const toast = document.getElementById('toast');
             if (!toast) return;
-            toast.innerText = msg;
-            toast.style.background = isError ? 'var(--error)' : 'var(--success)';
-            toast.style.transform = 'translateX(0)';
-            setTimeout(() => {
-                toast.style.transform = 'translateX(150%)';
-            }, 3000);
+            toast.innerText = msg; toast.style.background = isError ? 'var(--error)' : 'var(--success)';
+            toast.style.transform = 'translateX(0)'; setTimeout(() => toast.style.transform = 'translateX(150%)', 3000);
         }
 
         function navigate(pageId, btn = null) {
-            const targetPage = document.getElementById(pageId);
-            if (!targetPage) return;
-            
-            // CLEANUP: If navigating away from AR, turn off the camera immediately to save battery!
+            // FIX: Prevent camera from draining battery when switching tabs
             if (pageId !== 'ar') {
-                const existingVideos = document.querySelectorAll('video');
-                existingVideos.forEach(el => {
-                    if (el.srcObject) el.srcObject.getTracks().forEach(t => t.stop());
-                    el.remove();
-                });
-                const existingScenes = document.querySelectorAll('a-scene');
-                existingScenes.forEach(s => s.remove());
-                
-                // Reset AR UI back to the button
-                const permBox = document.getElementById('ar-perm-box');
-                const overlayText = document.getElementById('ar-overlay-text');
-                if (permBox) permBox.style.display = 'block';
-                if (overlayText) overlayText.style.display = 'none';
+                document.querySelectorAll('video').forEach(el => { if (el.srcObject) el.srcObject.getTracks().forEach(t => t.stop()); el.remove(); });
+                document.querySelectorAll('a-scene').forEach(s => s.remove());
+                document.getElementById('ar-perm-box').style.display = 'block';
+                document.getElementById('ar-overlay-text').style.display = 'none';
             }
-
             document.querySelectorAll('section').forEach(s => s.classList.remove('active-section'));
-            targetPage.classList.add('active-section');
-            
-            const navMenu = document.getElementById('nav-menu');
-            if (navMenu) navMenu.classList.remove('open');
-
-            if (btn) {
-                document.querySelectorAll('.nav-links button').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-            } else {
-                document.querySelectorAll('.nav-links button').forEach(b => {
-                    b.classList.remove('active');
-                    if (b.innerText.toLowerCase().includes(pageId.toLowerCase())) {
-                        b.classList.add('active');
-                    }
-                });
-            }
+            document.getElementById(pageId).classList.add('active-section');
+            document.getElementById('nav-menu')?.classList.remove('open');
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         function requestCameraAccess() {
-            const permBox = document.getElementById('ar-perm-box');
-            const overlayText = document.getElementById('ar-overlay-text');
-            const arFrame = document.getElementById('ar-frame');
+            const permBox = document.getElementById('ar-perm-box'), overlayText = document.getElementById('ar-overlay-text'), arFrame = document.getElementById('ar-frame');
+            permBox.style.display = 'none'; overlayText.style.display = 'block';
+            document.querySelectorAll('a-scene, video').forEach(el => el.remove());
             
-            if (!permBox || !overlayText || !arFrame) return;
+            // Choose artifact based on current era progress
+            let currentArtifact = `<a-entity position="0 0 0"><a-cylinder radius="0.8" height="1.5" color="#D4A574" roughness="0.4" metalness="0.2"></a-cylinder><a-sphere position="0 1.0 0" radius="0.85" color="#C19A6B"></a-sphere><a-animation attribute="rotation" to="0 360 0" dur="6000" easing="linear" repeat="indefinite"></a-animation></a-entity><a-text value="Manunggul Jar\\n890-710 BC" position="0 2.5 0" color="#FFFFFF" align="center" width="4"></a-text>`;
+            if(gameState.currentEra === 1) currentArtifact = `<a-box position="0 0.8 0" width="1.2" height="1.5" depth="0.2" color="#8B6914"></a-box><a-text value="ba y ba y i n" position="0 0.8 0.15" color="#FFD700" align="center" font="mozillavr" scale="2 2 2"></a-text><a-text value="Baybayin Script" position="0 -1.0 0" color="#FFFFFF" align="center" width="3"></a-text>`;
+            if(gameState.currentEra === 2) currentArtifact = `<a-plane position="0 0 0" rotation="-90 0 0" width="2" height="1.5" color="#C62828"></a-plane><a-text value="K K K" position="0 0.1 0" rotation="-90 0 0" color="#FFFFFF" align="center" width="6" font="mozillavr"></a-text>`;
 
-            permBox.style.display = 'none';
-            overlayText.style.display = 'block';
-            
-            const existingScenes = document.querySelectorAll('a-scene');
-            existingScenes.forEach(el => el.remove());
-            const existingVideos = document.querySelectorAll('video');
-            existingVideos.forEach(el => {
-                if (el.srcObject) el.srcObject.getTracks().forEach(t => t.stop());
-                el.remove();
-            });
-
-            // The 3D AR Scene
-            const arScene = `
-                <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false; trackingMethod: best;">
-                    <a-marker preset="hiro">
-                        <a-entity position="0 0 0">
-                            <a-cylinder radius="0.8" height="1.5" color="#D4A574" roughness="0.4" metalness="0.2"></a-cylinder>
-                            <a-sphere position="0 1.0 0" radius="0.85" color="#C19A6B" roughness="0.5"></a-sphere>
-                            <a-sphere position="-0.4 1.1 0" radius="0.25" color="#8B7355"></a-sphere>
-                            <a-sphere position="0.4 1.1 0" radius="0.25" color="#8B7355"></a-sphere>
-                            <a-animation attribute="rotation" to="0 360 0" dur="6000" easing="linear" repeat="indefinite"></a-animation>
-                        </a-entity>
-                        <a-text value="Manunggul Jar\\n890-710 BC" position="0 2.5 0" color="#FFFFFF" align="center" width="4" font="mozillavr"></a-text>
-                    </a-marker>
-                    <a-entity camera></a-entity>
-                </a-scene>`;
-            
+            const arScene = `<a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false; trackingMethod: best;"><a-marker preset="hiro">${currentArtifact}</a-marker><a-entity camera></a-entity></a-scene>`;
             arFrame.insertAdjacentHTML('beforeend', arScene);
             showToast("AR initializing! Point at Hiro marker... 📱✨");
-
-            // ⚡ THE FIX: "Snatch" the video AR.js creates and force it into our container!
+            
+            // FIX: "Snatch" the video AR.js creates and force it into our container
             let checkVideo = setInterval(() => {
                 let video = document.querySelector('video');
-                if (video) {
-                    if (video.parentElement !== arFrame) {
-                        arFrame.appendChild(video);
-                    }
-                    clearInterval(checkVideo);
-                }
+                if (video) { if (video.parentElement !== arFrame) arFrame.appendChild(video); clearInterval(checkVideo); }
             }, 100);
-        }
-
-        function createOptionButton(optionText, correctAnswer) {
-            const btn = document.createElement('button');
-            btn.className = 'option-btn';
-            btn.innerText = optionText;
-            btn.setAttribute('aria-label', `Answer option: ${optionText}`);
-            btn.onclick = () => validateAnswer(optionText, correctAnswer, btn);
-            return btn;
         }
 
         function initiateQuest(questId) {
-            if (questId < 0 || questId >= quizData.length) {
-                showToast("Uhm, that quest doesn't exist lol 💀", true);
-                return;
-            }
-
-            if (!gameState.unlockedQuests[questId]) {
-                showToast("Awit! Locked pa 'to, boss. Grind mo muna yung previous quest.", true);
-                return;
-            }
-
-            gameState.currentEra = questId;
-            gameState.questionIndex = 0;
-            gameState.score = 0;
-
-            const quizBlock = document.getElementById('quiz-block');
-            if (!quizBlock) return;
-            quizBlock.style.display = 'block';
-            
-            const badge = document.getElementById('quiz-badge');
-            if (badge) badge.innerText = `QUEST ${questId + 1}`;
-
+            if (!gameState.unlockedQuests[questId]) { showToast("Awit! Locked pa 'to, boss.", true); return; }
+            gameState.currentEra = questId; gameState.questionIndex = 0; gameState.hp = 3;
+            document.getElementById('player-hp').innerText = "❤️❤️❤️";
+            updateBossHP();
+            document.getElementById('boss-title').innerText = `Boss HP: ${['Ancient', 'Spanish', 'Revolution'][questId]} Era`;
+            document.getElementById('quiz-block').style.display = 'block';
             renderQuestion();
-            setTimeout(() => {
-                quizBlock.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }, 100);
+            setTimeout(() => document.getElementById('quiz-block').scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+        }
+
+        function updateBossHP() {
+            const total = gameDatabase[gameState.currentEra].length;
+            const remaining = total - gameState.questionIndex;
+            const percentage = (remaining / total) * 100;
+            document.getElementById('boss-hp').style.width = percentage + '%';
         }
 
         function renderQuestion() {
-            const eraQuestions = quizData[gameState.currentEra];
-            if (!eraQuestions) return;
-            const currentQuestion = eraQuestions[gameState.questionIndex];
-            if (!currentQuestion) return;
+            const qData = gameDatabase[gameState.currentEra][gameState.questionIndex];
+            document.getElementById('q-text').innerText = qData.q;
+            document.getElementById('quiz-hint').innerText = `💡 Hint: ${qData.hint}`;
+            document.getElementById('quiz-hint').style.display = 'block';
+            document.getElementById('lore-block').style.display = 'none';
+            const container = document.getElementById('dynamic-quiz-content');
+            container.innerHTML = '';
 
-            const tracker = document.getElementById('quiz-tracker');
-            if (tracker) tracker.innerText = `${gameState.questionIndex + 1} / ${eraQuestions.length}`;
-
-            const questionText = document.getElementById('q-text');
-            if (questionText) questionText.innerText = currentQuestion.q;
-
-            const hintBox = document.getElementById('quiz-hint');
-            if (hintBox && currentQuestion.hint) {
-                hintBox.innerText = `💡 Hint: ${currentQuestion.hint}`;
-                hintBox.style.display = 'block';
-            } else if (hintBox) {
-                hintBox.style.display = 'none';
+            if (qData.type === 'mcq') {
+                qData.o.forEach(opt => {
+                    const btn = document.createElement('button');
+                    btn.className = 'option-btn'; btn.innerText = opt;
+                    btn.onclick = () => validateAnswer(opt === qData.a, btn);
+                    container.appendChild(btn);
+                });
+            } 
+            else if (qData.type === 'fact_cap') {
+                container.innerHTML = `
+                    <div class="fact-cap-grid">
+                        <button class="fc-btn btn-fact" onclick="validateAnswer('${qData.a}' === 'fact', this)">🟢 FACT</button>
+                        <button class="fc-btn btn-cap" onclick="validateAnswer('${qData.a}' === 'cap', this)">🔴 CAP</button>
+                    </div>`;
             }
-
-            const optionsContainer = document.getElementById('q-options');
-            if (!optionsContainer) return;
-            optionsContainer.innerHTML = '';
-            
-            currentQuestion.o.forEach(option => {
-                const btn = createOptionButton(option, currentQuestion.a);
-                optionsContainer.appendChild(btn);
-            });
-
-            const loreBox = document.getElementById('lore-block');
-            if (loreBox) loreBox.style.display = 'none';
+            else if (qData.type === 'map') {
+                container.innerHTML = `
+                    <div class="map-grid">
+                        <div class="map-region map-luzon" onclick="validateAnswer('${qData.a}' === 'luzon', this)">LUZON</div>
+                        <div class="map-region map-palawan" onclick="validateAnswer('${qData.a}' === 'palawan', this)">PALAWAN</div>
+                        <div class="map-region map-visayas" onclick="validateAnswer('${qData.a}' === 'visayas', this)">VISAYAS</div>
+                        <div class="map-region map-mindanao" onclick="validateAnswer('${qData.a}' === 'mindanao', this)">MINDANAO</div>
+                    </div>`;
+            }
+            else if (qData.type === 'baybayin') {
+                container.innerHTML = `
+                    <div class="cipher-box">
+                        <div class="ancient-text">${qData.word}</div>
+                        <div class="cipher-key">ᜎ=La | ᜑ=Ha | ᜇ=Da | ᜆ=Ta | ᜀ=A | ᜋ=Ma | ᜒ='i' sound | ᜓ='u' sound</div>
+                    </div>
+                    <input type="text" id="cipher-ans" class="cipher-input" placeholder="Type translation here..." autocomplete="off">
+                    <button class="btn-main" style="width:100%" onclick="validateAnswer(document.getElementById('cipher-ans').value.toLowerCase().trim() === '${qData.a}', this)">DECODE</button>
+                `;
+            }
+            else if (qData.type === 'timeline') {
+                let shuffled = [...qData.order].sort(() => Math.random() - 0.5);
+                let html = `<div class="timeline-container" id="tl-container">`;
+                shuffled.forEach(item => { html += `<div class="drag-item" draggable="true"><span class="drag-icon">↕️</span> ${item}</div>`; });
+                html += `</div><button class="btn-main" style="width:100%; margin-top:20px;" onclick="checkTimeline()">SUBMIT ORDER</button>`;
+                container.innerHTML = html;
+                initDragDrop();
+            }
         }
 
-        function validateAnswer(selected, correct, btnElement) {
-            const allBtns = document.querySelectorAll('.option-btn');
-            allBtns.forEach(b => b.style.pointerEvents = 'none');
+        function initDragDrop() {
+            const container = document.getElementById('tl-container');
+            const items = container.querySelectorAll('.drag-item');
+            items.forEach(item => {
+                item.addEventListener('dragstart', () => item.classList.add('dragging'));
+                item.addEventListener('dragend', () => item.classList.remove('dragging'));
+            });
+            container.addEventListener('dragover', e => {
+                e.preventDefault();
+                const dragging = document.querySelector('.dragging');
+                const siblings = [...container.querySelectorAll('.drag-item:not(.dragging)')];
+                let nextSibling = siblings.find(sibling => e.clientY <= sibling.getBoundingClientRect().top + sibling.offsetHeight / 2);
+                container.insertBefore(dragging, nextSibling);
+            });
+        }
 
-            if (selected === correct) {
-                btnElement.classList.add('correct');
-                gameState.score++;
-                showToast("Sheesh! Tumpak, lodi. Slayed that question.");
+        function checkTimeline() {
+            const items = [...document.querySelectorAll('.drag-item')].map(i => i.innerText.replace('↕️ ', '').trim());
+            const correctOrder = gameDatabase[gameState.currentEra][gameState.questionIndex].order;
+            const isCorrect = items.join(',') === correctOrder.join(',');
+            validateAnswer(isCorrect, document.querySelector('.timeline-container'));
+        }
+
+        function validateAnswer(isCorrect, el) {
+            document.getElementById('dynamic-quiz-content').style.pointerEvents = 'none';
+
+            if (isCorrect) {
+                if (el) el.style.border = "4px solid var(--success)";
+                showToast("CRITICAL HIT! You cooked that. 🔥");
             } else {
-                btnElement.classList.add('wrong');
-                allBtns.forEach(b => {
-                    if (b.innerText === correct) b.classList.add('correct');
-                });
-                showToast("Delulu is not trululu. Mali pards, we're cooked!", true);
+                gameState.hp--;
+                const hearts = ['🖤🖤🖤', '❤️🖤🖤', '❤️❤️🖤', '❤️❤️❤️'];
+                document.getElementById('player-hp').innerText = hearts[gameState.hp];
+                if (el && el.style) el.style.border = "4px solid var(--error)";
+                
+                if (gameState.hp <= 0) {
+                    showToast("YOU ARE COOKED. 💀", true);
+                    document.getElementById('dynamic-quiz-content').innerHTML = `
+                        <div style="text-align:center; padding: 40px; background: #FFEBEE; border-radius: 16px;">
+                            <h2 style="color:var(--error); font-size:3rem; margin-bottom:10px;">💀 GAME OVER</h2>
+                            <p style="margin-bottom:20px; font-weight:600;">Skill issue spotted. The Boss defeated you.</p>
+                            <button class="btn-main" onclick="initiateQuest(${gameState.currentEra})">TRY AGAIN</button>
+                        </div>`;
+                    return;
+                }
+                showToast(`WRONG! Watch your HP bro! (-1 ❤️)`, true);
             }
 
-            const currentQuestion = quizData[gameState.currentEra][gameState.questionIndex];
-            const loreBox = document.getElementById('lore-block');
-            const loreText = document.getElementById('lore-text');
-            const loreLink = document.getElementById('lore-link');
-            
-            if (loreBox && loreText && loreLink) {
-                loreText.innerHTML = `<strong>Fun Fact:</strong> ${currentQuestion.lore}`;
-                loreLink.href = currentQuestion.link;
-                loreBox.style.display = 'block';
-                setTimeout(() => {
-                    loreBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                }, 200);
-            }
+            const qData = gameDatabase[gameState.currentEra][gameState.questionIndex];
+            document.getElementById('lore-text').innerHTML = `<strong>Fun Fact:</strong> ${qData.lore}`;
+            document.getElementById('lore-link').href = qData.link;
+            document.getElementById('lore-block').style.display = 'block';
+            setTimeout(() => document.getElementById('lore-block').scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 200);
         }
 
         function nextQuestion() {
             gameState.questionIndex++;
-            const eraQuestions = quizData[gameState.currentEra];
+            updateBossHP();
+            document.getElementById('dynamic-quiz-content').style.pointerEvents = 'all';
             
-            if (gameState.questionIndex < eraQuestions.length) {
+            if (gameState.questionIndex < gameDatabase[gameState.currentEra].length) {
                 renderQuestion();
             } else {
-                finishQuest();
-            }
-        }
-
-        function finishQuest() {
-            const quizBlock = document.getElementById('quiz-block');
-            if (quizBlock) quizBlock.style.display = 'none';
-
-            const eraQuestions = quizData[gameState.currentEra];
-            const percentage = (gameState.score / eraQuestions.length) * 100;
-            
-            if (percentage >= CONFIG.PASSING_SCORE_PERCENTAGE) {
-                const progressBar = document.getElementById(`prog-${gameState.currentEra}`);
-                if (progressBar) progressBar.style.width = '100%';
-
-                showToast(`Dasurv! Score: ${gameState.score}/${eraQuestions.length}. Next era unlocked!`);
-
+                document.getElementById('quiz-block').style.display = 'none';
+                document.getElementById(`prog-${gameState.currentEra}`).style.width = '100%';
+                showToast(`BOSS DEFEATED! Next era unlocked! 🏆`);
+                
                 if (gameState.currentEra + 1 < gameState.unlockedQuests.length) {
                     gameState.unlockedQuests[gameState.currentEra + 1] = true;
                     const nextCard = document.getElementById(`quest-${gameState.currentEra + 1}`);
-                    if (nextCard) {
-                        nextCard.classList.remove('locked');
-                        const lockIcon = nextCard.querySelector('.lock-icon');
-                        if (lockIcon) lockIcon.innerText = '✅';
-                    }
+                    nextCard.classList.remove('locked');
+                    nextCard.querySelector('.lock-icon').innerText = '✅';
                 }
-            } else {
-                const progressBar = document.getElementById(`prog-${gameState.currentEra}`);
-                if (progressBar) progressBar.style.width = '0%';
-                showToast(`Skill issue? Score: ${gameState.score}/${eraQuestions.length}. Try again bro!`, true);
-            }
-            
-            setTimeout(() => {
                 window.scrollTo({ top: 0, behavior: 'smooth' });
-            }, 500);
+            }
         }
 
-        window.addEventListener('load', () => {
-            setTimeout(() => {
-                const preloader = document.getElementById('preloader');
-                if (preloader) {
-                    preloader.style.opacity = '0';
-                    setTimeout(() => {
-                        if (preloader.parentElement) preloader.remove();
-                    }, CONFIG.PRELOADER_FADE_DURATION);
-                }
-            }, CONFIG.PRELOADER_DURATION);
-        });
-
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                const loreBox = document.getElementById('lore-block');
-                if (loreBox && loreBox.style.display === 'block') {
-                    nextQuestion();
-                } else {
-                    const firstOption = document.querySelector('.option-btn');
-                    if (firstOption && firstOption.style.pointerEvents !== 'none') {
-                        firstOption.click();
-                    }
-                }
-            }
-        });
+        window.addEventListener('load', () => setTimeout(() => document.getElementById('preloader').style.opacity = '0', CONFIG.PRELOADER_DURATION));
     </script>
 </body>
-                    </html>
+</html>
