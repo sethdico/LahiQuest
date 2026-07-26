@@ -12,7 +12,6 @@
 
 <style>
   :root {
-    /* -- Light theme tokens -- */
     --ink: #221D17;
     --paper: #F6EEDD;
     --paper-raised: #FFFCF4;
@@ -54,7 +53,6 @@
   }
   ::selection { background: var(--gold); color: var(--paper-raised); }
 
-  /* signature: woven "banig" divider — a repeating diagonal weave rendered as SVG background */
   .weave-rule {
     height: 10px;
     width: 100%;
@@ -68,7 +66,6 @@
   a { color: inherit; }
   button { font-family: var(--font-body); }
 
-  /* ---------- Preloader ---------- */
   #preloader {
     position: fixed; inset: 0; z-index: 9999; background: var(--ink);
     display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -96,7 +93,6 @@
   #toast.err { background: var(--sinag); color: #fff; }
   #toast.ok { background: var(--malachite); color: #fff; }
 
-  /* ---------- Login ---------- */
   #login-modal {
     position: fixed; inset: 0; z-index: 3000; background: rgba(16,14,10,0.72);
     display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px);
@@ -113,7 +109,6 @@
   }
   .login-input:focus { outline: none; border-color: var(--gold); }
 
-  /* ---------- Nav ---------- */
   nav {
     position: fixed; top: 0; width: 100%; z-index: 1000; height: 76px;
     display: flex; align-items: center; justify-content: space-between; padding: 0 5%;
@@ -151,7 +146,6 @@
   .section-title { font-family: var(--font-display); font-weight: 700; font-size: clamp(1.9rem, 4.5vw, 2.7rem); color: var(--ink); margin-bottom: 8px; }
   .section-desc { color: var(--muted); margin-bottom: 32px; font-size: 1.02rem; max-width: 640px; }
 
-  /* ---------- Hero ---------- */
   .hero-flex { display: flex; align-items: center; gap: 60px; flex-wrap: wrap; margin-top: 10px; }
   .hero-text { flex: 1.2; min-width: 320px; }
   .hero-text h1 { font-family: var(--font-display); font-weight: 900; font-size: clamp(2.4rem, 6.5vw, 4.2rem); line-height: 1.05; color: var(--ink); margin-bottom: 20px; }
@@ -167,7 +161,6 @@
   }
   .hero-panel h3 { font-family: var(--font-display); font-size: 1.3rem; margin-bottom: 4px; }
   .hero-panel p.small { color: var(--muted); font-size: .88rem; margin-bottom: 20px; }
-  .progress-ring-row { display: flex; align-items: center; gap: 20px; }
   .badges-row { display: flex; gap: 8px; margin-top: 18px; flex-wrap: wrap; }
   .badge-pill {
     font-size: .74rem; font-weight: 700; padding: 6px 12px; border-radius: 20px;
@@ -190,7 +183,6 @@
   .btn-ghost:hover { border-color: var(--gold); color: var(--gold-deep); }
   .btn-sm { padding: 9px 18px; font-size: .85rem; border-radius: 10px; }
 
-  /* ---------- Modules ---------- */
   .quest-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 22px; }
   .quest-card {
     background: var(--paper-raised); border-radius: 18px; padding: 30px; position: relative;
@@ -205,7 +197,6 @@
   .quest-bar-fill { height: 100%; background: linear-gradient(90deg, var(--malachite), var(--gold)); border-radius: 4px; }
   .lock-icon { position: absolute; top: 22px; right: 22px; font-size: 1.2rem; opacity: .6; }
 
-  /* ---------- Lesson & Quiz panels ---------- */
   .panel {
     background: var(--paper-raised); border-radius: 20px; padding: clamp(26px, 4vw, 46px);
     box-shadow: var(--shadow-soft); border: 1px solid var(--line); display: none; margin-top: 22px;
@@ -233,7 +224,6 @@
     color: var(--muted); padding: 5px 12px; border-radius: 20px; font-weight: 700;
   }
 
-  /* ---------- Games ---------- */
   .mode-tabs { display: flex; gap: 8px; margin-bottom: 26px; flex-wrap: wrap; }
   .mode-tab {
     background: var(--paper-raised); border: 1.5px solid var(--line); padding: 10px 18px; border-radius: 30px;
@@ -261,35 +251,31 @@
 
   /* Flashcards */
   .flashcard {
-    background: var(--paper); border: 1.5px solid var(--line); border-radius: 18px; padding: 40px 30px;
-    min-height: 180px; display: flex; align-items: center; justify-content: center; text-align: center;
-    font-family: var(--font-display); font-size: 1.3rem; cursor: pointer; margin-bottom: 20px;
+    background: var(--paper); border: 1.5px solid var(--line); border-radius: 18px; padding: 30px;
+    min-height: 220px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
+    font-family: var(--font-display); font-size: 1.25rem; cursor: pointer; margin-bottom: 20px;
     transition: transform .4s; perspective: 800px;
   }
-  .flashcard .face { transition: opacity .2s; }
+  .flashcard-img { max-height: 120px; border-radius: 8px; margin-bottom: 14px; object-fit: cover; display: none; }
   .flash-progress { display: flex; gap: 6px; margin-bottom: 18px; }
   .flash-progress span { flex: 1; height: 5px; border-radius: 3px; background: var(--line); }
   .flash-progress span.done { background: var(--malachite); }
   .flash-progress span.current { background: var(--gold); }
 
-  /* Speed round */
   .speed-timer {
     font-family: var(--font-mono); font-size: 2.2rem; font-weight: 700; color: var(--sinag);
     text-align: center; margin-bottom: 18px;
   }
 
-  /* Tutor chat */
   .tutor-log { max-height: 340px; overflow-y: auto; margin-bottom: 16px; display: flex; flex-direction: column; gap: 12px; }
   .tutor-msg { padding: 12px 16px; border-radius: 12px; font-size: .95rem; max-width: 85%; }
   .tutor-msg.user { background: var(--gold); color: #201503; align-self: flex-end; font-weight: 600; }
   .tutor-msg.ai { background: var(--paper); border: 1px solid var(--line); align-self: flex-start; }
 
-  /* ---------- AR ---------- */
   #ar-frame { width: 100%; height: clamp(380px, 55vh, 600px); border-radius: 20px; overflow: hidden; position: relative; background: #10100E; border: 1px solid var(--line); display: flex; align-items: center; justify-content: center; }
   #ar-frame video, #ar-frame .a-canvas { object-fit: cover !important; width: 100% !important; height: 100% !important; top: 0 !important; left: 0 !important; position: absolute !important; z-index: 1; }
   .ar-permissions-box { background: var(--paper-raised); padding: 36px; border-radius: 16px; text-align: center; max-width: 90%; z-index: 10; position: relative; }
 
-  /* ---------- Dashboard ---------- */
   table { width: 100%; min-width: 640px; border-collapse: separate; border-spacing: 0; background: var(--paper-raised); border-radius: 16px; border: 1px solid var(--line); overflow: hidden; }
   th, td { padding: 16px 22px; text-align: left; }
   th { background: var(--paper); font-weight: 700; font-size: .78rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid var(--line); }
@@ -298,12 +284,10 @@
   .mini-bar { flex: 1; height: 8px; background: var(--line); border-radius: 4px; overflow: hidden; max-width: 120px; }
   .mini-bar-fill { height: 100%; background: var(--gold); }
 
+  .mystery-portrait { width: 100px; height: 100px; border-radius: 50%; object-fit: cover; margin: 0 auto 16px; border: 3px solid var(--gold); display: block; }
+
   a:focus-visible, button:focus-visible, input:focus-visible {
     outline: 2px solid var(--gold); outline-offset: 2px;
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    * { animation-duration: .01ms !important; transition-duration: .01ms !important; }
   }
 
   @media (max-width: 768px) {
@@ -326,7 +310,7 @@
 <div id="login-modal">
   <div class="login-box">
     <h2>LahiQuest</h2>
-    <p style="color:var(--muted); font-size:.92rem;">Enter your name so your progress is saved on this device.</p>
+    <p style="color:var(--muted); font-size:.92rem;">Enter your name so your progress is saved across all devices.</p>
     <input type="text" id="student-name" class="login-input" placeholder="Your name" onkeypress="if(event.key==='Enter') loginUser()">
     <button class="btn-main" style="width:100%;" onclick="loginUser()">Start learning</button>
   </div>
@@ -356,7 +340,7 @@
       <div class="hero-text">
         <div class="eyebrow">Digital Interactive Media · MAPEH 10</div>
         <h1>Philippine history, <em>played</em> not just read.</h1>
-        <p>Five eras, AI-generated quizzes that never repeat themselves, AR artifacts you can hold up to your phone, and a tutor that answers your questions in plain language.</p>
+        <p>Five eras, AI-generated quizzes, cloud-synced progress, AR artifacts, and Wikipedia historical insights.</p>
         <div style="display:flex; gap:14px; flex-wrap:wrap;">
           <button class="btn-main" onclick="navigate('learn')">Continue quest →</button>
           <button class="btn-ghost" onclick="navigate('games')">Play a minigame</button>
@@ -369,7 +353,7 @@
       </div>
       <div class="hero-panel">
         <h3>Your progress</h3>
-        <p class="small">Tracked locally on this device.</p>
+        <p class="small">Synced with MongoDB Cloud Database.</p>
         <div id="home-quest-list"></div>
         <div class="badges-row" id="home-badges"></div>
       </div>
@@ -381,7 +365,7 @@
     <div id="modules-grid-view">
       <div class="eyebrow">Learning path</div>
       <h2 class="section-title">Five eras of Philippine history</h2>
-      <p class="section-desc">Read the module, then take an assessment. Score 3 out of 4 to unlock the next era — the questions are generated fresh by AI each time, so re-attempts feel different.</p>
+      <p class="section-desc">Read the module, then take an assessment. Score 3 out of 4 to unlock the next era — questions are generated fresh by AI.</p>
       <div class="quest-grid" id="quest-grid"></div>
     </div>
 
@@ -393,7 +377,7 @@
       <div id="lesson-content" class="lesson-content"></div>
       <div style="margin-top:34px; padding-top:26px; border-top:1px solid var(--line); text-align:center;">
         <h3 style="font-family:var(--font-display); font-size:1.25rem; margin-bottom:8px;">Ready for assessment?</h3>
-        <p style="color:var(--muted); margin-bottom:18px;">The AI will write four new questions focused on this module — never the exact same set twice.</p>
+        <p style="color:var(--muted); margin-bottom:18px;">The AI will write four new questions focused on this module.</p>
         <button class="btn-main" onclick="generateAndStartQuiz()">Start assessment</button>
       </div>
     </div>
@@ -421,7 +405,7 @@
   <section id="games">
     <div class="eyebrow">Practice</div>
     <h2 class="section-title">Play &amp; practice</h2>
-    <p class="section-desc">Four ways to reinforce what you've learned — each one talks to the AI tutor differently.</p>
+    <p class="section-desc">Reinforce what you've learned using interactive mini-games and tools.</p>
 
     <div class="mode-tabs">
       <button class="mode-tab active" data-mode="timeline" onclick="switchGameMode('timeline', this)">🕰 Timeline Sequence</button>
@@ -444,7 +428,8 @@
     <div class="game-view" id="mode-mystery">
       <div class="panel" style="display:block;">
         <h3 style="font-family:var(--font-display); font-size:1.3rem; margin-bottom:4px;">Who is it?</h3>
-        <p style="color:var(--muted); font-size:.92rem; margin-bottom:20px;">The AI writes three fresh clues about a historical figure it hasn't used with you before.</p>
+        <p style="color:var(--muted); font-size:.92rem; margin-bottom:20px;">Guess the historical figure from clues and historical images.</p>
+        <img id="mystery-portrait-img" class="mystery-portrait" style="display:none;" alt="Historical Portrait">
         <div id="mystery-clues" style="display:none; background:var(--paper); padding:20px; border-radius:12px; margin-bottom:18px; border:1px solid var(--line);">
           <ul id="clue-list" style="margin-left:20px;"></ul>
         </div>
@@ -462,7 +447,7 @@
     <div class="game-view" id="mode-flash">
       <div class="panel" style="display:block;">
         <h3 style="font-family:var(--font-display); font-size:1.3rem; margin-bottom:4px;">Flashcard drill</h3>
-        <p style="color:var(--muted); font-size:.92rem; margin-bottom:20px;">Terms you mark "still learning" come back sooner next round.</p>
+        <p style="color:var(--muted); font-size:.92rem; margin-bottom:20px;">Cards feature images fetched automatically from Google Search &amp; Wikipedia.</p>
         <div id="flash-setup">
           <select id="flash-era-select" class="flash-input">
             <option value="all">All eras</option>
@@ -471,7 +456,10 @@
         </div>
         <div id="flash-play" style="display:none;">
           <div class="flash-progress" id="flash-progress"></div>
-          <div class="flashcard" id="flashcard-el" onclick="flipFlashcard()"><span class="face" id="flashcard-face">Loading…</span></div>
+          <div class="flashcard" id="flashcard-el" onclick="flipFlashcard()">
+            <img id="flash-card-img" class="flashcard-img" alt="Historical Illustration">
+            <span class="face" id="flashcard-face">Loading…</span>
+          </div>
           <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
             <button class="btn-ghost btn-sm" onclick="rateFlashcard(false)">Still learning</button>
             <button class="btn-main btn-sm" onclick="rateFlashcard(true)">Got it</button>
@@ -483,7 +471,7 @@
     <div class="game-view" id="mode-speed">
       <div class="panel" style="display:block;">
         <h3 style="font-family:var(--font-display); font-size:1.3rem; margin-bottom:4px;">60-second speed round</h3>
-        <p style="color:var(--muted); font-size:.92rem; margin-bottom:20px;">Answer as many AI-generated rapid-fire questions as you can before time runs out.</p>
+        <p style="color:var(--muted); font-size:.92rem; margin-bottom:20px;">Answer as many AI questions as you can before time runs out.</p>
         <div id="speed-setup">
           <button class="btn-main btn-sm" onclick="startSpeedRound()">Start round</button>
         </div>
@@ -499,7 +487,7 @@
     <div class="game-view" id="mode-tutor">
       <div class="panel" style="display:block;">
         <h3 style="font-family:var(--font-display); font-size:1.3rem; margin-bottom:4px;">Ask the tutor</h3>
-        <p style="color:var(--muted); font-size:.92rem; margin-bottom:20px;">Ask anything about Philippine history in your own words — Taglish is fine.</p>
+        <p style="color:var(--muted); font-size:.92rem; margin-bottom:20px;">Ask anything about Philippine history — Taglish is fine.</p>
         <div class="tutor-log" id="tutor-log"></div>
         <input type="text" id="tutor-input" class="tutor-input" placeholder="e.g. bakit natalo ang Katipunan sa una?" onkeypress="if(event.key==='Enter') askTutor()">
         <button class="btn-main btn-sm" onclick="askTutor()">Send</button>
@@ -511,7 +499,7 @@
   <section id="ar">
     <div class="eyebrow">WebAR</div>
     <h2 class="section-title">AR artifacts</h2>
-    <p class="section-desc">Point your camera at a Hiro marker to view a 3D historical object tied to your current module.</p>
+    <p class="section-desc">Point your camera at a Hiro marker to view 3D artifacts.</p>
     <div id="ar-frame">
       <div class="ar-permissions-box" id="ar-perm-box">
         <h3 style="font-family:var(--font-display); margin-bottom:12px;">Camera access needed</h3>
@@ -526,7 +514,7 @@
   <section id="teacher">
     <div class="eyebrow">Class overview</div>
     <h2 class="section-title">Progress dashboard</h2>
-    <p class="section-desc">Tracked locally on this device — good for one classroom computer or a teacher's own browser profile.</p>
+    <p class="section-desc">Real-time cloud progress synced across all student devices via MongoDB.</p>
     <div style="display:flex; justify-content:flex-end; margin-bottom:14px;">
       <button class="btn-ghost btn-sm" onclick="exportCSV()">Export CSV</button>
     </div>
@@ -541,14 +529,9 @@
 </main>
 
 <script>
-/* ============================================================
-   CONFIG — AI calls go through /api/ai (server-side key).
-   Deploy on Vercel and set OPENROUTER_API_KEY as an env var.
-   If /api/ai isn't available (e.g. running locally without
-   Vercel), every AI feature gracefully falls back to the
-   built-in offline data below.
-   ============================================================ */
 const API_ENDPOINT = "/api/ai";
+const DB_ENDPOINT = "/api/db";
+const SEARCH_ENDPOINT = "/api/search";
 
 async function callAI(prompt, temperature = 0.5) {
   const res = await fetch(API_ENDPOINT, {
@@ -562,9 +545,6 @@ async function callAI(prompt, temperature = 0.5) {
   return data.text.trim().replace(/^```(json)?/i, "").replace(/```$/, "").trim();
 }
 
-/* ============================================================
-   1. LESSON DATA — five eras
-   ============================================================ */
 const lessonsData = [
   {
     title: "Module 1 · Pre-Colonial Philippines",
@@ -614,9 +594,6 @@ const lessonsData = [
 ];
 const ERA_NAMES = lessonsData.map(l => l.title.split("·")[1].trim());
 
-/* ============================================================
-   2. OFFLINE FALLBACK DATA (used if /api/ai is unreachable)
-   ============================================================ */
 const fallbackQuizData = [
   [
     { q: "What was the basic socio-political unit in pre-colonial Philippines?", a: "Barangay", o: ["Barrio", "Pueblo", "Barangay", "Encomienda"], lore: "Barangays were named after the balangay boats used by early settlers." },
@@ -655,9 +632,6 @@ const fallbackMysteries = [
   { name: "Gabriela Silang", clues: ["She led a revolt in the Ilocos region.", "She took command after her husband's assassination.", "She was eventually captured and executed by the Spanish."] }
 ];
 
-/* ============================================================
-   3. STATE
-   ============================================================ */
 let currentUser = "Guest";
 let localDB = {};
 let activeQuizData = [];
@@ -696,17 +670,50 @@ function ensureUserShape(u) {
   return u;
 }
 
-function loadDatabase() {
-  try { const s = localStorage.getItem('LahiQuestDB'); if (s) localDB = JSON.parse(s); } catch(e) { localDB = {}; }
+// Upgraded with MongoDB Cloud Fallback & Cache
+async function loadDatabase() {
+  try {
+    const s = localStorage.getItem('LahiQuestDB');
+    if (s) localDB = JSON.parse(s);
+  } catch(e) { localDB = {}; }
+
+  try {
+    const res = await fetch(`${DB_ENDPOINT}`);
+    if (res.ok) {
+      const cloudData = await res.json();
+      if (cloudData && typeof cloudData === 'object') {
+        localDB = { ...localDB, ...cloudData };
+        localStorage.setItem('LahiQuestDB', JSON.stringify(localDB));
+      }
+    }
+  } catch(e) {
+    console.log("Offline mode — using local storage");
+  }
 }
-function saveDatabase() {
+
+async function saveDatabase() {
   localStorage.setItem('LahiQuestDB', JSON.stringify(localDB));
   renderTeacherDashboard();
   renderHome();
+
+  if (currentUser && localDB[currentUser]) {
+    try {
+      await fetch(`${DB_ENDPOINT}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: currentUser,
+          data: localDB[currentUser]
+        })
+      });
+    } catch(e) {
+      console.log("Could not sync to cloud");
+    }
+  }
 }
 
-function checkLogin() {
-  loadDatabase();
+async function checkLogin() {
+  await loadDatabase();
   const session = sessionStorage.getItem('LahiQuestActiveUser');
   if (session && localDB[session]) {
     currentUser = session;
@@ -717,23 +724,36 @@ function checkLogin() {
     document.getElementById('login-modal').style.display = 'flex';
   }
 }
+
 function setUserChip() {
   const chip = document.getElementById('nav-user-badge');
   chip.innerText = currentUser; chip.style.display = 'inline-block';
 }
-function loginUser() {
+
+async function loginUser() {
   const name = document.getElementById('student-name').value.trim();
   if (!name) return showToast("Please enter your name.", 'err');
   currentUser = name;
   sessionStorage.setItem('LahiQuestActiveUser', currentUser);
+
+  try {
+    const res = await fetch(`${DB_ENDPOINT}?username=${encodeURIComponent(currentUser)}`);
+    if (res.ok) {
+      const cloudUserData = await res.json();
+      if (cloudUserData) localDB[currentUser] = cloudUserData;
+    }
+  } catch(e) {}
+
   if (!localDB[currentUser]) localDB[currentUser] = freshUser();
   else localDB[currentUser] = ensureUserShape(localDB[currentUser]);
+
   saveDatabase();
   document.getElementById('login-modal').style.display = 'none';
   setUserChip();
   afterLogin();
   showToast(`Welcome, ${currentUser}.`, 'ok');
 }
+
 function afterLogin() {
   buildQuestGrid();
   updateQuestsUI();
@@ -741,9 +761,6 @@ function afterLogin() {
   populateFlashEraSelect();
 }
 
-/* ============================================================
-   4. THEME + NAV
-   ============================================================ */
 function toggleTheme() {
   const html = document.documentElement;
   const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
@@ -788,9 +805,6 @@ function toggleLoader(show, text = "Loading…") {
   document.getElementById('system-loader').style.display = show ? 'flex' : 'none';
 }
 
-/* ============================================================
-   5. HOME + QUEST GRID
-   ============================================================ */
 function buildQuestGrid() {
   const grid = document.getElementById('quest-grid');
   grid.innerHTML = '';
@@ -853,9 +867,6 @@ function awardBadge(id) {
   }
 }
 
-/* ============================================================
-   6. LESSON + QUIZ (anti-repetition built in)
-   ============================================================ */
 function openLesson(eraIndex) {
   const u = localDB[currentUser];
   if (!u || !u.unlockedQuests[eraIndex]) return showToast("This module is locked. Clear the previous one first.", 'err');
@@ -882,7 +893,6 @@ async function generateAndStartQuiz() {
   const lesson = lessonsData[era];
   const u = localDB[currentUser];
   const askedList = u.askedQuestions[era].slice(-15);
-  // rotate which subtopics to emphasize so repeated attempts don't converge
   const shuffledTopics = [...lesson.subtopics].sort(() => Math.random() - 0.5).slice(0, 3);
 
   const prompt = `You are writing a Grade 10 Philippine history quiz.
@@ -995,9 +1005,6 @@ function finishQuest() {
   closeLesson();
 }
 
-/* ============================================================
-   7. GAME MODE SWITCHING
-   ============================================================ */
 function switchGameMode(mode, btn) {
   document.querySelectorAll('.mode-tab').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
@@ -1005,7 +1012,7 @@ function switchGameMode(mode, btn) {
   document.getElementById(`mode-${mode}`).classList.add('active');
 }
 
-/* ---- Timeline ---- */
+/* Timeline */
 const ALL_TIMELINE_EVENTS = [
   { year: 1521, text: "Arrival of Ferdinand Magellan" }, { year: 1571, text: "Founding of Manila" },
   { year: 1872, text: "Execution of GOMBURZA" }, { year: 1892, text: "Founding of the Katipunan" },
@@ -1048,10 +1055,12 @@ function handleTimelineChoice(btn, eventObj) {
   }
 }
 
-/* ---- Mystery Figure (AI, avoids repeats) ---- */
+/* Mystery Figure with Wikipedia Portrait Integration */
 async function initMysteryGame() {
   document.getElementById('btn-start-mystery').style.display = 'none';
   document.getElementById('mystery-input-area').style.display = 'none';
+  const portraitImg = document.getElementById('mystery-portrait-img');
+  portraitImg.style.display = 'none';
   const clueList = document.getElementById('clue-list');
   document.getElementById('mystery-clues').style.display = 'block';
   clueList.innerHTML = "<li>Opening case file…</li>";
@@ -1073,12 +1082,25 @@ Reply ONLY with JSON, no markdown: {"name":"Full Name","clues":["clue 1 (broad)"
     const pick = fallbackMysteries[Math.floor(Math.random() * fallbackMysteries.length)];
     mysteryAnswer = pick.name;
     clueList.innerHTML = pick.clues.map(c => `<li>${c}</li>`).join('');
-    showToast("AI unavailable — using a built-in case.", '');
   }
+
+  // Wikipedia portrait lookup
+  try {
+    const searchRes = await fetch(`${SEARCH_ENDPOINT}?q=${encodeURIComponent(mysteryAnswer)}&type=wiki`);
+    if (searchRes.ok) {
+      const wikiData = await searchRes.json();
+      if (wikiData.thumbnail) {
+        portraitImg.src = wikiData.thumbnail;
+        portraitImg.style.display = 'block';
+      }
+    }
+  } catch(e) {}
+
   document.getElementById('mystery-input-area').style.display = 'block';
   document.getElementById('mystery-guess').value = '';
   document.getElementById('mystery-guess').focus();
 }
+
 function checkMysteryGuess() {
   const guess = document.getElementById('mystery-guess').value.trim().toLowerCase();
   if (!guess) return;
@@ -1092,12 +1114,13 @@ function checkMysteryGuess() {
   }
 }
 
-/* ---- Flashcards ---- */
+/* Flashcards with Google & Wikipedia Image Integration */
 function populateFlashEraSelect() {
   const sel = document.getElementById('flash-era-select');
   sel.innerHTML = '<option value="all">All eras</option>' +
     ERA_NAMES.map((n,i) => `<option value="${i}">${n}</option>`).join('');
 }
+
 async function startFlashcards() {
   const eraChoice = document.getElementById('flash-era-select').value;
   document.getElementById('flash-setup').style.display = 'none';
@@ -1113,33 +1136,58 @@ Reply ONLY with JSON: [{"front":"term or question","back":"answer"}]`;
     flashDeck = cards.map(c => ({...c, weak: false}));
   } catch (e) {
     flashDeck = eras.flatMap(i => fallbackQuizData[i].map(q => ({ front: q.q, back: q.a })));
-    showToast("AI unavailable — using built-in flashcards.", '');
   }
   toggleLoader(false);
   flashIndex = 0; flashFlipped = false;
   document.getElementById('flash-play').style.display = 'block';
   renderFlashcard();
 }
-function renderFlashcard() {
+
+async function renderFlashcard() {
   const prog = document.getElementById('flash-progress');
   prog.innerHTML = flashDeck.map((_, i) =>
     `<span class="${i < flashIndex ? 'done' : i === flashIndex ? 'current' : ''}"></span>`).join('');
   const card = flashDeck[flashIndex];
   flashFlipped = false;
-  document.getElementById('flashcard-face').innerText = card ? card.front : "Deck complete 🎉";
+  
+  const faceEl = document.getElementById('flashcard-face');
+  const imgEl = document.getElementById('flash-card-img');
+  imgEl.style.display = 'none';
+
+  if (!card) {
+    faceEl.innerText = "Deck complete 🎉";
+    return;
+  }
+
+  faceEl.innerText = card.front;
+
+  // Search image via Google Search & Wikipedia API
+  try {
+    const imgRes = await fetch(`${SEARCH_ENDPOINT}?q=${encodeURIComponent(card.front)}`);
+    if (imgRes.ok) {
+      const imgData = await imgRes.json();
+      if (imgData.imageUrl) {
+        imgEl.src = imgData.imageUrl;
+        imgEl.style.display = 'block';
+      }
+    }
+  } catch(e) {}
 }
+
 function flipFlashcard() {
   const card = flashDeck[flashIndex]; if (!card) return;
   flashFlipped = !flashFlipped;
   document.getElementById('flashcard-face').innerText = flashFlipped ? card.back : card.front;
 }
+
 function rateFlashcard(gotIt) {
   const card = flashDeck[flashIndex]; if (!card) return;
-  if (!gotIt) { card.weak = true; flashDeck.push(card); } // requeue weak cards
+  if (!gotIt) { card.weak = true; flashDeck.push(card); }
   flashIndex++;
   if (flashIndex >= flashDeck.length) {
     showToast("Deck complete.", 'ok');
     document.getElementById('flashcard-face').innerText = "Deck complete 🎉";
+    document.getElementById('flash-card-img').style.display = 'none';
     document.getElementById('flash-progress').innerHTML = '';
     setTimeout(() => { document.getElementById('flash-play').style.display = 'none'; document.getElementById('flash-setup').style.display = 'block'; }, 1400);
     return;
@@ -1147,7 +1195,6 @@ function rateFlashcard(gotIt) {
   renderFlashcard();
 }
 
-/* ---- Speed round ---- */
 async function startSpeedRound() {
   document.getElementById('speed-setup').style.display = 'none';
   toggleLoader(true, "Preparing rapid-fire questions…");
@@ -1158,7 +1205,6 @@ async function startSpeedRound() {
     speedQuestions = JSON.parse(raw);
   } catch (e) {
     speedQuestions = fallbackQuizData[era].map(q => ({ q: q.q, a: q.a, o: q.o }));
-    showToast("AI unavailable — using a shorter built-in set.", '');
   }
   toggleLoader(false);
   speedIndex = 0; speedScore = 0; speedTimeLeft = 60;
@@ -1172,6 +1218,7 @@ async function startSpeedRound() {
     if (speedTimeLeft <= 0) endSpeedRound();
   }, 1000);
 }
+
 function renderSpeedQuestion() {
   if (speedIndex >= speedQuestions.length) { endSpeedRound(); return; }
   const q = speedQuestions[speedIndex];
@@ -1186,6 +1233,7 @@ function renderSpeedQuestion() {
     opts.appendChild(b);
   });
 }
+
 function endSpeedRound() {
   clearInterval(speedTimerId);
   document.getElementById('speed-play').style.display = 'none';
@@ -1195,12 +1243,12 @@ function endSpeedRound() {
   saveDatabase();
 }
 
-/* ---- AI Tutor chat ---- */
 function renderTutorLog() {
   const log = document.getElementById('tutor-log');
   log.innerHTML = tutorHistory.map(m => `<div class="tutor-msg ${m.role}">${m.text}</div>`).join('');
   log.scrollTop = log.scrollHeight;
 }
+
 async function askTutor() {
   const input = document.getElementById('tutor-input');
   const msg = input.value.trim();
@@ -1223,9 +1271,6 @@ async function askTutor() {
   saveDatabase();
 }
 
-/* ============================================================
-   8. AR
-   ============================================================ */
 function requestCameraAccess() {
   document.getElementById('ar-perm-box').style.display = 'none';
   document.getElementById('ar-overlay-text').style.display = 'block';
@@ -1243,13 +1288,20 @@ function requestCameraAccess() {
   if (u && !u.arViewed) { u.arViewed = true; awardBadge('ar_explorer'); saveDatabase(); }
 }
 
-/* ============================================================
-   9. DASHBOARD
-   ============================================================ */
-function renderTeacherDashboard() {
+async function renderTeacherDashboard() {
   const tbody = document.getElementById('teacher-table-body');
   tbody.innerHTML = '';
-  for (const [name, dataRaw] of Object.entries(localDB)) {
+
+  let dbSource = localDB;
+  try {
+    const res = await fetch(`${DB_ENDPOINT}`);
+    if (res.ok) {
+      const cloudData = await res.json();
+      if (cloudData && typeof cloudData === 'object') dbSource = cloudData;
+    }
+  } catch(e) {}
+
+  for (const [name, dataRaw] of Object.entries(dbSource)) {
     const data = ensureUserShape(dataRaw);
     const totalScore = data.eraScores.reduce((a,b) => a+b, 0);
     let highestUnlocked = 0;
@@ -1268,6 +1320,7 @@ function renderTeacherDashboard() {
     </tr>`);
   }
 }
+
 function exportCSV() {
   let csv = "Name,TotalScore,EraReached,Badges,Status\n";
   for (const [name, dataRaw] of Object.entries(localDB)) {
@@ -1283,9 +1336,6 @@ function exportCSV() {
   URL.revokeObjectURL(url);
 }
 
-/* ============================================================
-   10. INIT
-   ============================================================ */
 window.addEventListener('load', () => {
   applyStoredTheme();
   setTimeout(() => {
@@ -1296,4 +1346,4 @@ window.addEventListener('load', () => {
 });
 </script>
 </body>
-    </html>
+  </html>
