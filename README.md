@@ -1,130 +1,64 @@
-# 🎮 LahiQuest - Learn Philippine History, But Make It Fun
+# 🎮 LahiQuest — Learn Philippine History, But Make It Fun
 
-A gamified WebAR learning platform for Philippine history, built as a Grade 10 MAPEH project. Learn your nation's story through immersive quests, AR artifacts, and real Filipino slang.
+A gamified WebAR learning platform for Philippine history, built for a Grade 10 MAPEH / Digital Interactive Media project.
 
-## ✨ Features
+## ⚠️ Security fix in this version
 
-✅ **3 Historical Eras** - Ancient PH, Spanish Colonial, Revolution (24 total questions)
-✅ **Progressive Unlocking** - Earn 60% to unlock the next era  
-✅ **WebAR Artifacts** - Point your camera at Hiro Marker to see historical 3D models
-✅ **Wikipedia Integration** - Learn context facts after correct answers (no API key needed!)
-✅ **Hints & Learning** - Every question includes helpful hints
-✅ **Offline Support** - Quiz data cached locally, works without internet  
-✅ **Mobile Responsive** - Fully optimized for phones & tablets
-✅ **Teacher Analytics** - See student progress and performance  
+The previous version had an OpenRouter API key hardcoded directly in `index.html`, visible to anyone who viewed the page source — including on a public GitHub repo. **If you had a key in the old code, revoke/rotate it on OpenRouter now.**
 
-## 🎯 What You Learn
+This version moves all AI calls behind a serverless function (`/api/ai.js`) so the key lives only on the server:
 
-- **Ancient Era:** Baybayin, Lapu-Lapu, Barangays, pre-colonial trade routes
-- **Spanish Era:** Encomienda, Jose Rizal, Cavite Mutiny, Galleon Trade
-- **Revolution:** Katipunan, Andres Bonifacio, Independence Declaration, Antonio Luna
+1. Deploy this repo to **Vercel**.
+2. In your Vercel project → **Settings → Environment Variables**, add:
+   - `OPENROUTER_API_KEY` = your key
+3. Redeploy. The front-end calls `/api/ai`, which never exposes the key to the browser.
 
-## 🌐 Live Demo
+If you just want to preview the site without deploying (e.g. `python -m http.server`), every AI feature automatically falls back to a built-in offline question bank — the site stays fully usable either way.
 
-👉 **https://lahi-quest.vercel.app**
+## ✨ What's new
 
-## 🚀 How to Run Locally
-
-```bash
-# Clone the repo
-git clone https://github.com/sethdico/LahiQuest.git
-cd LahiQuest
-
-# Serve with any HTTP server
-# Option 1: Python
-python -m http.server 8000
-
-# Option 2: Node.js
-npx http-server
-
-# Option 3: VS Code Live Server extension
-
-# Then visit http://localhost:8000
-```
+- **Non-repetitive AI quizzes** — each assessment attempt sends the AI a rotating set of sub-topics plus a list of the student's last ~15 questions for that module, so re-attempts don't converge on the same set.
+- **AI Tutor chat** — students can ask free-form questions ("bakit natalo ang Katipunan sa una?") and get a grounded, Grade-10-level answer.
+- **Flashcard drill** — AI-generated deck with a simple spaced-repetition twist: cards marked "still learning" get requeued into the same session.
+- **60-second Speed Round** — rapid-fire AI trivia against the clock.
+- **Mystery Figure** — now avoids repeating the same historical figure across sessions (tracked per student).
+- **Progress system** — per-module progress bars, a points total, a pass streak, and 7 unlockable badges.
+- **Teacher dashboard** — score bars per student, badge count, and CSV export.
+- **Dark mode**, keyboard-focus states, and `prefers-reduced-motion` support.
+- **Two new modules** (5 total, matching the original proposal): American Era & WWII, Modern Filipino Culture.
+- New visual identity: Fraunces (display) + Sora (body) + Space Mono (data), a warm "manuscript and gold" palette, and a woven "banig" motif as the page's signature detail.
 
 ## 🛠 Tech Stack
 
-- **Frontend:** HTML5, CSS3, JavaScript (vanilla)
+- **Frontend:** HTML5, CSS3, vanilla JavaScript
 - **AR:** A-Frame + AR.js (WebAR)
-- **Data:** Embedded + Wikipedia API (no auth needed!)
-- **Storage:** LocalStorage (offline-first)
+- **AI:** OpenRouter, called via a Vercel serverless function (`/api/ai`)
+- **Storage:** LocalStorage (offline-first, per-device progress)
 - **Deployment:** Vercel
 
-## 📱 Features Breakdown
+## 🚀 Run locally
 
-### Quiz System
-- 8 questions per historical era (24 total)
-- Hints for every question
-- Real-time feedback (correct/wrong with explanations)
-- Progress tracking per quest
-- LocalStorage for offline play
+```bash
+git clone https://github.com/sethdico/LahiQuest.git
+cd LahiQuest
+npx http-server
+# visit http://localhost:8080
+```
 
-### AR Artifacts
-- **Manunggul Jar** (Ancient Era) - 3D historical burial vessel
-- **Baybayin Script** (Ancient Era) - Ancient Filipino writing system  
-- **Katipunan Flag** (Revolution) - Symbol of independence
-
-*Scan Hiro Marker with your device to activate AR!*
-
-### Educational Enhancements
-- Wikipedia context fetching (works offline with cached data)
-- Historically accurate information with sources
-- Teacher analytics dashboard
-- Mobile-first design
-
-## 💻 API & Data Sources
-
-- **Wikipedia API** - FREE historical context (no API key needed)
-- **A-Frame/AR.js** - FREE WebAR framework
-- **All quiz data** - Embedded (no external dependencies)
-
-## 🎓 Learning Outcomes
-
-Students will:
-- ✅ Understand pre-colonial Philippine society
-- ✅ Learn about Spanish colonial impact
-- ✅ Study the Philippine Revolution and independence
-- ✅ Experience AR technology in education
-- ✅ Engage with history through gamification
-
-## 📊 Progress Tracking
-
-- **Score Tracking** - See your performance across all eras
-- **Quest Unlocking** - Progress through history linearly
-- **Teacher Dashboard** - Class analytics with student stats
-- **LocalStorage** - Your progress is saved automatically
+AI features need `/api/ai` to be live, which only happens on Vercel (or `vercel dev` locally with `.env.local` set from `.env.example`). Without it, the site uses its offline question bank automatically.
 
 ## 🐛 Troubleshooting
 
-### 404 Error on Vercel?
-The `vercel.json` file handles routing. If you still see errors:
-1. Make sure `index.html` is in the root directory
-2. Redeploy with `git push`
+**AI features not responding?** Check that `OPENROUTER_API_KEY` is set in Vercel and that you redeployed after adding it. The browser console will show `AI endpoint unavailable` if `/api/ai` can't be reached — the app will keep working with offline content either way.
 
-### AR Not Working?
-- Ensure you allow camera permissions
-- Use a Hiro Marker (search "Hiro Marker" online)
-- Try in landscape mode for better experience
+**AR not working?** Allow camera permissions, use a printed or on-screen Hiro marker, and try landscape mode.
 
-### Offline Mode
-- Quiz data is cached in localStorage automatically
-- Wikipedia context requires internet but quiz works offline
-
-## 📝 Credits
-
-Built with ❤️ for Philippine history education.
-- Quiz data sourced from: Wikipedia, school textbooks, historical archives
-- Icons & fonts: Google Fonts, Dicebear Avatars
-- AR: A-Frame.io, AR.js
+**404 on Vercel?** Make sure `index.html` is in the repo root and that `api/ai.js` is at `api/ai.js` (Vercel auto-detects it as a serverless function).
 
 ## 📄 License
 
-MIT - Feel free to use, modify, and share!
+MIT — feel free to use, modify, and share.
 
 ---
 
-**Made by:** @sethdico  
-**Subject:** MAPEH (Music, Arts, Physical Education, Health)  
-**Date:** July 16-17, 2026  
-
-"History class, but it's giving main character." 🎮✨
+**Subject:** MAPEH (Music, Arts, Physical Education, Health) / Digital Interactive Media
