@@ -15,7 +15,7 @@
             --accent: #FFB300;
             --accent-hover: #FFA000;
             --bg-gradient: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
-            --surface: rgba(255, 255, 255, 0.9);
+            --surface: rgba(255, 255, 255, 0.95);
             --text: #2C3E50;
             --success: #27AE60;
             --error: #E74C3C;
@@ -27,145 +27,109 @@
 
         * { margin: 0; padding: 0; box-sizing: border-box; outline: none; }
         
-        body { 
-            font-family: 'Outfit', sans-serif; 
-            background: var(--bg-gradient); 
-            background-attachment: fixed;
-            color: var(--text);
-            overflow-x: hidden;
-            line-height: 1.6;
-            width: 100%;
-        }
+        body { font-family: 'Outfit', sans-serif; background: var(--bg-gradient); background-attachment: fixed; color: var(--text); overflow-x: hidden; line-height: 1.6; width: 100%; }
+        body::before { content: ''; position: fixed; inset: 0; z-index: -1; background-image: radial-gradient(rgba(255, 179, 0, 0.1) 2px, transparent 2px); background-size: 40px 40px; opacity: 0.5; }
 
-        body::before {
-            content: ''; position: fixed; inset: 0; z-index: -1;
-            background-image: radial-gradient(rgba(255, 179, 0, 0.1) 2px, transparent 2px);
-            background-size: 40px 40px; opacity: 0.5;
-        }
-
-        #preloader {
-            position: fixed; inset: 0; background: var(--primary); z-index: 9999;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            color: var(--accent); transition: opacity 0.5s ease;
-        }
-
-        #preloader h1 { font-family: 'Playfair Display', serif; font-size: clamp(2.5rem, 10vw, 5rem); }
+        /* Loaders */
+        #preloader, #ai-loader { position: fixed; inset: 0; background: rgba(62, 39, 35, 0.98); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--accent); transition: opacity 0.5s ease; backdrop-filter: blur(10px); }
+        #ai-loader { display: none; z-index: 1500; }
+        h1.title-font { font-family: 'Playfair Display', serif; font-size: clamp(2.5rem, 10vw, 5rem); }
         .spinner { margin-top: 20px; width: 40px; height: 40px; border: 4px solid rgba(255,179,0,0.3); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        #toast {
-            position: fixed; top: 90px; right: 5%; padding: 16px 28px;
-            border-radius: 16px; color: white; font-weight: 600;
-            transform: translateX(150%); transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            z-index: 2000; box-shadow: 0 10px 25px rgba(0,0,0,0.2); max-width: 90%; backdrop-filter: blur(8px);
-        }
+        #toast { position: fixed; top: 90px; right: 5%; padding: 16px 28px; border-radius: 16px; color: white; font-weight: 600; transform: translateX(150%); transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 2000; box-shadow: 0 10px 25px rgba(0,0,0,0.2); max-width: 90%; backdrop-filter: blur(8px); }
 
-        nav {
-            position: fixed; top: 0; width: 100%; height: 80px;
-            background: var(--glass); backdrop-filter: blur(16px);
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 0 5%; z-index: 1000; border-bottom: var(--glass-border);
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
-        }
-        
+        /* Login Modal */
+        #login-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 3000; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(5px); transition: 0.3s; }
+        .login-box { background: white; padding: 40px; border-radius: 24px; text-align: center; width: 90%; max-width: 400px; box-shadow: var(--shadow); }
+        .login-input { width: 100%; padding: 15px; border-radius: 12px; border: 2px solid #E0E0E0; margin-bottom: 20px; font-family: 'Outfit'; font-size: 1rem; text-align: center; font-weight: 600; }
+        .login-input:focus { border-color: var(--accent); }
+
+        /* Nav */
+        nav { position: fixed; top: 0; width: 100%; height: 80px; background: var(--glass); backdrop-filter: blur(16px); display: flex; align-items: center; justify-content: space-between; padding: 0 5%; z-index: 1000; border-bottom: var(--glass-border); box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05); }
         .logo { font-family: 'Playfair Display', serif; font-size: clamp(1.4rem, 4vw, 2rem); font-weight: 900; color: var(--primary); cursor: pointer; }
         .logo span { color: var(--accent); }
-        
         .hamburger { display: none; background: none; border: none; font-size: 2rem; color: var(--primary); cursor: pointer; }
-
         .nav-links { display: flex; gap: 8px; }
-        .nav-links button {
-            background: none; border: none; padding: 10px 20px;
-            font-family: 'Outfit', sans-serif; font-weight: 600; font-size: clamp(0.9rem, 2vw, 1rem);
-            cursor: pointer; color: var(--text); transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            border-radius: 12px;
-        }
-        
+        .nav-links button { background: none; border: none; padding: 10px 20px; font-family: 'Outfit', sans-serif; font-weight: 600; font-size: clamp(0.9rem, 2vw, 1rem); cursor: pointer; color: var(--text); transition: 0.3s; border-radius: 12px; }
         .nav-links button:hover { background: rgba(255, 179, 0, 0.15); color: var(--primary); }
         .nav-links button.active { background: var(--primary); color: white; box-shadow: 0 6px 15px rgba(62, 39, 35, 0.2); }
+        .user-badge { background: rgba(255,179,0,0.2); color: var(--primary); padding: 5px 15px; border-radius: 20px; font-weight: 800; font-size: 0.85rem; margin-left: 10px; display: none; }
 
         main { display: block; padding-top: 80px; }
-        section { display: none; padding: 60px 5% 100px; min-height: calc(100vh - 80px); max-width: 1200px; margin: auto; animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        section { display: none; padding: 60px 5% 100px; min-height: calc(100vh - 80px); max-width: 1200px; margin: auto; animation: fadeUp 0.6s forwards; }
         .active-section { display: block; }
         @keyframes fadeUp { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
 
         .hero-flex { display: flex; align-items: center; justify-content: space-between; gap: 50px; flex-wrap: wrap; margin-top: 40px; }
         .hero-text { flex: 1.2; min-width: 320px; }
-        .hero-text h1 { font-family: 'Playfair Display', serif; font-size: clamp(2.8rem, 8vw, 5rem); line-height: 1.05; margin-bottom: 25px; color: var(--primary); }
-        .hero-text p { font-size: clamp(1.1rem, 3vw, 1.3rem); color: #555; margin-bottom: 40px; max-width: 550px; }
-        
-        .hero-image-container { flex: 1; display: flex; justify-content: center; min-width: 300px; position: relative; }
-        .hero-image-container img { width: 100%; max-width: 450px; border-radius: 40px; transform: rotate(3deg); box-shadow: var(--shadow); transition: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-        .hero-image-container img:hover { transform: rotate(0deg) scale(1.03) translateY(-10px); box-shadow: var(--shadow-hover); }
+        .hero-text h1 { font-family: 'Playfair Display', serif; font-size: clamp(2.8rem, 8vw, 4.5rem); line-height: 1.05; margin-bottom: 25px; color: var(--primary); }
+        .hero-image-container { flex: 1; display: flex; justify-content: center; min-width: 300px; }
+        .hero-image-container img { width: 100%; max-width: 450px; border-radius: 40px; transform: rotate(3deg); box-shadow: var(--shadow); transition: 0.5s; }
+        .hero-image-container img:hover { transform: rotate(0deg) scale(1.03) translateY(-10px); }
 
-        .btn-main {
-            background: var(--accent); color: var(--primary); padding: 18px 50px;
-            border: none; border-radius: 100px; font-family: 'Outfit', sans-serif; font-weight: 800; font-size: clamp(1rem, 2vw, 1.2rem);
-            cursor: pointer; box-shadow: 0 8px 0 #D48806, 0 15px 20px rgba(0,0,0,0.1); 
-            transition: all 0.1s; display: inline-flex; align-items: center; justify-content: center; gap: 10px; text-transform: uppercase; letter-spacing: 1px;
-        }
+        .btn-main { background: var(--accent); color: var(--primary); padding: 18px 50px; border: none; border-radius: 100px; font-family: 'Outfit', sans-serif; font-weight: 800; font-size: clamp(1rem, 2vw, 1.2rem); cursor: pointer; box-shadow: 0 8px 0 #D48806, 0 15px 20px rgba(0,0,0,0.1); transition: all 0.1s; display: inline-flex; align-items: center; justify-content: center; gap: 10px; text-transform: uppercase; letter-spacing: 1px; }
         .btn-main:active { transform: translateY(8px); box-shadow: 0 0px 0 #D48806, 0 5px 10px rgba(0,0,0,0.1); }
-        .btn-main:disabled { filter: grayscale(1); cursor: not-allowed; opacity: 0.7; }
+        .btn-main:disabled { filter: grayscale(1); cursor: not-allowed; opacity: 0.7; box-shadow: none; transform: none; }
 
         .section-title { font-family: 'Playfair Display', serif; font-size: clamp(2.2rem, 6vw, 3.5rem); color: var(--primary); margin-bottom: 5px; }
-        .section-subtitle { color: #666; font-size: clamp(1rem, 2.5vw, 1.2rem); margin-bottom: 40px; }
 
+        /* Learning Modules & Quests */
         .quest-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 30px; }
-        .quest-card { background: var(--surface); backdrop-filter: blur(10px); border-radius: 30px; padding: 40px; position: relative; box-shadow: var(--shadow); border: var(--glass-border); border-bottom: 4px solid transparent; cursor: pointer; transition: all 0.3s ease; }
+        .quest-card { background: var(--surface); backdrop-filter: blur(10px); border-radius: 30px; padding: 40px; position: relative; box-shadow: var(--shadow); border: var(--glass-border); border-bottom: 4px solid transparent; cursor: pointer; transition: all 0.3s; }
         .quest-card:hover:not(.locked) { border-bottom-color: var(--accent); transform: translateY(-10px); box-shadow: var(--shadow-hover); }
-        .quest-card h3 { margin: 20px 0 10px; font-family: 'Playfair Display', serif; font-size: clamp(1.4rem, 4vw, 1.8rem); color: var(--primary); }
-        .progress-track { background: #E0E0E0; height: 12px; border-radius: 10px; margin-top: 30px; overflow: hidden; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); }
-        .progress-fill { background: linear-gradient(90deg, var(--accent), #FFD54F); height: 100%; width: 0%; transition: width 1s cubic-bezier(0.175, 0.885, 0.32, 1.275); border-radius: 10px; }
-        .locked { background: rgba(255,255,255,0.4); filter: grayscale(1); cursor: not-allowed; }
-        .lock-icon { position: absolute; top: 30px; right: 30px; font-size: 1.8rem; background: rgba(255,255,255,0.8); padding: 10px; border-radius: 50%; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .locked { background: rgba(255,255,255,0.5); filter: grayscale(1); cursor: not-allowed; }
+        .lock-icon { position: absolute; top: 30px; right: 30px; font-size: 1.8rem; background: rgba(255,255,255,0.9); padding: 10px; border-radius: 50%; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
 
-        .quiz-container { background: var(--surface); backdrop-filter: blur(10px); border-radius: 30px; padding: clamp(30px, 5vw, 50px); box-shadow: var(--shadow); margin-top: 50px; display: none; border: var(--glass-border); }
-        .quiz-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; flex-wrap: wrap; gap: 15px; }
-        .quiz-tag { background: var(--primary); color: var(--accent); padding: 8px 20px; border-radius: 30px; font-weight: 800; font-size: 0.9rem; letter-spacing: 1px; }
-        .quiz-hint { background: rgba(39, 174, 96, 0.1); color: var(--success); padding: 12px 20px; border-radius: 12px; font-size: 0.95rem; margin-bottom: 25px; border-left: 4px solid var(--success); display: flex; align-items: center; gap: 10px; }
-        
-        .option-btn { display: block; width: 100%; padding: clamp(15px, 3vw, 20px) 25px; margin-bottom: 15px; border: 2px solid #E0E0E0; border-radius: 20px; text-align: left; background: white; cursor: pointer; font-family: 'Outfit', sans-serif; font-size: clamp(1rem, 2.5vw, 1.15rem); transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); color: var(--text); font-weight: 600; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
-        .option-btn:hover:not(:disabled) { border-color: var(--accent); background: #FFFDF7; transform: translateX(8px); box-shadow: 0 6px 12px rgba(255,179,0,0.1); }
-        .option-btn:active:not(:disabled) { transform: translateX(8px) scale(0.98); }
+        .lesson-container { background: white; border-radius: 30px; padding: clamp(30px, 5vw, 60px); box-shadow: var(--shadow); display: none; margin-top: 30px; border: var(--glass-border); }
+        .lesson-header { border-bottom: 2px solid #EEE; padding-bottom: 20px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
+        .lesson-content h3 { font-family: 'Playfair Display', serif; font-size: 1.8rem; color: var(--primary); margin: 30px 0 15px; }
+        .lesson-content p { font-size: 1.1rem; color: #444; margin-bottom: 20px; line-height: 1.8; }
+        .lesson-content ul { margin-left: 20px; margin-bottom: 25px; }
+        .lesson-content li { font-size: 1.1rem; color: #444; margin-bottom: 10px; line-height: 1.6; }
+        .highlight { background: rgba(255, 179, 0, 0.2); padding: 2px 6px; border-radius: 4px; font-weight: 600; color: var(--primary); }
+
+        /* Quiz UI */
+        .quiz-container { background: var(--surface); border-radius: 30px; padding: clamp(30px, 5vw, 50px); box-shadow: var(--shadow); margin-top: 30px; display: none; }
+        .option-btn { display: block; width: 100%; padding: clamp(15px, 3vw, 20px) 25px; margin-bottom: 15px; border: 2px solid #E0E0E0; border-radius: 20px; text-align: left; background: white; cursor: pointer; font-family: 'Outfit'; font-size: 1.1rem; transition: 0.2s; font-weight: 600; }
+        .option-btn:hover:not(:disabled) { border-color: var(--accent); background: #FFFDF7; transform: translateX(8px); }
         .option-btn:disabled { opacity: 0.9; cursor: default; }
         .option-btn.correct { background: #E8F5E9; border-color: var(--success); color: var(--success); font-weight: 800; }
         .option-btn.wrong { background: #FFEBEE; border-color: var(--error); color: var(--error); }
-        .lore-box { display: none; background: #FFFBF0; border: 2px solid var(--accent); border-radius: 20px; padding: 30px; margin-top: 30px; animation: fadeUp 0.5s ease forwards; }
+        
+        .lore-box { display: none; background: #FFFBF0; border: 2px solid var(--accent); border-radius: 20px; padding: 30px; margin-top: 30px; animation: fadeUp 0.5s; }
+        .ai-explain-box { background: rgba(255,255,255,0.8); border-radius: 16px; padding: 20px; margin-top: 20px; border-left: 4px solid var(--primary); display: none; font-size: 1rem; line-height: 1.6; color: var(--text); }
 
-        /* Timeline Game */
-        .timeline-game-container { background: var(--surface); border-radius: 30px; padding: 40px; box-shadow: var(--shadow); text-align: center; border: var(--glass-border); }
+        /* Minigame */
+        .timeline-game-container { background: white; border-radius: 30px; padding: 40px; box-shadow: var(--shadow); text-align: center; }
         .timeline-slots { display: flex; justify-content: space-between; gap: 15px; margin: 40px 0; min-height: 120px; position: relative; }
         .timeline-slots::before { content: ''; position: absolute; top: 50%; left: 0; right: 0; height: 4px; background: #E0E0E0; z-index: 0; transform: translateY(-50%); border-radius: 4px; }
-        .slot { flex: 1; background: white; border: 2px dashed #BDBDBD; border-radius: 16px; display: flex; align-items: center; justify-content: center; z-index: 1; padding: 15px; font-weight: 600; font-size: 0.9rem; transition: 0.3s; color: #757575; box-shadow: inset 0 4px 8px rgba(0,0,0,0.05); }
-        .slot.filled { border-style: solid; border-color: var(--primary); background: var(--primary); color: white; box-shadow: 0 8px 15px rgba(62,39,35,0.2); animation: popIn 0.3s; }
+        .slot { flex: 1; background: white; border: 2px dashed #BDBDBD; border-radius: 16px; display: flex; align-items: center; justify-content: center; z-index: 1; padding: 15px; font-weight: 600; font-size: 0.9rem; transition: 0.3s; color: #757575; }
+        .slot.filled { border-style: solid; border-color: var(--primary); background: var(--primary); color: white; box-shadow: 0 8px 15px rgba(62,39,35,0.2); }
         .slot.correct { background: var(--success); border-color: var(--success); }
-        .slot.wrong { background: var(--error); border-color: var(--error); animation: shake 0.4s; }
+        .slot.wrong { background: var(--error); border-color: var(--error); }
         .timeline-choices { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         .choice-btn { background: white; border: 2px solid #E0E0E0; padding: 20px; border-radius: 16px; font-family: 'Outfit'; font-weight: 600; font-size: 1rem; cursor: pointer; transition: 0.2s; }
         .choice-btn:hover:not(:disabled) { border-color: var(--accent); background: #FFFDF7; transform: translateY(-3px); }
         .choice-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: scale(0.95); }
-        
-        @keyframes popIn { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
-        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
 
         /* AR UI */
         #ar-frame { width: 100%; height: clamp(450px, 65vh, 700px); border-radius: 30px; overflow: hidden; position: relative; background: #000; border: 4px solid var(--primary); box-shadow: var(--shadow); display: flex; align-items: center; justify-content: center; }
-        #ar-frame video, #ar-frame .a-canvas { object-fit: cover !important; width: 100% !important; height: 100% !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; margin: 0 !important; padding: 0 !important; position: absolute !important; z-index: 1 !important; }
-        .ar-permissions-box { background: rgba(255,255,255,0.95); padding: 50px 40px; border-radius: 24px; text-align: center; max-width: 90%; width: 450px; box-shadow: 0 20px 40px rgba(0,0,0,0.3); z-index: 10; position: relative; backdrop-filter: blur(10px); }
+        #ar-frame video, #ar-frame .a-canvas { object-fit: cover !important; width: 100% !important; height: 100% !important; top: 0 !important; left: 0 !important; position: absolute !important; z-index: 1 !important; }
+        .ar-permissions-box { background: rgba(255,255,255,0.95); padding: 50px 40px; border-radius: 24px; text-align: center; max-width: 90%; box-shadow: 0 20px 40px rgba(0,0,0,0.3); z-index: 10; position: relative; }
 
-        /* AI Forge UI */
-        .ai-forge { background: var(--surface); padding: 40px; border-radius: 24px; border: 2px solid var(--accent); margin-bottom: 40px; box-shadow: var(--shadow); }
-        .input-group { margin-bottom: 20px; }
-        .input-group label { display: block; font-weight: 800; margin-bottom: 8px; color: var(--primary); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; }
-        .ai-input { width: 100%; padding: 15px; border-radius: 12px; border: 2px solid #E0E0E0; font-family: 'Outfit'; font-size: 1rem; transition: 0.3s; }
-        .ai-input:focus { border-color: var(--accent); box-shadow: 0 0 0 4px rgba(255,179,0,0.2); }
+        /* Dashboard */
+        table { width: 100%; min-width: 600px; border-collapse: separate; border-spacing: 0; background: var(--surface); border-radius: 24px; box-shadow: var(--shadow); }
+        th, td { padding: 20px 30px; text-align: left; }
+        th { background: #F8F9FA; font-weight: 800; font-size: 0.85rem; color: #7F8C8D; text-transform: uppercase; letter-spacing: 1.5px; border-bottom: 2px solid #EEE; }
+        tr:not(:last-child) td { border-bottom: 1px solid #F0F0F0; }
+        tr:hover td { background: #FAFAFA; }
 
         @media (max-width: 768px) {
             .hamburger { display: block; }
-            .nav-links { position: absolute; top: 80px; left: 0; width: 100%; background: rgba(255,255,255,0.95); backdrop-filter: blur(16px); flex-direction: column; padding: 20px 5%; border-bottom: 1px solid rgba(0,0,0,0.1); transform: translateY(-150%); transition: 0.4s; opacity: 0; pointer-events: none; gap: 0; }
+            .nav-links { position: absolute; top: 80px; left: 0; width: 100%; background: rgba(255,255,255,0.95); backdrop-filter: blur(16px); flex-direction: column; padding: 20px 5%; transform: translateY(-150%); transition: 0.4s; opacity: 0; pointer-events: none; gap: 0; }
             .nav-links.open { transform: translateY(0); opacity: 1; pointer-events: all; }
             .nav-links button { width: 100%; text-align: left; padding: 18px 20px; border-bottom: 1px solid #EEE; font-size: 1.1rem; }
-            .hero-flex { text-align: center; justify-content: center; }
             .timeline-choices { grid-template-columns: 1fr; }
             .timeline-slots { flex-direction: column; min-height: auto; gap: 10px; }
             .timeline-slots::before { width: 4px; height: 100%; top: 0; bottom: 0; left: 50%; transform: translateX(-50%); }
@@ -175,32 +139,53 @@
 <body>
 
     <div id="preloader">
-        <h1>LahiQuest</h1>
+        <h1 class="title-font">LahiQuest</h1>
         <div class="spinner"></div>
-        <p style="font-weight: 600; letter-spacing: 3px; margin-top: 20px; text-transform: uppercase; font-size: 0.9rem;">Vibe Checking Heritage...</p>
+        <p style="font-weight: 600; letter-spacing: 3px; margin-top: 20px; text-transform: uppercase;">Booting up history...</p>
+    </div>
+
+    <!-- The actual AI Loading Screen -->
+    <div id="ai-loader">
+        <h2 class="title-font" style="color: white; font-size: 3rem; text-align: center;">Vibe Checking Heritage...</h2>
+        <div class="spinner"></div>
+        <p style="font-weight: 600; letter-spacing: 2px; margin-top: 20px; color: #DDD; text-transform: uppercase; text-align: center;">Nemotron AI is forging a unique quiz for you</p>
     </div>
 
     <div id="toast">Message here</div>
 
+    <!-- Identity Modal -->
+    <div id="login-modal">
+        <div class="login-box">
+            <h2 style="font-family: 'Playfair Display'; color: var(--primary); margin-bottom: 10px; font-size: 2rem;">Welcome to LahiQuest</h2>
+            <p style="color: #666; margin-bottom: 25px; font-size: 1rem;">Enter your name to track your learning progress.</p>
+            <input type="text" id="student-name" class="login-input" placeholder="e.g. Juan Dela Cruz" onkeypress="if(event.key==='Enter') loginUser()">
+            <button class="btn-main" style="width: 100%;" onclick="loginUser()">Start Learning</button>
+        </div>
+    </div>
+
     <nav>
         <div class="logo" onclick="navigate('home')">Lahi<span>Quest</span></div>
-        <button class="hamburger" onclick="toggleMenu()">☰</button>
-        <div class="nav-links" id="nav-menu">
-            <button onclick="navigate('home', this)" class="active">Home</button>
-            <button onclick="navigate('quests', this)">Quests</button>
-            <button onclick="navigate('games', this)">Minigames</button>
-            <button onclick="navigate('ar', this)">WebAR</button>
-            <button onclick="navigate('teacher', this)">Teacher's POV</button>
+        <div style="display: flex; align-items: center;">
+            <div class="nav-links" id="nav-menu">
+                <button onclick="navigate('home', this)" class="active">Home</button>
+                <button onclick="navigate('learn', this)">Modules</button>
+                <button onclick="navigate('games', this)">Minigames</button>
+                <button onclick="navigate('ar', this)">WebAR</button>
+                <button onclick="navigate('teacher', this)">Teacher's POV</button>
+            </div>
+            <span class="user-badge" id="nav-user-badge"></span>
+            <button class="hamburger" onclick="toggleMenu()" style="margin-left: 10px;">☰</button>
         </div>
     </nav>
 
     <main>
+        <!-- HOME SECTION -->
         <section id="home" class="active-section">
             <div class="hero-flex">
                 <div class="hero-text">
                     <h1>History class, but it's giving main character.</h1>
-                    <p>POV: You actually enjoy learning Philippine history. No cap, this WebAR and gamified quest ecosystem is built different. Dive into the deep cuts of our nation's lore.</p>
-                    <button class="btn-main" onclick="navigate('quests')">G, Let's Go ➔</button>
+                    <p>Experience an AI-driven, dynamically generating quest ecosystem. No two playthroughs are the same. Read the modules, pass the AI-generated Vibe Check, and master our nation's lore.</p>
+                    <button class="btn-main" onclick="navigate('learn')">Start Learning ➔</button>
                 </div>
                 <div class="hero-image-container">
                     <img src="https://api.dicebear.com/7.x/shapes/svg?seed=Pilipinas&backgroundColor=FFB300,3E2723" alt="Abstract Art">
@@ -208,60 +193,80 @@
             </div>
         </section>
 
-        <section id="quests">
-            <h2 class="section-title">Choose Your Era</h2>
-            <p class="section-subtitle">Flex your knowledge to unlock the next canon event.</p>
+        <!-- LEARN / MODULES SECTION -->
+        <section id="learn">
+            <div id="modules-grid-view">
+                <h2 class="section-title">Historical Modules</h2>
+                <p style="color: #666; margin-bottom: 40px; font-size: 1.1rem;">Read the lore, then pass the AI-generated quiz to unlock the next timeline.</p>
 
-            <div class="quest-grid" id="main-quest-grid">
-                <div class="quest-card" id="quest-0" onclick="initiateQuest(0)">
-                    <div style="font-size: clamp(2.5rem, 6vw, 3.5rem); margin-bottom: 15px;">🏺</div>
-                    <h3>Ancient PH Era</h3>
-                    <p style="color: #666;">Golden death masks, mystic Babaylans, and copperplate inscriptions.</p>
-                    <div class="progress-track"><div class="progress-fill" id="prog-0"></div></div>
-                </div>
-                <div class="quest-card locked" id="quest-1" onclick="initiateQuest(1)">
-                    <span class="lock-icon">🔒</span>
-                    <div style="font-size: clamp(2.5rem, 6vw, 3.5rem); margin-bottom: 15px;">⛪</div>
-                    <h3>Spanish Era</h3>
-                    <p style="color: #666;">Wine monopolies, 85-year rebellions, and the Louisiana Manila Men.</p>
-                    <div class="progress-track"><div class="progress-fill" id="prog-1"></div></div>
-                </div>
-                <div class="quest-card locked" id="quest-2" onclick="initiateQuest(2)">
-                    <span class="lock-icon">🔒</span>
-                    <div style="font-size: clamp(2.5rem, 6vw, 3.5rem); margin-bottom: 15px;">⚔️</div>
-                    <h3>The Revolution</h3>
-                    <p style="color: #666;">Visayan Joan of Arcs, stolen bells, and outlaws who were actually heroes.</p>
-                    <div class="progress-track"><div class="progress-fill" id="prog-2"></div></div>
+                <div class="quest-grid">
+                    <div class="quest-card" id="quest-0" onclick="openLesson(0)">
+                        <div style="font-size: 3.5rem; margin-bottom: 15px;">🏺</div>
+                        <h3>Module 1: Pre-Colonial PH</h3>
+                        <p style="color: #666;">Barangays, Babaylans, Trade, and ancient gold.</p>
+                    </div>
+                    <div class="quest-card locked" id="quest-1" onclick="openLesson(1)">
+                        <span class="lock-icon">🔒</span>
+                        <div style="font-size: 3.5rem; margin-bottom: 15px;">⛪</div>
+                        <h3>Module 2: Spanish Era</h3>
+                        <p style="color: #666;">333 years of rule, Galleons, and epic rebellions.</p>
+                    </div>
+                    <div class="quest-card locked" id="quest-2" onclick="openLesson(2)">
+                        <span class="lock-icon">🔒</span>
+                        <div style="font-size: 3.5rem; margin-bottom: 15px;">⚔️</div>
+                        <h3>Module 3: The Revolution</h3>
+                        <p style="color: #666;">Propaganda, Katipunan, and the fight for freedom.</p>
+                    </div>
                 </div>
             </div>
 
-            <div id="quiz-block" class="quiz-container">
-                <div class="quiz-header">
-                    <span class="quiz-tag" id="quiz-badge">QUEST</span>
-                    <span style="font-weight: 800; color: #888; background: #F0F0F0; padding: 5px 15px; border-radius: 20px;" id="quiz-tracker">1 / 8</span>
+            <!-- LESSON READER -->
+            <div id="lesson-container" class="lesson-container">
+                <div class="lesson-header">
+                    <button class="btn-main" style="padding: 10px 20px; font-size: 0.9rem; background: #EEE; color: #333; box-shadow: none;" onclick="closeLesson()">← Back to Modules</button>
+                    <h2 id="lesson-title" style="font-family: 'Playfair Display'; color: var(--primary); font-size: 2rem;">Lesson Title</h2>
                 </div>
-                <div id="quiz-hint" class="quiz-hint" style="display: none;"></div>
-                <h2 id="q-text" style="font-size: clamp(1.3rem, 4vw, 2rem); margin-bottom: 40px; color: var(--primary); font-family: 'Playfair Display', serif; line-height: 1.3;">Question text goes here</h2>
+                
+                <div id="lesson-content" class="lesson-content"></div>
+
+                <div style="text-align: center; margin-top: 50px; padding-top: 30px; border-top: 2px dashed #E0E0E0;">
+                    <h3 style="font-family: 'Playfair Display'; font-size: 1.8rem; margin-bottom: 10px;">Ready for the Vibe Check?</h3>
+                    <p style="color: #666; margin-bottom: 20px;">The AI will generate 4 unique questions based on this module. Prove you mastered it!</p>
+                    <button class="btn-main" style="padding: 20px 60px; font-size: 1.2rem;" onclick="startAIQuiz()">Generate & Start Quiz ⚡</button>
+                </div>
+            </div>
+
+            <!-- QUIZ BLOCK -->
+            <div id="quiz-block" class="quiz-container">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+                    <span style="background: var(--primary); color: var(--accent); padding: 8px 20px; border-radius: 30px; font-weight: 800; font-size: 0.9rem;" id="quiz-badge">VIBE CHECK</span>
+                    <span style="font-weight: 800; color: #888; background: #F0F0F0; padding: 5px 15px; border-radius: 20px;" id="quiz-tracker">1 / 4</span>
+                </div>
+                
+                <h2 id="q-text" style="font-size: clamp(1.3rem, 4vw, 2rem); margin-bottom: 40px; color: var(--primary); font-family: 'Playfair Display', serif; line-height: 1.3;">Loading question...</h2>
                 <div id="q-options"></div>
                 
                 <div id="lore-block" class="lore-box">
-                    <div style="font-family: 'Playfair Display', serif; color: var(--primary); font-size: 1.6rem; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">📜 The Lore Drop</div>
-                    <div style="color: #444; font-size: 1.05rem; margin-bottom: 25px; line-height: 1.7;" id="lore-text">Lore goes here...</div>
-                    <div style="display: flex; gap: 15px; flex-wrap: wrap; align-items: center; justify-content: space-between;">
-                        <a href="#" target="_blank" id="lore-link" style="color: var(--primary); font-weight: 800; text-decoration: underline; text-underline-offset: 4px;">Read Full Wiki ↗</a>
-                        <button class="btn-main" style="padding: 12px 30px; font-size: 1rem; box-shadow: 0 4px 0 #D48806;" onclick="nextQuestion()" tabindex="0">Next Question</button>
+                    <div style="font-family: 'Playfair Display', serif; color: var(--primary); font-size: 1.6rem; margin-bottom: 10px;">📜 Post-Question Lore</div>
+                    <div style="color: #444; font-size: 1.05rem; margin-bottom: 20px; line-height: 1.7;" id="lore-text"></div>
+                    
+                    <div style="display: flex; gap: 15px; flex-wrap: wrap; align-items: center;">
+                        <button class="btn-main" style="padding: 10px 25px; font-size: 0.9rem; background: #FFF; color: var(--primary); border: 2px solid var(--primary); box-shadow: none;" id="btn-deep-dive" onclick="fetchDeepLore()">Ask AI Tutor 🧠</button>
+                        <button class="btn-main" style="padding: 12px 30px; font-size: 1rem; margin-left: auto;" onclick="nextQuestion()">Next Question</button>
                     </div>
+                    <div id="ai-explain-box" class="ai-explain-box"></div>
                 </div>
             </div>
         </section>
 
+        <!-- MINIGAMES SECTION -->
         <section id="games">
             <h2 class="section-title">Mini-Games</h2>
-            <p class="section-subtitle">Take a break from quizzes. Test your historical instinct.</p>
+            <p style="color: #666; margin-bottom: 40px;">Test your timeline knowledge.</p>
             <div class="timeline-game-container">
                 <div style="font-size: 3rem; margin-bottom: 10px;">⏱️</div>
                 <h3 style="font-family: 'Playfair Display', serif; font-size: 2rem; color: var(--primary); margin-bottom: 10px;">Timeline Sequence</h3>
-                <p style="color: #666; margin-bottom: 30px;">Click the historical events in chronological order (from Oldest to Newest).</p>
+                <p style="color: #666; margin-bottom: 30px;">Click the historical events in chronological order (Oldest to Newest).</p>
                 <div class="timeline-slots" id="timeline-slots">
                     <div class="slot" id="slot-0">1st Event</div>
                     <div class="slot" id="slot-1">2nd Event</div>
@@ -273,53 +278,30 @@
             </div>
         </section>
 
+        <!-- WEBAR SECTION -->
         <section id="ar">
             <h2 class="section-title">AR Artifact Flex</h2>
-            <p class="section-subtitle">Point your camera at a Hiro Marker to spawn artifacts IRL.</p>
+            <p style="color: #666; margin-bottom: 40px;">Point your camera at a Hiro Marker to spawn historical artifacts.</p>
             <div id="ar-frame">
                 <div class="ar-permissions-box" id="ar-perm-box">
                     <h3 style="margin-bottom: 15px; color: var(--primary); font-family: 'Playfair Display', serif; font-size: 1.8rem;">Hui, wait lang! ✋</h3>
-                    <p style="margin-bottom: 30px; color: #555; font-size: 1.1rem;">We need camera access para lumabas yung AR magic. Payag ka ba?</p>
+                    <p style="margin-bottom: 30px; color: #555;">We need camera access para lumabas yung AR magic.</p>
                     <button class="btn-main" onclick="requestCameraAccess()">Payag ako, let's go</button>
                 </div>
-                <div id="ar-overlay-text" style="position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: white; padding: 12px 30px; border-radius: 30px; font-size: 1rem; z-index: 20; font-weight: 600; display: none;">📷 Tracking Hiro Marker...</div>
+                <div id="ar-overlay-text" style="position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: white; padding: 12px 30px; border-radius: 30px; z-index: 20; display: none;">📷 Tracking Hiro Marker...</div>
             </div>
         </section>
 
-        <!-- TEACHER DASHBOARD + AI FORGE -->
+        <!-- TEACHER DASHBOARD -->
         <section id="teacher">
-            <h2 class="section-title">Teacher's POV</h2>
-            <p class="section-subtitle">Generate custom arcs using AI or view student analytics.</p>
-
-            <div class="ai-forge">
-                <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 25px;">
-                    <span style="font-size: 2.5rem;">🤖</span>
-                    <h3 style="font-family: 'Playfair Display', serif; font-size: 2rem; color: var(--primary);">The AI Forge</h3>
-                </div>
-                <p style="color: #666; margin-bottom: 25px;">Generate an endgame quest dynamically using Nvidia Nemotron AI. (Do not share your API key!)</p>
-                
-                <div class="input-group">
-                    <label>OpenRouter API Key (Pre-filled for Demo)</label>
-                    <!-- WARNING: Pre-filled with user's key as requested. Keep this safe in production! -->
-                    <input type="password" id="openrouter-key" class="ai-input" placeholder="sk-or-v1-..." value="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">
-                </div>
-                <div class="input-group">
-                    <label>Philippine History Topic (e.g., Martial Law, Pre-colonial Visayas)</label>
-                    <input type="text" id="ai-topic" class="ai-input" placeholder="Enter a specific topic..." value="Philippine Mythology">
-                </div>
-                <button class="btn-main" id="btn-generate-ai" onclick="generateAIQuest()">
-                    <span id="ai-btn-text">Generate New Quest ⚡</span>
-                    <div class="spinner" id="ai-spinner" style="display: none; width: 20px; height: 20px; border-width: 3px; margin: 0;"></div>
-                </button>
-            </div>
+            <h2 class="section-title">Class Analytics</h2>
+            <p style="color: #666; margin-bottom: 40px;">Real-time progress tracking for all students using this device.</p>
             
-            <h3 style="font-family: 'Playfair Display', serif; font-size: 1.8rem; color: var(--primary); margin-bottom: 20px;">Class Analytics</h3>
             <div style="width: 100%; overflow-x: auto; border-radius: 24px; box-shadow: var(--shadow); background: var(--surface);">
                 <table>
-                    <thead><tr><th>Student Name</th><th>Current Arc</th><th>Win Rate</th><th>Status</th></tr></thead>
-                    <tbody>
-                        <tr><td style="font-weight: 800; color: var(--primary);">Santos, Maria Clara</td><td>The Revolution</td><td style="font-weight: 900; color: var(--accent);">95%</td><td><span style="background: rgba(39, 174, 96, 0.1); color: var(--success); padding: 6px 15px; border-radius: 20px; font-weight: 800; font-size: 0.85rem;">SLAYING</span></td></tr>
-                        <tr><td style="font-weight: 800; color: var(--primary);">Dela Cruz, Juan</td><td>Spanish Era</td><td style="font-weight: 900; color: var(--accent);">60%</td><td><span style="background: rgba(243, 156, 18, 0.1); color: #F39C12; padding: 6px 15px; border-radius: 20px; font-weight: 800; font-size: 0.85rem;">GRINDING</span></td></tr>
+                    <thead><tr><th>Student Name</th><th>Total Score</th><th>Highest Module Unlocked</th><th>Status</th></tr></thead>
+                    <tbody id="teacher-table-body">
+                        <!-- Data injected by JS -->
                     </tbody>
                 </table>
             </div>
@@ -327,121 +309,406 @@
     </main>
 
     <script>
-        const CONFIG = {
-            PASSING_SCORE_PERCENTAGE: 60,
-            PRELOADER_DURATION: 1200,
-            PRELOADER_FADE_DURATION: 500,
-            SAVE_KEY: 'lahiQuestProgress'
-        };
+        // --- 0. AI API CONFIGURATION ---
+        // Warning: Exposing API keys in frontend JS is bad practice for production.
+        // This is strictly for the school project demonstration as requested.
+        const OPENROUTER_KEY = "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";
+        const AI_MODEL = "nvidia/nemotron-3-ultra-550b-a55b:free";
 
-        let quizData = [
+        // --- 1. HISTORICAL LESSON CONTENT ---
+        const lessonsData = [
+            {
+                title: "Module 1: Pre-Colonial Philippines",
+                topicContext: "Pre-Colonial Philippines, ancient Barangays, the Babaylan healers, trade networks, and Baybayin script.",
+                content: `
+                    <h3>Before the Spaniards Arrived</h3>
+                    <p>Contrary to popular belief, the Philippines was <span class="highlight">not an uncivilized wilderness</span> before 1521. Early Filipinos had complex societies, robust trade networks, and their own writing systems.</p>
+                    
+                    <h3>The Barangay System</h3>
+                    <p>There was no central government. Instead, communities lived in independent units called <strong>Barangays</strong> (named after the <em>Balangay</em> boats they used to travel). Each was ruled by a <strong>Datu</strong> (chief).</p>
+                    <ul>
+                        <li><strong>Maharlika / Timawa:</strong> The nobles and freemen.</li>
+                        <li><strong>Alipin:</strong> Dependents or slaves (though "slavery" was fluid and usually based on debt, not race).</li>
+                    </ul>
+
+                    <h3>The Babaylan</h3>
+                    <p>The <span class="highlight">Babaylan</span> were the shamans and healers of the tribe. Highly respected and mostly women, they acted as the bridge between the physical world and the spirits.</p>
+                `
+            },
+            {
+                title: "Module 2: The Spanish Era (1521 - 1898)",
+                topicContext: "Spanish Colonial Era in the Philippines, Miguel Lopez de Legazpi, Polo y Servicio, Dagohoy Rebellion, and GOMBURZA.",
+                content: `
+                    <h3>God, Gold, and Glory</h3>
+                    <p>Ferdinand Magellan arrived in 1521, but it was <strong>Miguel Lopez de Legazpi</strong> who truly began colonization in 1571. For 333 years, Spain ruled the archipelago using the cross and the sword.</p>
+
+                    <h3>Life Under the Crown</h3>
+                    <ul>
+                        <li><strong>Polo y Servicio:</strong> Forced labor for men aged 16-60 to build churches and galleons.</li>
+                        <li><strong>Galleon Trade:</strong> A massive trade route connecting Manila to Acapulco, Mexico.</li>
+                    </ul>
+
+                    <h3>The Turning Point (1872)</h3>
+                    <p>In 1872, a mutiny in Cavite led the Spanish to unjustly execute three innocent priests: <strong>Gomez, Burgos, and Zamora (GOMBURZA)</strong>. This awakened a young Jose Rizal and lit the fire of Filipino nationalism.</p>
+                `
+            },
+            {
+                title: "Module 3: The Philippine Revolution",
+                topicContext: "The Philippine Revolution against Spain, Andres Bonifacio, Katipunan, Cry of Pugad Lawin, and the start of the Philippine-American War.",
+                content: `
+                    <h3>The Katipunan (KKK)</h3>
+                    <p>When peaceful reform failed, <strong>Andres Bonifacio</strong> founded the <span class="highlight">Katipunan</span> in 1892. It was a secret society aimed at complete armed revolution and independence.</p>
+
+                    <h3>The Outbreak of War</h3>
+                    <ul>
+                        <li><strong>Cry of Pugad Lawin (1896):</strong> Katipuneros tore their cedulas (tax certificates), marking the start of the revolution.</li>
+                    </ul>
+
+                    <h3>A Stolen Independence</h3>
+                    <p>On June 12, 1898, Emilio Aguinaldo declared independence. However, Spain secretly "sold" the Philippines to the United States for $20 million in the Treaty of Paris, sparking the <strong>Philippine-American War</strong>.</p>
+                `
+            }
+        ];
+
+        // --- 2. FALLBACK QUIZ DATA (If AI Fails / No Internet) ---
+        const fallbackQuizData = [
+            // Era 0
             [
-                { q: "What is the oldest known written document found in the Philippines, dating back to 900 CE?", a: "Laguna Copperplate Inscription", o: ["Laguna Copperplate Inscription", "Boxer Codex", "Doctrina Christiana", "Urbana at Felisa"], hint: "It cleared a man named Namwaran of a debt of gold.", lore: "The Laguna Copperplate Inscription (LCI) proved that ancient Filipinos weren't uneducated savages before the Spanish arrived.", link: "https://en.wikipedia.org/wiki/Laguna_Copperplate_Inscription" },
-                { q: "In pre-colonial Visayas, what were the heavily tattooed warriors called by the Spaniards?", a: "Pintados", o: ["Maharlika", "Pintados", "Ilustrados", "Timawa"], hint: "Literally translates to 'the painted ones'.", lore: "To the ancient Visayans, tattoos weren't just for aesthetics—they were medals of honor. A warrior could only earn a tattoo after killing an enemy.", link: "https://en.wikipedia.org/wiki/Pintados" }
+                { q: "What was the basic socio-political unit in pre-colonial Philippines?", a: "Barangay", o: ["Barrio", "Pueblo", "Barangay", "Encomienda"], lore: "Barangays were named after the Balangay boats." },
+                { q: "Who acted as the primary healers and spiritual leaders in the community?", a: "Babaylan", o: ["Datu", "Timawa", "Maharlika", "Babaylan"], lore: "Babaylans were so influential that Spanish friars hunted them down." },
+                { q: "What ancient script was used by early Filipinos to write on bamboo?", a: "Baybayin", o: ["Alibata", "Sanskrit", "Baybayin", "Kawi"], lore: "Baybayin is an abugida script used extensively before the Spanish arrived." },
+                { q: "What ancient gold artifact was placed on the face of the dead?", a: "Oton Death Mask", o: ["Manunggul Jar", "Lingling-o", "Oton Death Mask", "Pintados Gold"], lore: "Found in Iloilo, it proves ancient Filipinos were master goldsmiths." }
             ],
+            // Era 1
             [
-                { q: "Who led the longest rebellion in Philippine history, which lasted for exactly 85 years?", a: "Francisco Dagohoy", o: ["Diego Silang", "Apolinario de la Cruz", "Francisco Dagohoy", "Andres Malong"], hint: "The rebellion took place in Bohol.", lore: "Francisco Dagohoy started a massive rebellion in Bohol in 1744 after a Spanish priest refused to give his brother a Christian burial.", link: "https://en.wikipedia.org/wiki/Dagohoy_rebellion" },
-                { q: "What was the cause of the 1807 Basi Revolt in Ilocos?", a: "A Spanish monopoly on sugarcane wine", o: ["Forced labor in galleon ships", "A Spanish monopoly on sugarcane wine", "Execution of a local priest", "Unfair tobacco taxes"], hint: "It involves a local alcoholic drink.", lore: "The Ilocanos loved their Basi (wine). In 1786, the Spanish colonial government effectively banned the locals from making their own private stashes.", link: "https://en.wikipedia.org/wiki/Basi_revolt" }
+                { q: "Which Spanish explorer formally began the colonization of the Philippines in 1571?", a: "Miguel Lopez de Legazpi", o: ["Ferdinand Magellan", "Miguel Lopez de Legazpi", "Ruy Lopez de Villalobos", "Christopher Columbus"], lore: "Legazpi allied with local datus and made Manila the capital." },
+                { q: "What was the system of forced labor for Filipino men aged 16 to 60?", a: "Polo y Servicio", o: ["Encomienda", "Tributo", "Falla", "Polo y Servicio"], lore: "Men had to work 40 days a year building galleons and churches." },
+                { q: "Who led the longest rebellion in Philippine history (85 years)?", a: "Francisco Dagohoy", o: ["Diego Silang", "Tamblot", "Francisco Dagohoy", "Apolinario de la Cruz"], lore: "Dagohoy established a free government in the mountains of Bohol." },
+                { q: "The unjust execution of which group in 1872 sparked Filipino nationalism?", a: "GOMBURZA", o: ["The Katipunan", "GOMBURZA", "Los Indios Bravos", "The Trece Martires"], lore: "Jose Rizal dedicated his novel 'El Filibusterismo' to them." }
             ],
+            // Era 2
             [
-                { q: "Who was the fierce, hot-tempered General known as the 'Alexander of the East'?", a: "Antonio Luna", o: ["Gregorio del Pilar", "Emilio Aguinaldo", "Antonio Luna", "Apolinario Mabini"], hint: "He studied military science in Europe and was assassinated by his own men.", lore: "General Antonio Luna was the most capable military commander of the Philippine-American war, having studied European military tactics.", link: "https://en.wikipedia.org/wiki/Antonio_Luna" },
-                { q: "At the Battle of Tirad Pass, who delayed the Americans to allow Aguinaldo to escape?", a: "Gregorio del Pilar", o: ["Antonio Luna", "Gregorio del Pilar", "Miguel Malvar", "Vicente Lukban"], hint: "He was one of the youngest generals, known as the 'Boy General'.", lore: "General Gregorio del Pilar, only 24 years old, volunteered to hold the narrow Tirad Pass with just 60 men against over 500 heavily armed Americans.", link: "https://en.wikipedia.org/wiki/Battle_of_Tirad_Pass" }
+                { q: "Who founded the secret revolutionary society called the Katipunan?", a: "Andres Bonifacio", o: ["Jose Rizal", "Emilio Aguinaldo", "Andres Bonifacio", "Apolinario Mabini"], lore: "Bonifacio was a self-educated warehouse clerk who read books on the French Revolution." },
+                { q: "What event symbolized the start of the Philippine Revolution in 1896?", a: "Tearing of the Cedulas", o: ["The Battle of Mactan", "Tearing of the Cedulas", "Signing the Pact of Biak-na-Bato", "Execution of Rizal"], lore: "Tearing their tax certificates meant they no longer recognized Spanish authority." },
+                { q: "For how much did Spain 'sell' the Philippines to the United States in 1898?", a: "$20 Million", o: ["$5 Million", "$10 Million", "$20 Million", "$50 Million"], lore: "The Treaty of Paris immediately caused the Philippine-American war." },
+                { q: "Who was the brilliant but hot-tempered General known as the 'Alexander of the East'?", a: "Antonio Luna", o: ["Gregorio del Pilar", "Emilio Aguinaldo", "Antonio Luna", "Miguel Malvar"], lore: "Luna was famously assassinated by his own fellow Filipino soldiers." }
             ]
         ];
 
-        let gameState = { currentEra: 0, questionIndex: 0, score: 0, unlockedQuests: [true, false, false], eraScores: [0, 0, 0] };
-        
-        // --- AI FORGE LOGIC (Upgraded to Nemotron) ---
-        async function generateAIQuest() {
-            const key = document.getElementById('openrouter-key').value.trim();
-            const topic = document.getElementById('ai-topic').value.trim() || 'Philippine History';
-            
-            if (!key) return showToast("Bruh, you need to paste your OpenRouter API Key first!", true);
+        // --- 3. STATE & LOCAL STORAGE ---
+        let currentUser = "Guest";
+        let localDB = {};
+        let activeQuizData = []; // The array that holds the current (AI or Fallback) questions
+        let gameState = { currentEra: 0, questionIndex: 0, score: 0 };
 
-            const btn = document.getElementById('btn-generate-ai');
-            const btnText = document.getElementById('ai-btn-text');
-            const spinner = document.getElementById('ai-spinner');
-            
-            btn.disabled = true;
-            btnText.innerText = "Forging Quest with Nemotron...";
-            spinner.style.display = 'block';
+        function loadDatabase() {
+            try {
+                const stored = localStorage.getItem('LahiQuestDB');
+                if (stored) localDB = JSON.parse(stored);
+            } catch (e) {}
+        }
+        function saveDatabase() {
+            localStorage.setItem('LahiQuestDB', JSON.stringify(localDB));
+            renderTeacherDashboard();
+        }
 
-            // Very strict prompt to prevent Nemotron from adding conversational fluff
-            const systemPrompt = `You are a Philippine History JSON Generator. Generate EXACTLY 4 multiple choice questions about: ${topic}.
-You MUST reply ONLY with a valid JSON array of objects. Absolutely NO conversational text, NO intro, NO markdown formatting around the JSON.
-Format EACH object EXACTLY like this structure:
-[
-  {
-    "q": "The question string?",
-    "a": "Correct answer string",
-    "o": ["Option 1", "Option 2", "Correct answer string", "Option 4"],
-    "hint": "A short hint string",
-    "lore": "A 1-2 sentence fun historical fact string",
-    "link": "https://en.wikipedia.org/wiki/Relevant_Page"
-  }
-]`;
+        function checkLogin() {
+            loadDatabase();
+            const activeSession = sessionStorage.getItem('LahiQuestActiveUser');
+            if (activeSession) {
+                currentUser = activeSession;
+                document.getElementById('nav-user-badge').innerText = currentUser;
+                document.getElementById('nav-user-badge').style.display = 'inline-block';
+                updateQuestsUI();
+            } else {
+                document.getElementById('login-modal').style.display = 'flex';
+            }
+        }
+
+        function loginUser() {
+            const nameInput = document.getElementById('student-name').value.trim();
+            if (!nameInput) return showToast("Please enter your name!", true);
+            
+            currentUser = nameInput;
+            sessionStorage.setItem('LahiQuestActiveUser', currentUser);
+            
+            if (!localDB[currentUser]) {
+                localDB[currentUser] = { unlockedQuests: [true, false, false], eraScores: [0, 0, 0] };
+            }
+            saveDatabase();
+            
+            document.getElementById('login-modal').style.display = 'none';
+            document.getElementById('nav-user-badge').innerText = currentUser;
+            document.getElementById('nav-user-badge').style.display = 'inline-block';
+            updateQuestsUI();
+            showToast(`Welcome to history, ${currentUser}!`);
+        }
+
+        // --- 4. NAVIGATION & UI ---
+        function navigate(pageId, btn = null) {
+            if (pageId !== 'ar') {
+                document.querySelectorAll('video').forEach(el => { if(el.srcObject)el.srcObject.getTracks().forEach(t=>t.stop()); el.remove(); });
+                document.querySelectorAll('a-scene').forEach(s => s.remove());
+                document.getElementById('ar-perm-box').style.display = 'block'; document.getElementById('ar-overlay-text').style.display = 'none';
+            }
+            if (pageId === 'games' && document.getElementById('slot-0').innerText === '1st Event') initTimelineGame();
+            if (pageId === 'teacher') renderTeacherDashboard();
+
+            document.querySelectorAll('section').forEach(s => s.classList.remove('active-section'));
+            document.getElementById(pageId).classList.add('active-section');
+            document.getElementById('nav-menu').classList.remove('open');
+
+            if (btn) {
+                document.querySelectorAll('.nav-links button').forEach(b => b.classList.remove('active')); btn.classList.add('active');
+            }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            
+            if (pageId === 'learn') closeLesson();
+        }
+
+        function toggleMenu() { document.getElementById('nav-menu').classList.toggle('open'); }
+        function showToast(msg, isErr=false) {
+            const t = document.getElementById('toast'); t.innerText = msg; t.style.background = isErr ? 'var(--error)' : 'var(--success)';
+            t.style.transform = 'translateX(0)'; setTimeout(() => t.style.transform = 'translateX(150%)', 3000);
+        }
+
+        // --- 5. LEARNING MODULE & AI QUIZ LOGIC ---
+        function openLesson(eraIndex) {
+            const userStats = localDB[currentUser];
+            if (!userStats || !userStats.unlockedQuests[eraIndex]) {
+                showToast("Awit! This module is locked. Finish the previous one first.", true);
+                return;
+            }
+            
+            gameState.currentEra = eraIndex;
+            document.getElementById('modules-grid-view').style.display = 'none';
+            document.getElementById('quiz-block').style.display = 'none';
+            
+            const lesson = lessonsData[eraIndex];
+            document.getElementById('lesson-title').innerText = lesson.title;
+            document.getElementById('lesson-content').innerHTML = lesson.content;
+            
+            document.getElementById('lesson-container').style.display = 'block';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function closeLesson() {
+            document.getElementById('lesson-container').style.display = 'none';
+            document.getElementById('quiz-block').style.display = 'none';
+            document.getElementById('modules-grid-view').style.display = 'block';
+        }
+
+        // THE MAGIC: Generates the quiz dynamically via OpenRouter API
+        async function startAIQuiz() {
+            document.getElementById('lesson-container').style.display = 'none';
+            document.getElementById('ai-loader').style.display = 'flex'; // Show AI loading screen
+
+            const topicContext = lessonsData[gameState.currentEra].topicContext;
+            const systemPrompt = `You are a Philippine History Quiz Generator. Generate EXACTLY 4 multiple-choice questions about: ${topicContext}.
+Reply ONLY with a valid JSON array. DO NOT include introductory text or markdown tags (no \`\`\`json).
+Format EACH object EXACTLY like this:
+[{"q": "Question string?", "a": "Correct answer string", "o": ["Option 1", "Option 2", "Correct answer string", "Option 4"], "lore": "A short 1-sentence historical fact."}]`;
 
             try {
-                // Using Nemotron Model and the documented headers
                 const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
                     method: "POST",
                     headers: {
-                        "Authorization": `Bearer ${key}`,
+                        "Authorization": `Bearer ${OPENROUTER_KEY}`,
                         "Content-Type": "application/json",
                         "HTTP-Referer": window.location.href,
                         "X-Title": "LahiQuest Pro"
                     },
                     body: JSON.stringify({
-                        model: "nvidia/nemotron-3-ultra-550b-a55b:free",
+                        model: AI_MODEL,
                         messages: [{ role: "user", content: systemPrompt }],
-                        temperature: 0.1 // Kept low so it doesn't break the JSON format
+                        temperature: 0.3
                     })
                 });
 
-                if (!res.ok) throw new Error("API rejected the request. Check your key.");
+                if (!res.ok) throw new Error("API Limit or Error");
                 
                 const data = await res.json();
                 let text = data.choices[0].message.content.trim();
                 
-                // Aggressive cleaning to ensure pure JSON parsing
+                // Clean markdown
                 text = text.replace(/^```(json)?/i, '').replace(/```$/, '').trim();
-                
-                const newQuestions = JSON.parse(text);
-                
-                if (!Array.isArray(newQuestions) || newQuestions.length === 0) throw new Error("AI returned invalid JSON array.");
+                const aiQuestions = JSON.parse(text);
 
-                // Add to game database
-                const newEraIndex = quizData.length;
-                quizData.push(newQuestions);
-                gameState.unlockedQuests.push(true); // AI quests are unlocked automatically
-                gameState.eraScores.push(0);
-
-                // Inject new card into UI
-                const grid = document.getElementById('main-quest-grid');
-                const newCardHTML = `
-                    <div class="quest-card" id="quest-${newEraIndex}" onclick="initiateQuest(${newEraIndex})">
-                        <div style="font-size: clamp(2.5rem, 6vw, 3.5rem); margin-bottom: 15px;">⚡</div>
-                        <h3>AI Arc: ${topic}</h3>
-                        <p style="color: #666;">Generated dynamically by Nvidia Nemotron AI.</p>
-                        <div class="progress-track"><div class="progress-fill" id="prog-${newEraIndex}"></div></div>
-                    </div>`;
-                grid.insertAdjacentHTML('beforeend', newCardHTML);
-
-                showToast("Nemotron Quest successfully forged! Check the Quests tab.");
-                navigate('quests');
-
+                if (Array.isArray(aiQuestions) && aiQuestions.length >= 4) {
+                    activeQuizData = aiQuestions.slice(0, 4); // Success! We use the AI questions
+                } else {
+                    throw new Error("Invalid JSON format from AI");
+                }
             } catch (err) {
-                console.error(err);
-                showToast("Failed to parse AI output. Try clicking generate again.", true);
-            } finally {
-                btn.disabled = false;
-                btnText.innerText = "Generate New Quest ⚡";
-                spinner.style.display = 'none';
+                console.warn("AI Generation Failed. Falling back to offline database.", err);
+                activeQuizData = fallbackQuizData[gameState.currentEra]; // Offline Fallback
+                showToast("Using offline database (AI rate limit reached).", false);
+            }
+
+            document.getElementById('ai-loader').style.display = 'none';
+            document.getElementById('quiz-block').style.display = 'block';
+            gameState.questionIndex = 0;
+            gameState.score = 0;
+            renderQuestion();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function renderQuestion() {
+            const currentQ = activeQuizData[gameState.questionIndex];
+            document.getElementById('quiz-tracker').innerText = `${gameState.questionIndex + 1} / 4`;
+            document.getElementById('q-text').innerText = currentQ.q;
+            
+            const oc = document.getElementById('q-options'); oc.innerHTML = '';
+            
+            // Randomize options
+            let options = [...currentQ.o];
+            for(let i = options.length - 1; i > 0; i--){
+                const j = Math.floor(Math.random() * (i + 1));
+                [options[i], options[j]] = [options[j], options[i]];
+            }
+
+            options.forEach(opt => { 
+                const b = document.createElement('button'); b.className = 'option-btn'; b.innerText = opt; 
+                b.onclick = () => validateAnswer(opt, currentQ.a, b); oc.appendChild(b); 
+            });
+            
+            document.getElementById('lore-block').style.display = 'none';
+            document.getElementById('ai-explain-box').style.display = 'none'; // reset AI tutor box
+        }
+
+        function validateAnswer(sel, corr, btn) {
+            document.querySelectorAll('.option-btn').forEach(b => { b.style.pointerEvents = 'none'; b.disabled = true; });
+            if (sel === corr) { btn.classList.add('correct'); gameState.score++; showToast("Tumpak! Slay."); }
+            else { btn.classList.add('wrong'); document.querySelectorAll('.option-btn').forEach(b => { if(b.innerText===corr) b.classList.add('correct'); }); showToast("Mali pards!", true); }
+            
+            const q = activeQuizData[gameState.questionIndex];
+            document.getElementById('lore-text').innerHTML = `<strong>Context:</strong> ${q.lore}`; 
+            document.getElementById('lore-block').style.display = 'block'; 
+            
+            // Reset AI Tutor button
+            const aiBtn = document.getElementById('btn-deep-dive');
+            aiBtn.innerHTML = "Ask AI Tutor 🧠";
+            aiBtn.disabled = false;
+        }
+
+        // THE MAGIC: Ask AI Tutor to explain the historical fact
+        async function fetchDeepLore() {
+            const currentQ = activeQuizData[gameState.questionIndex];
+            const btn = document.getElementById('btn-deep-dive');
+            const explainBox = document.getElementById('ai-explain-box');
+            
+            btn.innerHTML = "Asking AI... 🧠⏳";
+            btn.disabled = true;
+            explainBox.style.display = 'block';
+            explainBox.innerHTML = "<em>Nemotron AI is typing a fun explanation...</em>";
+
+            try {
+                const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+                    method: "POST",
+                    headers: {
+                        "Authorization": `Bearer ${OPENROUTER_KEY}`,
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        model: AI_MODEL,
+                        messages: [{
+                            role: "user",
+                            content: `Explain this historical fact to a Grade 10 student in a fun, modern, engaging way (like a cool teacher). Keep it to 3 sentences maximum. Fact: ${currentQ.lore}`
+                        }],
+                        temperature: 0.5
+                    })
+                });
+
+                if (!response.ok) throw new Error("API Limit");
+                const data = await response.json();
+                explainBox.innerHTML = `<strong>AI Tutor:</strong> ${data.choices[0].message.content}`;
+            } catch(e) {
+                explainBox.innerHTML = "<em>AI Tutor is currently asleep (No internet or rate limited). Please proceed to the next question!</em>";
+            }
+            btn.innerHTML = "Ask AI Tutor 🧠"; // Keep it disabled so they don't spam it
+        }
+
+        function nextQuestion() {
+            gameState.questionIndex++;
+            if (gameState.questionIndex < activeQuizData.length) {
+                renderQuestion();
+            } else {
+                finishQuest();
             }
         }
-        // -----------------------
 
-        // Timeline Game
+        function finishQuest() {
+            const max = activeQuizData.length;
+            const pct = (gameState.score / max) * 100;
+            let userStats = localDB[currentUser];
+
+            if (gameState.score > userStats.eraScores[gameState.currentEra]) {
+                userStats.eraScores[gameState.currentEra] = gameState.score;
+            }
+
+            if (pct >= 75) { // Requires 3/4 to pass
+                showToast(`Dasurv! Score: ${gameState.score}/${max}. Next era unlocked!`);
+                if (gameState.currentEra + 1 < userStats.unlockedQuests.length) {
+                    userStats.unlockedQuests[gameState.currentEra + 1] = true;
+                }
+            } else {
+                showToast(`Score: ${gameState.score}/${max}. You need 3/4 to pass. Try again bro!`, true);
+            }
+            
+            saveDatabase();
+            updateQuestsUI();
+            closeLesson(); // Back to grid
+        }
+
+        function updateQuestsUI() {
+            if(!localDB[currentUser]) return;
+            const userStats = localDB[currentUser];
+            
+            userStats.unlockedQuests.forEach((unlocked, index) => {
+                const qc = document.getElementById(`quest-${index}`);
+                if (qc) {
+                    if (unlocked) {
+                        qc.classList.remove('locked');
+                        const l = qc.querySelector('.lock-icon'); if (l) l.innerText = '✅';
+                    }
+                }
+            });
+        }
+
+        // --- 6. TEACHER DASHBOARD LOGIC ---
+        function renderTeacherDashboard() {
+            const tbody = document.getElementById('teacher-table-body');
+            tbody.innerHTML = '';
+
+            const eras = ["Ancient PH", "Spanish Era", "The Revolution"];
+
+            for (const [name, data] of Object.entries(localDB)) {
+                let totalScore = data.eraScores.reduce((a, b) => a + b, 0);
+                
+                let highestUnlocked = 0;
+                data.unlockedQuests.forEach((u, i) => { if(u) highestUnlocked = i; });
+                
+                let statusHTML = "";
+                if (highestUnlocked === 2 && data.eraScores[2] >= 3) {
+                    statusHTML = `<span style="background: rgba(39, 174, 96, 0.1); color: var(--success); padding: 6px 15px; border-radius: 20px; font-weight: 800; font-size: 0.85rem;">COMPLETED</span>`;
+                } else if (totalScore > 0) {
+                    statusHTML = `<span style="background: rgba(243, 156, 18, 0.1); color: #F39C12; padding: 6px 15px; border-radius: 20px; font-weight: 800; font-size: 0.85rem;">GRINDING</span>`;
+                } else {
+                    statusHTML = `<span style="background: rgba(149, 165, 166, 0.1); color: #7F8C8D; padding: 6px 15px; border-radius: 20px; font-weight: 800; font-size: 0.85rem;">JUST STARTED</span>`;
+                }
+
+                tbody.insertAdjacentHTML('beforeend', `
+                    <tr>
+                        <td style="font-weight: 800; color: var(--primary);">${name}</td>
+                        <td style="font-weight: 900; color: var(--accent); font-size: 1.1rem;">${totalScore} pts</td>
+                        <td>${eras[highestUnlocked]}</td>
+                        <td>${statusHTML}</td>
+                    </tr>
+                `);
+            }
+        }
+
+        // --- 7. MINIGAMES & AR ---
         const ALL_TIMELINE_EVENTS = [
             { year: 1521, text: "Arrival of Ferdinand Magellan" }, { year: 1571, text: "Founding of Manila" },
             { year: 1872, text: "Execution of GOMBURZA" }, { year: 1892, text: "Founding of Katipunan" },
@@ -480,34 +747,6 @@ Format EACH object EXACTLY like this structure:
             }
         }
 
-        // Standard App Logic
-        function toggleMenu() { document.getElementById('nav-menu').classList.toggle('open'); }
-        function showToast(msg, isErr=false) {
-            const t = document.getElementById('toast'); t.innerText = msg; t.style.background = isErr ? 'var(--error)' : 'var(--success)';
-            t.style.transform = 'translateX(0)'; setTimeout(() => t.style.transform = 'translateX(150%)', 3000);
-        }
-
-        function navigate(pageId, btn = null) {
-            const targetPage = document.getElementById(pageId);
-            if (!targetPage) return;
-            
-            if (pageId !== 'ar') {
-                document.querySelectorAll('video').forEach(el => { if(el.srcObject)el.srcObject.getTracks().forEach(t=>t.stop()); el.remove(); });
-                document.querySelectorAll('a-scene').forEach(s => s.remove());
-                document.getElementById('ar-perm-box').style.display = 'block'; document.getElementById('ar-overlay-text').style.display = 'none';
-            }
-            if (pageId === 'games' && currentGameEvents.length === 0) initTimelineGame();
-
-            document.querySelectorAll('section').forEach(s => s.classList.remove('active-section'));
-            targetPage.classList.add('active-section');
-            document.getElementById('nav-menu').classList.remove('open');
-
-            if (btn) {
-                document.querySelectorAll('.nav-links button').forEach(b => b.classList.remove('active')); btn.classList.add('active');
-            }
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
         function requestCameraAccess() {
             document.getElementById('ar-perm-box').style.display = 'none'; document.getElementById('ar-overlay-text').style.display = 'block';
             document.querySelectorAll('a-scene, video').forEach(el => { if(el.srcObject)el.srcObject.getTracks().forEach(t=>t.stop()); el.remove(); });
@@ -516,60 +755,14 @@ Format EACH object EXACTLY like this structure:
             let checkVideo = setInterval(() => { let v = document.querySelector('video'); if (v && v.parentElement !== f) { f.appendChild(v); clearInterval(checkVideo); } }, 100);
         }
 
-        function initiateQuest(questId) {
-            if (questId >= quizData.length || !gameState.unlockedQuests[questId]) { showToast(questId >= quizData.length ? "Error" : "Locked pa 'to!", true); return; }
-            gameState.currentEra = questId; gameState.questionIndex = 0; gameState.score = 0;
-            const q = document.getElementById('quiz-block'); q.style.display = 'block'; document.getElementById('quiz-badge').innerText = `QUEST ${questId + 1}`;
-            renderQuestion(); setTimeout(() => q.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100);
-        }
-
-        function renderQuestion() {
-            const currentQ = quizData[gameState.currentEra][gameState.questionIndex];
-            document.getElementById('quiz-tracker').innerText = `${gameState.questionIndex + 1} / ${quizData[gameState.currentEra].length}`;
-            document.getElementById('q-text').innerText = currentQ.q;
-            const h = document.getElementById('quiz-hint'); if (currentQ.hint) { h.innerHTML = `<strong>💡 Hint:</strong> ${currentQ.hint}`; h.style.display = 'flex'; } else h.style.display = 'none';
-            const oc = document.getElementById('q-options'); oc.innerHTML = '';
-            currentQ.o.forEach(opt => { const b = document.createElement('button'); b.className = 'option-btn'; b.innerText = opt; b.onclick = () => validateAnswer(opt, currentQ.a, b); oc.appendChild(b); });
-            document.getElementById('lore-block').style.display = 'none';
-        }
-
-        function validateAnswer(sel, corr, btn) {
-            document.querySelectorAll('.option-btn').forEach(b => { b.style.pointerEvents = 'none'; b.disabled = true; });
-            if (sel === corr) { btn.classList.add('correct'); gameState.score++; showToast("Tumpak, lodi!"); }
-            else { btn.classList.add('wrong'); document.querySelectorAll('.option-btn').forEach(b => { if(b.innerText===corr) b.classList.add('correct'); }); showToast("Mali pards!", true); }
-            const q = quizData[gameState.currentEra][gameState.questionIndex];
-            const lb = document.getElementById('lore-block'); document.getElementById('lore-text').innerHTML = `<strong>Fun Fact:</strong> ${q.lore}`; document.getElementById('lore-link').href = q.link;
-            lb.style.display = 'block'; setTimeout(() => { lb.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }, 200);
-        }
-
-        function nextQuestion() {
-            gameState.questionIndex++;
-            if (gameState.questionIndex < quizData[gameState.currentEra].length) renderQuestion(); else finishQuest();
-        }
-
-        function finishQuest() {
-            document.getElementById('quiz-block').style.display = 'none';
-            const max = quizData[gameState.currentEra].length, pct = (gameState.score / max) * 100;
-            if (gameState.score > gameState.eraScores[gameState.currentEra]) gameState.eraScores[gameState.currentEra] = gameState.score;
-            if (pct >= CONFIG.PASSING_SCORE_PERCENTAGE) {
-                showToast(`Dasurv! Score: ${gameState.score}/${max}. Next era unlocked!`);
-                if (gameState.currentEra + 1 < gameState.unlockedQuests.length) gameState.unlockedQuests[gameState.currentEra + 1] = true;
-            } else showToast(`Score: ${gameState.score}/${max}. Try again bro!`, true);
-            updateQuestsUI(); setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 500);
-        }
-
-        function updateQuestsUI() {
-            gameState.unlockedQuests.forEach((unlocked, index) => {
-                const qc = document.getElementById(`quest-${index}`);
-                if (qc && index > 0 && unlocked) { qc.classList.remove('locked'); const l = qc.querySelector('.lock-icon'); if (l) l.innerText = '✅'; }
-                if (quizData[index]) { const pb = document.getElementById(`prog-${index}`); if (pb) pb.style.width = `${(gameState.eraScores[index] / quizData[index].length) * 100}%`; }
-            });
-        }
-
+        // --- INIT ---
         window.addEventListener('load', () => {
-            updateQuestsUI();
-            setTimeout(() => { const p = document.getElementById('preloader'); if(p) { p.style.opacity = '0'; setTimeout(()=>p.remove(), CONFIG.PRELOADER_FADE_DURATION); } }, CONFIG.PRELOADER_DURATION);
+            setTimeout(() => { 
+                const p = document.getElementById('preloader'); 
+                if(p) { p.style.opacity = '0'; setTimeout(()=>p.remove(), 500); } 
+                checkLogin();
+            }, 1200);
         });
     </script>
 </body>
-</html>
+    </html>
