@@ -52,17 +52,6 @@
     transition: background .3s ease, color .3s ease;
   }
   ::selection { background: var(--gold); color: var(--paper-raised); }
-
-  .weave-rule {
-    height: 10px;
-    width: 100%;
-    background-image: repeating-linear-gradient(135deg, var(--gold) 0 3px, transparent 3px 9px),
-                       repeating-linear-gradient(45deg, var(--malachite) 0 3px, transparent 3px 9px);
-    background-size: 18px 18px;
-    background-position: 0 0, 0 0;
-    opacity: .55;
-  }
-
   a { color: inherit; }
   button { font-family: var(--font-body); }
 
@@ -92,6 +81,7 @@
   }
   #toast.err { background: var(--sinag); color: #fff; }
   #toast.ok { background: var(--malachite); color: #fff; }
+  #toast.warn { background: var(--gold-deep); color: #fff; }
 
   #login-modal {
     position: fixed; inset: 0; z-index: 3000; background: rgba(16,14,10,0.72);
@@ -104,10 +94,11 @@
   .login-box h2 { font-family: var(--font-display); font-size: 2rem; color: var(--gold-deep); margin-bottom: 6px; }
   .login-input {
     width: 100%; padding: 14px 16px; border-radius: 10px; border: 1.5px solid var(--line);
-    margin: 20px 0; font-family: var(--font-body); font-size: 1rem; text-align: center;
+    margin: 10px 0; font-family: var(--font-body); font-size: 1rem; text-align: center;
     background: var(--paper); color: var(--ink);
   }
   .login-input:focus { outline: none; border-color: var(--gold); }
+  .login-hint { font-size: .78rem; color: var(--muted); margin-bottom: 18px; }
 
   nav {
     position: fixed; top: 0; width: 100%; z-index: 1000; height: 76px;
@@ -128,9 +119,12 @@
     background: none; border: 1px solid var(--line); width: 38px; height: 38px; border-radius: 50%;
     cursor: pointer; font-size: 1rem; color: var(--ink); display: flex; align-items: center; justify-content: center;
   }
+  .sync-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); display: inline-block; margin-right: 6px; }
+  .sync-dot.on { background: var(--malachite); }
+  .sync-dot.off { background: var(--sinag); }
   .user-chip {
     font-family: var(--font-mono); font-size: .78rem; background: var(--gold); color: #201503;
-    padding: 5px 12px; border-radius: 20px; font-weight: 700; display: none; margin-left: 8px;
+    padding: 5px 12px; border-radius: 20px; font-weight: 700; display: none; margin-left: 8px; align-items: center;
   }
   .hamburger { display: none; background: none; border: none; font-size: 1.6rem; cursor: pointer; color: var(--ink); }
 
@@ -175,12 +169,13 @@
     justify-content: center; gap: 10px; transition: .18s; letter-spacing: .2px;
   }
   .btn-main:hover:not(:disabled) { transform: translateY(-2px); box-shadow: var(--shadow-soft); background: var(--gold-deep); color: #fff; }
-  .btn-main:disabled { opacity: .55; cursor: not-allowed; }
+  .btn-main:disabled { opacity: .55; cursor: not-allowed; transform: none; }
   .btn-ghost {
     background: transparent; color: var(--ink); border: 1.5px solid var(--line); padding: 13px 28px;
     border-radius: 12px; font-weight: 700; cursor: pointer; font-size: .95rem;
   }
-  .btn-ghost:hover { border-color: var(--gold); color: var(--gold-deep); }
+  .btn-ghost:hover:not(:disabled) { border-color: var(--gold); color: var(--gold-deep); }
+  .btn-ghost:disabled { opacity: .5; cursor: not-allowed; }
   .btn-sm { padding: 9px 18px; font-size: .85rem; border-radius: 10px; }
 
   .quest-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 22px; }
@@ -249,12 +244,10 @@
     font-size: 1rem; margin-bottom: 12px; background: var(--paper); color: var(--ink);
   }
 
-  /* Flashcards */
   .flashcard {
     background: var(--paper); border: 1.5px solid var(--line); border-radius: 18px; padding: 30px;
     min-height: 220px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
     font-family: var(--font-display); font-size: 1.25rem; cursor: pointer; margin-bottom: 20px;
-    transition: transform .4s; perspective: 800px;
   }
   .flashcard-img { max-height: 120px; border-radius: 8px; margin-bottom: 14px; object-fit: cover; display: none; }
   .flash-progress { display: flex; gap: 6px; margin-bottom: 18px; }
@@ -283,12 +276,13 @@
   .bar-cell { display: flex; align-items: center; gap: 8px; }
   .mini-bar { flex: 1; height: 8px; background: var(--line); border-radius: 4px; overflow: hidden; max-width: 120px; }
   .mini-bar-fill { height: 100%; background: var(--gold); }
+  .dash-msg { text-align: center; padding: 40px 20px; color: var(--muted); background: var(--paper-raised); border-radius: 16px; border: 1px solid var(--line); }
 
   .mystery-portrait { width: 100px; height: 100px; border-radius: 50%; object-fit: cover; margin: 0 auto 16px; border: 3px solid var(--gold); display: block; }
 
-  a:focus-visible, button:focus-visible, input:focus-visible {
-    outline: 2px solid var(--gold); outline-offset: 2px;
-  }
+  a:focus-visible, button:focus-visible, input:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+  @media (prefers-reduced-motion: reduce) { * { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
 
   @media (max-width: 768px) {
     .hamburger { display: block; }
@@ -310,8 +304,10 @@
 <div id="login-modal">
   <div class="login-box">
     <h2>LahiQuest</h2>
-    <p style="color:var(--muted); font-size:.92rem;">Enter your name so your progress is saved across all devices.</p>
-    <input type="text" id="student-name" class="login-input" placeholder="Your name" onkeypress="if(event.key==='Enter') loginUser()">
+    <p style="color:var(--muted); font-size:.92rem; margin-bottom:18px;">Enter your name and the class code your teacher gave you.</p>
+    <input type="text" id="student-name" class="login-input" placeholder="Your name" onkeypress="if(event.key==='Enter') document.getElementById('class-code-input').focus()">
+    <input type="text" id="class-code-input" class="login-input" placeholder="Class code" onkeypress="if(event.key==='Enter') loginUser()">
+    <p class="login-hint">No code? You can still play — progress just stays on this device instead of syncing to the class dashboard.</p>
     <button class="btn-main" style="width:100%;" onclick="loginUser()">Start learning</button>
   </div>
 </div>
@@ -327,7 +323,7 @@
       <button onclick="navigate('teacher', this)">Dashboard</button>
     </div>
     <button class="icon-btn" id="theme-toggle" onclick="toggleTheme()" title="Toggle dark mode" aria-label="Toggle dark mode">◐</button>
-    <span class="user-chip" id="nav-user-badge"></span>
+    <span class="user-chip" id="nav-user-badge"><span class="sync-dot" id="sync-dot"></span><span id="nav-user-name"></span></span>
     <button class="hamburger" onclick="toggleMenu()" aria-label="Menu">☰</button>
   </div>
 </nav>
@@ -340,7 +336,7 @@
       <div class="hero-text">
         <div class="eyebrow">Digital Interactive Media · MAPEH 10</div>
         <h1>Philippine history, <em>played</em> not just read.</h1>
-        <p>Five eras, AI-generated quizzes, cloud-synced progress, AR artifacts, and Wikipedia historical insights.</p>
+        <p>Five eras, AI-generated quizzes that never repeat themselves, AR artifacts, and a tutor that answers your questions in plain language.</p>
         <div style="display:flex; gap:14px; flex-wrap:wrap;">
           <button class="btn-main" onclick="navigate('learn')">Continue quest →</button>
           <button class="btn-ghost" onclick="navigate('games')">Play a minigame</button>
@@ -353,7 +349,7 @@
       </div>
       <div class="hero-panel">
         <h3>Your progress</h3>
-        <p class="small">Synced with MongoDB Cloud Database.</p>
+        <p class="small" id="sync-status-text">Checking sync status…</p>
         <div id="home-quest-list"></div>
         <div class="badges-row" id="home-badges"></div>
       </div>
@@ -365,7 +361,7 @@
     <div id="modules-grid-view">
       <div class="eyebrow">Learning path</div>
       <h2 class="section-title">Five eras of Philippine history</h2>
-      <p class="section-desc">Read the module, then take an assessment. Score 3 out of 4 to unlock the next era — questions are generated fresh by AI.</p>
+      <p class="section-desc">Read the module, then take an assessment. Score 3 out of 4 to unlock the next era — the questions are generated fresh by AI each time.</p>
       <div class="quest-grid" id="quest-grid"></div>
     </div>
 
@@ -378,7 +374,7 @@
       <div style="margin-top:34px; padding-top:26px; border-top:1px solid var(--line); text-align:center;">
         <h3 style="font-family:var(--font-display); font-size:1.25rem; margin-bottom:8px;">Ready for assessment?</h3>
         <p style="color:var(--muted); margin-bottom:18px;">The AI will write four new questions focused on this module.</p>
-        <button class="btn-main" onclick="generateAndStartQuiz()">Start assessment</button>
+        <button class="btn-main" id="btn-start-quiz" onclick="generateAndStartQuiz()">Start assessment</button>
       </div>
     </div>
 
@@ -428,8 +424,8 @@
     <div class="game-view" id="mode-mystery">
       <div class="panel" style="display:block;">
         <h3 style="font-family:var(--font-display); font-size:1.3rem; margin-bottom:4px;">Who is it?</h3>
-        <p style="color:var(--muted); font-size:.92rem; margin-bottom:20px;">Guess the historical figure from clues and historical images.</p>
-        <img id="mystery-portrait-img" class="mystery-portrait" style="display:none;" alt="Historical Portrait">
+        <p style="color:var(--muted); font-size:.92rem; margin-bottom:20px;">Guess the historical figure from AI-written clues.</p>
+        <img id="mystery-portrait-img" class="mystery-portrait" style="display:none;" alt="Historical figure portrait">
         <div id="mystery-clues" style="display:none; background:var(--paper); padding:20px; border-radius:12px; margin-bottom:18px; border:1px solid var(--line);">
           <ul id="clue-list" style="margin-left:20px;"></ul>
         </div>
@@ -447,17 +443,17 @@
     <div class="game-view" id="mode-flash">
       <div class="panel" style="display:block;">
         <h3 style="font-family:var(--font-display); font-size:1.3rem; margin-bottom:4px;">Flashcard drill</h3>
-        <p style="color:var(--muted); font-size:.92rem; margin-bottom:20px;">Cards feature images fetched automatically from Google Search &amp; Wikipedia.</p>
+        <p style="color:var(--muted); font-size:.92rem; margin-bottom:20px;">Cards pull an image from Wikipedia when one's available.</p>
         <div id="flash-setup">
           <select id="flash-era-select" class="flash-input">
             <option value="all">All eras</option>
           </select>
-          <button class="btn-main btn-sm" onclick="startFlashcards()">Generate deck</button>
+          <button class="btn-main btn-sm" id="btn-gen-deck" onclick="startFlashcards()">Generate deck</button>
         </div>
         <div id="flash-play" style="display:none;">
           <div class="flash-progress" id="flash-progress"></div>
           <div class="flashcard" id="flashcard-el" onclick="flipFlashcard()">
-            <img id="flash-card-img" class="flashcard-img" alt="Historical Illustration">
+            <img id="flash-card-img" class="flashcard-img" alt="Historical illustration">
             <span class="face" id="flashcard-face">Loading…</span>
           </div>
           <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
@@ -473,7 +469,7 @@
         <h3 style="font-family:var(--font-display); font-size:1.3rem; margin-bottom:4px;">60-second speed round</h3>
         <p style="color:var(--muted); font-size:.92rem; margin-bottom:20px;">Answer as many AI questions as you can before time runs out.</p>
         <div id="speed-setup">
-          <button class="btn-main btn-sm" onclick="startSpeedRound()">Start round</button>
+          <button class="btn-main btn-sm" id="btn-start-speed" onclick="startSpeedRound()">Start round</button>
         </div>
         <div id="speed-play" style="display:none;">
           <div class="speed-timer" id="speed-timer">0:60</div>
@@ -490,7 +486,7 @@
         <p style="color:var(--muted); font-size:.92rem; margin-bottom:20px;">Ask anything about Philippine history — Taglish is fine.</p>
         <div class="tutor-log" id="tutor-log"></div>
         <input type="text" id="tutor-input" class="tutor-input" placeholder="e.g. bakit natalo ang Katipunan sa una?" onkeypress="if(event.key==='Enter') askTutor()">
-        <button class="btn-main btn-sm" onclick="askTutor()">Send</button>
+        <button class="btn-main btn-sm" id="btn-tutor-send" onclick="askTutor()">Send</button>
       </div>
     </div>
   </section>
@@ -499,7 +495,7 @@
   <section id="ar">
     <div class="eyebrow">WebAR</div>
     <h2 class="section-title">AR artifacts</h2>
-    <p class="section-desc">Point your camera at a Hiro marker to view 3D artifacts.</p>
+    <p class="section-desc">Point your camera at a Hiro marker to view a 3D artifact tied to your current module.</p>
     <div id="ar-frame">
       <div class="ar-permissions-box" id="ar-perm-box">
         <h3 style="font-family:var(--font-display); margin-bottom:12px;">Camera access needed</h3>
@@ -514,11 +510,12 @@
   <section id="teacher">
     <div class="eyebrow">Class overview</div>
     <h2 class="section-title">Progress dashboard</h2>
-    <p class="section-desc">Real-time cloud progress synced across all student devices via MongoDB.</p>
-    <div style="display:flex; justify-content:flex-end; margin-bottom:14px;">
+    <p class="section-desc">Pulled live from the class database when a valid class code is set.</p>
+    <div style="display:flex; justify-content:flex-end; margin-bottom:14px; gap:10px;">
+      <button class="btn-ghost btn-sm" onclick="renderTeacherDashboard()">Refresh</button>
       <button class="btn-ghost btn-sm" onclick="exportCSV()">Export CSV</button>
     </div>
-    <div style="overflow-x:auto;">
+    <div id="teacher-table-wrap" style="overflow-x:auto;">
       <table>
         <thead><tr><th>Name</th><th>Score</th><th>Era reached</th><th>Badges</th><th>Status</th></tr></thead>
         <tbody id="teacher-table-body"></tbody>
@@ -529,12 +526,32 @@
 </main>
 
 <script>
-const API_ENDPOINT = "/api/ai";
+/* ============================================================
+   0. ENDPOINTS + CLASS-CODE AUTH
+   All /api/db and /api/search calls carry an x-class-code header.
+   Without a valid code the server returns 401 and the app quietly
+   falls back to local-only storage (still fully playable).
+   ============================================================ */
+const AI_ENDPOINT = "/api/ai";
 const DB_ENDPOINT = "/api/db";
 const SEARCH_ENDPOINT = "/api/search";
 
+let classCode = localStorage.getItem('LahiQuestClassCode') || '';
+let cloudAvailable = false; // updated after first successful/failed call
+
+function authHeaders(extra = {}) {
+  return { ...extra, 'x-class-code': classCode };
+}
+function setSyncState(on) {
+  cloudAvailable = on;
+  const dot = document.getElementById('sync-dot');
+  if (dot) dot.className = 'sync-dot ' + (on ? 'on' : 'off');
+  const txt = document.getElementById('sync-status-text');
+  if (txt) txt.innerText = on ? "Synced with the class dashboard." : "Local only — no class code, or the class code is invalid.";
+}
+
 async function callAI(prompt, temperature = 0.5) {
-  const res = await fetch(API_ENDPOINT, {
+  const res = await fetch(AI_ENDPOINT, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ prompt, temperature })
@@ -545,6 +562,55 @@ async function callAI(prompt, temperature = 0.5) {
   return data.text.trim().replace(/^```(json)?/i, "").replace(/```$/, "").trim();
 }
 
+// GET one user's cloud record. Returns null if offline/unauthorized/not found.
+async function cloudGetUser(username) {
+  try {
+    const res = await fetch(`${DB_ENDPOINT}?username=${encodeURIComponent(username)}`, { headers: authHeaders() });
+    if (res.status === 401) { setSyncState(false); return null; }
+    if (!res.ok) { setSyncState(false); return null; }
+    setSyncState(true);
+    return await res.json(); // { data, updatedAt } | null
+  } catch (e) { setSyncState(false); return null; }
+}
+
+// GET the whole roster — only used by the teacher dashboard.
+async function cloudGetAll() {
+  try {
+    const res = await fetch(DB_ENDPOINT, { headers: authHeaders() });
+    if (res.status === 401) { setSyncState(false); return null; }
+    if (!res.ok) { setSyncState(false); return null; }
+    setSyncState(true);
+    return await res.json(); // { [username]: { data, updatedAt } }
+  } catch (e) { setSyncState(false); return null; }
+}
+
+// POST current user's data. Fails silently to local-only.
+async function cloudSaveUser(username, data) {
+  try {
+    const res = await fetch(DB_ENDPOINT, {
+      method: 'POST',
+      headers: authHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ username, data })
+    });
+    if (res.status === 401) { setSyncState(false); return false; }
+    setSyncState(res.ok);
+    return res.ok;
+  } catch (e) { setSyncState(false); return false; }
+}
+
+// Cached image/summary lookup, used by flashcards + mystery figure.
+async function cloudSearch(q, type) {
+  try {
+    const url = `${SEARCH_ENDPOINT}?q=${encodeURIComponent(q)}${type ? `&type=${type}` : ''}`;
+    const res = await fetch(url, { headers: authHeaders() });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch (e) { return null; }
+}
+
+/* ============================================================
+   1. LESSON DATA — five eras
+   ============================================================ */
 const lessonsData = [
   {
     title: "Module 1 · Pre-Colonial Philippines",
@@ -553,7 +619,7 @@ const lessonsData = [
     content: `<h3>Early society</h3><p>The Philippines had complex societies and trade networks before 1521. Communities were organized into independent units called <strong>barangays</strong>, typically led by a <strong>datu</strong>.</p>
     <h3>Social structure</h3><ul><li><strong>Maharlika / Timawa:</strong> nobles and freemen.</li><li><strong>Alipin:</strong> dependents, often based on debt rather than chattel slavery.</li></ul>
     <h3>Culture and beliefs</h3><p>The <strong>babaylan</strong> served as spiritual leaders and healers. Early Filipinos used a syllabic script called <strong>Baybayin</strong>.</p>`,
-    ar: { name: "Manunggul Jar", color: "#B9873A", shape: "cylinder" }
+    ar: { name: "Manunggul Jar", color: "#B9873A" }
   },
   {
     title: "Module 2 · The Spanish Era (1521–1898)",
@@ -562,7 +628,7 @@ const lessonsData = [
     content: `<h3>Colonization</h3><p>Following Magellan's arrival in 1521, <strong>Miguel López de Legazpi</strong> formally established Spanish colonial rule in 1571.</p>
     <h3>Economic systems</h3><ul><li><strong>Polo y Servicio:</strong> forced labor for males aged 16–60.</li><li><strong>Galleon Trade:</strong> maritime trade connecting Manila to Acapulco.</li></ul>
     <h3>Resistance</h3><p>In 1872, the execution of three priests known as <strong>GOMBURZA</strong> catalyzed Filipino nationalism.</p>`,
-    ar: { name: "Baybayin Tablet", color: "#2E6E5E", shape: "box" }
+    ar: { name: "Baybayin Tablet", color: "#2E6E5E" }
   },
   {
     title: "Module 3 · The Philippine Revolution",
@@ -571,7 +637,7 @@ const lessonsData = [
     content: `<h3>The Katipunan</h3><p><strong>Andres Bonifacio</strong> founded the <strong>Katipunan (KKK)</strong> in 1892, advocating armed independence from Spain.</p>
     <h3>Key events</h3><ul><li><strong>Cry of Pugad Lawin (1896):</strong> members tore their tax certificates, symbolizing revolt.</li></ul>
     <h3>Transition of power</h3><p>Independence was declared on June 12, 1898. The Treaty of Paris then transferred control to the United States, leading to the Philippine-American War.</p>`,
-    ar: { name: "Katipunan Flag", color: "#A73B2E", shape: "flag" }
+    ar: { name: "Katipunan Flag", color: "#A73B2E" }
   },
   {
     title: "Module 4 · American Era & World War II",
@@ -580,7 +646,7 @@ const lessonsData = [
     content: `<h3>American rule</h3><p>After the Philippine-American War, the U.S. introduced public education and infrastructure while delaying full independence. The <strong>Commonwealth</strong> era began in 1935 under President Manuel Quezon.</p>
     <h3>World War II</h3><p>Japan occupied the Philippines from 1942. The <strong>Bataan Death March</strong> followed the fall of Bataan, while guerrilla units continued resisting occupation.</p>
     <h3>Independence</h3><p>The Philippines gained full independence on <strong>July 4, 1946</strong>, later commemorated on June 12 to honor the 1898 declaration.</p>`,
-    ar: { name: "Guerrilla Radio Set", color: "#6B6153", shape: "box" }
+    ar: { name: "Guerrilla Radio Set", color: "#6B6153" }
   },
   {
     title: "Module 5 · Modern Filipino Culture",
@@ -589,11 +655,14 @@ const lessonsData = [
     content: `<h3>People Power</h3><p>The <strong>1986 EDSA Revolution</strong> peacefully ended the Marcos era and became a global model of nonviolent political change.</p>
     <h3>Living heritage</h3><p>Festivals, regional cuisine, and traditional weaving and pottery continue practices that trace back centuries, adapted for modern life.</p>
     <h3>A global identity</h3><p>Millions of overseas Filipino workers carry this history and culture abroad, shaping a modern Filipino identity that spans continents.</p>`,
-    ar: { name: "Banig Weave Pattern", color: "#B9873A", shape: "box" }
+    ar: { name: "Banig Weave Pattern", color: "#B9873A" }
   }
 ];
 const ERA_NAMES = lessonsData.map(l => l.title.split("·")[1].trim());
 
+/* ============================================================
+   2. OFFLINE FALLBACK DATA
+   ============================================================ */
 const fallbackQuizData = [
   [
     { q: "What was the basic socio-political unit in pre-colonial Philippines?", a: "Barangay", o: ["Barrio", "Pueblo", "Barangay", "Encomienda"], lore: "Barangays were named after the balangay boats used by early settlers." },
@@ -632,10 +701,13 @@ const fallbackMysteries = [
   { name: "Gabriela Silang", clues: ["She led a revolt in the Ilocos region.", "She took command after her husband's assassination.", "She was eventually captured and executed by the Spanish."] }
 ];
 
+/* ============================================================
+   3. STATE
+   ============================================================ */
 let currentUser = "Guest";
 let localDB = {};
 let activeQuizData = [];
-let gameState = { currentEra: 0, questionIndex: 0, score: 0, usingAI: false };
+let gameState = { currentEra: 0, questionIndex: 0, score: 0 };
 let mysteryAnswer = "";
 let flashDeck = [], flashIndex = 0, flashFlipped = false;
 let speedTimerId = null, speedTimeLeft = 60, speedScore = 0, speedQuestions = [], speedIndex = 0;
@@ -665,93 +737,91 @@ function freshUser() {
 }
 function ensureUserShape(u) {
   const f = freshUser();
-  for (const k in f) if (u[k] === undefined) u[k] = f[k];
-  for (let i=0;i<5;i++) if (!u.askedQuestions[i]) u.askedQuestions[i] = [];
-  return u;
+  const out = { ...u };
+  for (const k in f) if (out[k] === undefined) out[k] = f[k];
+  out.askedQuestions = { ...f.askedQuestions, ...(out.askedQuestions || {}) };
+  for (let i=0;i<5;i++) if (!out.askedQuestions[i]) out.askedQuestions[i] = [];
+  return out;
 }
 
-// Upgraded with MongoDB Cloud Fallback & Cache
-async function loadDatabase() {
-  try {
-    const s = localStorage.getItem('LahiQuestDB');
-    if (s) localDB = JSON.parse(s);
-  } catch(e) { localDB = {}; }
-
-  try {
-    const res = await fetch(`${DB_ENDPOINT}`);
-    if (res.ok) {
-      const cloudData = await res.json();
-      if (cloudData && typeof cloudData === 'object') {
-        localDB = { ...localDB, ...cloudData };
-        localStorage.setItem('LahiQuestDB', JSON.stringify(localDB));
-      }
-    }
-  } catch(e) {
-    console.log("Offline mode — using local storage");
-  }
+/* ============================================================
+   4. LOGIN + SYNC
+   Strategy: local storage is always the working copy. On login we
+   pull the cloud copy (if a class code is set) and only adopt it
+   if it's newer than what's on this device, so offline progress
+   never gets silently clobbered.
+   ============================================================ */
+function loadLocalCache() {
+  try { const s = localStorage.getItem('LahiQuestDB'); if (s) localDB = JSON.parse(s); } catch(e) { localDB = {}; }
 }
+function persistLocalCache() { localStorage.setItem('LahiQuestDB', JSON.stringify(localDB)); }
 
 async function saveDatabase() {
-  localStorage.setItem('LahiQuestDB', JSON.stringify(localDB));
-  renderTeacherDashboard();
+  persistLocalCache();
   renderHome();
-
   if (currentUser && localDB[currentUser]) {
-    try {
-      await fetch(`${DB_ENDPOINT}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          username: currentUser,
-          data: localDB[currentUser]
-        })
-      });
-    } catch(e) {
-      console.log("Could not sync to cloud");
+    localDB[currentUser]._localUpdatedAt = new Date().toISOString();
+    persistLocalCache();
+    if (classCode) {
+      const ok = await cloudSaveUser(currentUser, localDB[currentUser]);
+      if (!ok) showToast("Saved on this device — couldn't reach the class server.", 'warn');
     }
   }
 }
 
 async function checkLogin() {
-  await loadDatabase();
+  loadLocalCache();
   const session = sessionStorage.getItem('LahiQuestActiveUser');
   if (session && localDB[session]) {
     currentUser = session;
     localDB[currentUser] = ensureUserShape(localDB[currentUser]);
     setUserChip();
+    if (classCode) await syncCurrentUserFromCloud();
     afterLogin();
   } else {
     document.getElementById('login-modal').style.display = 'flex';
+    if (classCode) document.getElementById('class-code-input').value = classCode;
+  }
+}
+
+async function syncCurrentUserFromCloud() {
+  const remote = await cloudGetUser(currentUser); // { data, updatedAt } | null
+  if (!remote || !remote.data) return;
+  const localTime = new Date(localDB[currentUser]?._localUpdatedAt || 0).getTime();
+  const remoteTime = new Date(remote.updatedAt || 0).getTime();
+  if (remoteTime > localTime) {
+    localDB[currentUser] = ensureUserShape(remote.data);
+    persistLocalCache();
+    showToast("Progress restored from the class server.", 'ok');
   }
 }
 
 function setUserChip() {
-  const chip = document.getElementById('nav-user-badge');
-  chip.innerText = currentUser; chip.style.display = 'inline-block';
+  document.getElementById('nav-user-name').innerText = currentUser;
+  document.getElementById('nav-user-badge').style.display = 'inline-flex';
 }
 
 async function loginUser() {
   const name = document.getElementById('student-name').value.trim();
+  const code = document.getElementById('class-code-input').value.trim();
   if (!name) return showToast("Please enter your name.", 'err');
+
+  classCode = code;
+  localStorage.setItem('LahiQuestClassCode', classCode);
   currentUser = name;
   sessionStorage.setItem('LahiQuestActiveUser', currentUser);
-
-  try {
-    const res = await fetch(`${DB_ENDPOINT}?username=${encodeURIComponent(currentUser)}`);
-    if (res.ok) {
-      const cloudUserData = await res.json();
-      if (cloudUserData) localDB[currentUser] = cloudUserData;
-    }
-  } catch(e) {}
 
   if (!localDB[currentUser]) localDB[currentUser] = freshUser();
   else localDB[currentUser] = ensureUserShape(localDB[currentUser]);
 
-  saveDatabase();
+  if (classCode) await syncCurrentUserFromCloud();
+
+  persistLocalCache();
   document.getElementById('login-modal').style.display = 'none';
   setUserChip();
   afterLogin();
   showToast(`Welcome, ${currentUser}.`, 'ok');
+  await saveDatabase();
 }
 
 function afterLogin() {
@@ -759,8 +829,12 @@ function afterLogin() {
   updateQuestsUI();
   renderHome();
   populateFlashEraSelect();
+  setSyncState(cloudAvailable);
 }
 
+/* ============================================================
+   5. THEME + NAV
+   ============================================================ */
 function toggleTheme() {
   const html = document.documentElement;
   const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
@@ -768,8 +842,7 @@ function toggleTheme() {
   localStorage.setItem('LahiQuestTheme', next);
 }
 function applyStoredTheme() {
-  const t = localStorage.getItem('LahiQuestTheme');
-  if (t === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+  if (localStorage.getItem('LahiQuestTheme') === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
 }
 
 function navigate(pageId, btn = null) {
@@ -794,8 +867,7 @@ function toggleMenu() { document.getElementById('nav-menu').classList.toggle('op
 
 function showToast(msg, type = '') {
   const t = document.getElementById('toast');
-  t.innerText = msg;
-  t.className = type;
+  t.innerText = msg; t.className = type;
   t.style.transform = 'translateX(0)';
   clearTimeout(t._timer);
   t._timer = setTimeout(() => t.style.transform = 'translateX(140%)', 3200);
@@ -805,6 +877,9 @@ function toggleLoader(show, text = "Loading…") {
   document.getElementById('system-loader').style.display = show ? 'flex' : 'none';
 }
 
+/* ============================================================
+   6. HOME + QUEST GRID
+   ============================================================ */
 function buildQuestGrid() {
   const grid = document.getElementById('quest-grid');
   grid.innerHTML = '';
@@ -841,8 +916,7 @@ function renderHome() {
   document.getElementById('stat-score').innerText = u.eraScores.reduce((a,b)=>a+b,0);
   document.getElementById('stat-streak').innerText = u.passStreak;
 
-  const list = document.getElementById('home-quest-list');
-  list.innerHTML = ERA_NAMES.map((name, i) => {
+  document.getElementById('home-quest-list').innerHTML = ERA_NAMES.map((name, i) => {
     const pct = Math.min(100, (u.eraScores[i]/4)*100);
     return `<div style="margin-bottom:12px;">
       <div style="display:flex; justify-content:space-between; font-size:.82rem; margin-bottom:4px;">
@@ -852,8 +926,7 @@ function renderHome() {
     </div>`;
   }).join('');
 
-  const badgeRow = document.getElementById('home-badges');
-  badgeRow.innerHTML = BADGES.map(b => {
+  document.getElementById('home-badges').innerHTML = BADGES.map(b => {
     const earned = u.badges.includes(b.id);
     return `<span class="badge-pill ${earned ? '' : 'locked'}" title="${b.desc}">${earned ? '★' : '☆'} ${b.label}</span>`;
   }).join('');
@@ -862,11 +935,13 @@ function awardBadge(id) {
   const u = localDB[currentUser];
   if (!u.badges.includes(id)) {
     u.badges.push(id);
-    const b = BADGES.find(x => x.id === id);
-    showToast(`Badge earned: ${b.label}`, 'ok');
+    showToast(`Badge earned: ${BADGES.find(x => x.id === id).label}`, 'ok');
   }
 }
 
+/* ============================================================
+   7. LESSON + QUIZ (anti-repetition + button locking)
+   ============================================================ */
 function openLesson(eraIndex) {
   const u = localDB[currentUser];
   if (!u || !u.unlockedQuests[eraIndex]) return showToast("This module is locked. Clear the previous one first.", 'err');
@@ -886,6 +961,8 @@ function closeLesson() {
 }
 
 async function generateAndStartQuiz() {
+  const btn = document.getElementById('btn-start-quiz');
+  btn.disabled = true;
   document.getElementById('lesson-container').style.display = 'none';
   toggleLoader(true, "Writing new questions…");
 
@@ -909,16 +986,15 @@ Reply ONLY with a valid JSON array, no markdown fences, formatted exactly like:
     const generated = JSON.parse(raw);
     if (!Array.isArray(generated) || generated.length < 4) throw new Error("bad format");
     activeQuizData = generated.slice(0, 4);
-    gameState.usingAI = true;
     document.getElementById('quiz-source-tag').innerText = "AI-generated assessment";
   } catch (err) {
     activeQuizData = fallbackQuizData[era];
-    gameState.usingAI = false;
     document.getElementById('quiz-source-tag').innerText = "Offline assessment";
     showToast("AI unavailable — using built-in question bank.", '');
   }
 
   toggleLoader(false);
+  btn.disabled = false;
   document.getElementById('quiz-block').style.display = 'block';
   gameState.questionIndex = 0;
   gameState.score = 0;
@@ -982,7 +1058,7 @@ function nextQuestion() {
   else finishQuest();
 }
 
-function finishQuest() {
+async function finishQuest() {
   const max = activeQuizData.length;
   const u = localDB[currentUser];
   const era = gameState.currentEra;
@@ -1000,11 +1076,14 @@ function finishQuest() {
     showToast(`Not yet — ${gameState.score}/${max}. Needs 3/4 to pass. Try again.`, 'err');
     u.passStreak = 0;
   }
-  saveDatabase();
+  await saveDatabase();
   updateQuestsUI();
   closeLesson();
 }
 
+/* ============================================================
+   8. GAME MODES
+   ============================================================ */
 function switchGameMode(mode, btn) {
   document.querySelectorAll('.mode-tab').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
@@ -1012,7 +1091,6 @@ function switchGameMode(mode, btn) {
   document.getElementById(`mode-${mode}`).classList.add('active');
 }
 
-/* Timeline */
 const ALL_TIMELINE_EVENTS = [
   { year: 1521, text: "Arrival of Ferdinand Magellan" }, { year: 1571, text: "Founding of Manila" },
   { year: 1872, text: "Execution of GOMBURZA" }, { year: 1892, text: "Founding of the Katipunan" },
@@ -1055,12 +1133,12 @@ function handleTimelineChoice(btn, eventObj) {
   }
 }
 
-/* Mystery Figure with Wikipedia Portrait Integration */
+/* Mystery Figure — uses cloudSearch() for a cached Wikipedia portrait */
 async function initMysteryGame() {
-  document.getElementById('btn-start-mystery').style.display = 'none';
+  const startBtn = document.getElementById('btn-start-mystery');
+  startBtn.disabled = true;
   document.getElementById('mystery-input-area').style.display = 'none';
-  const portraitImg = document.getElementById('mystery-portrait-img');
-  portraitImg.style.display = 'none';
+  document.getElementById('mystery-portrait-img').style.display = 'none';
   const clueList = document.getElementById('clue-list');
   document.getElementById('mystery-clues').style.display = 'block';
   clueList.innerHTML = "<li>Opening case file…</li>";
@@ -1076,31 +1154,26 @@ Reply ONLY with JSON, no markdown: {"name":"Full Name","clues":["clue 1 (broad)"
     mysteryAnswer = result.name;
     u.mysteryUsed.push(mysteryAnswer);
     if (u.mysteryUsed.length > 20) u.mysteryUsed.shift();
-    saveDatabase();
+    await saveDatabase();
     clueList.innerHTML = result.clues.map(c => `<li>${c}</li>`).join('');
   } catch (e) {
     const pick = fallbackMysteries[Math.floor(Math.random() * fallbackMysteries.length)];
     mysteryAnswer = pick.name;
     clueList.innerHTML = pick.clues.map(c => `<li>${c}</li>`).join('');
+    showToast("AI unavailable — using a built-in case.", '');
   }
 
-  // Wikipedia portrait lookup
-  try {
-    const searchRes = await fetch(`${SEARCH_ENDPOINT}?q=${encodeURIComponent(mysteryAnswer)}&type=wiki`);
-    if (searchRes.ok) {
-      const wikiData = await searchRes.json();
-      if (wikiData.thumbnail) {
-        portraitImg.src = wikiData.thumbnail;
-        portraitImg.style.display = 'block';
-      }
-    }
-  } catch(e) {}
+  const wiki = await cloudSearch(mysteryAnswer, 'wiki');
+  if (wiki?.thumbnail) {
+    const img = document.getElementById('mystery-portrait-img');
+    img.src = wiki.thumbnail; img.style.display = 'block';
+  }
 
+  startBtn.disabled = false;
   document.getElementById('mystery-input-area').style.display = 'block';
   document.getElementById('mystery-guess').value = '';
   document.getElementById('mystery-guess').focus();
 }
-
 function checkMysteryGuess() {
   const guess = document.getElementById('mystery-guess').value.trim().toLowerCase();
   if (!guess) return;
@@ -1114,14 +1187,14 @@ function checkMysteryGuess() {
   }
 }
 
-/* Flashcards with Google & Wikipedia Image Integration */
+/* Flashcards — images cached on the card object so re-flipping never re-fetches */
 function populateFlashEraSelect() {
   const sel = document.getElementById('flash-era-select');
-  sel.innerHTML = '<option value="all">All eras</option>' +
-    ERA_NAMES.map((n,i) => `<option value="${i}">${n}</option>`).join('');
+  sel.innerHTML = '<option value="all">All eras</option>' + ERA_NAMES.map((n,i) => `<option value="${i}">${n}</option>`).join('');
 }
-
 async function startFlashcards() {
+  const btn = document.getElementById('btn-gen-deck');
+  btn.disabled = true;
   const eraChoice = document.getElementById('flash-era-select').value;
   document.getElementById('flash-setup').style.display = 'none';
   toggleLoader(true, "Building flashcard deck…");
@@ -1133,53 +1206,46 @@ Reply ONLY with JSON: [{"front":"term or question","back":"answer"}]`;
   try {
     const raw = await callAI(prompt, 0.6);
     const cards = JSON.parse(raw);
-    flashDeck = cards.map(c => ({...c, weak: false}));
+    flashDeck = cards.map(c => ({...c, weak: false, imageUrl: null, imageChecked: false}));
   } catch (e) {
-    flashDeck = eras.flatMap(i => fallbackQuizData[i].map(q => ({ front: q.q, back: q.a })));
+    flashDeck = eras.flatMap(i => fallbackQuizData[i].map(q => ({ front: q.q, back: q.a, imageUrl: null, imageChecked: false })));
+    showToast("AI unavailable — using built-in flashcards.", '');
   }
   toggleLoader(false);
+  btn.disabled = false;
   flashIndex = 0; flashFlipped = false;
   document.getElementById('flash-play').style.display = 'block';
   renderFlashcard();
 }
-
 async function renderFlashcard() {
   const prog = document.getElementById('flash-progress');
-  prog.innerHTML = flashDeck.map((_, i) =>
-    `<span class="${i < flashIndex ? 'done' : i === flashIndex ? 'current' : ''}"></span>`).join('');
+  prog.innerHTML = flashDeck.map((_, i) => `<span class="${i < flashIndex ? 'done' : i === flashIndex ? 'current' : ''}"></span>`).join('');
   const card = flashDeck[flashIndex];
   flashFlipped = false;
-  
   const faceEl = document.getElementById('flashcard-face');
   const imgEl = document.getElementById('flash-card-img');
-  imgEl.style.display = 'none';
-
-  if (!card) {
-    faceEl.innerText = "Deck complete 🎉";
-    return;
-  }
-
+  if (!card) { faceEl.innerText = "Deck complete 🎉"; imgEl.style.display = 'none'; return; }
   faceEl.innerText = card.front;
 
-  // Search image via Google Search & Wikipedia API
-  try {
-    const imgRes = await fetch(`${SEARCH_ENDPOINT}?q=${encodeURIComponent(card.front)}`);
-    if (imgRes.ok) {
-      const imgData = await imgRes.json();
-      if (imgData.imageUrl) {
-        imgEl.src = imgData.imageUrl;
-        imgEl.style.display = 'block';
+  if (card.imageUrl) {
+    imgEl.src = card.imageUrl; imgEl.style.display = 'block';
+  } else {
+    imgEl.style.display = 'none';
+    if (!card.imageChecked) {
+      card.imageChecked = true; // only ever fetch once per card, even if requeued
+      const result = await cloudSearch(card.front);
+      if (result?.imageUrl && flashDeck[flashIndex] === card) { // still on this card
+        card.imageUrl = result.imageUrl;
+        imgEl.src = card.imageUrl; imgEl.style.display = 'block';
       }
     }
-  } catch(e) {}
+  }
 }
-
 function flipFlashcard() {
   const card = flashDeck[flashIndex]; if (!card) return;
   flashFlipped = !flashFlipped;
   document.getElementById('flashcard-face').innerText = flashFlipped ? card.back : card.front;
 }
-
 function rateFlashcard(gotIt) {
   const card = flashDeck[flashIndex]; if (!card) return;
   if (!gotIt) { card.weak = true; flashDeck.push(card); }
@@ -1196,6 +1262,8 @@ function rateFlashcard(gotIt) {
 }
 
 async function startSpeedRound() {
+  const btn = document.getElementById('btn-start-speed');
+  btn.disabled = true;
   document.getElementById('speed-setup').style.display = 'none';
   toggleLoader(true, "Preparing rapid-fire questions…");
   const era = Math.floor(Math.random() * 5);
@@ -1205,8 +1273,10 @@ async function startSpeedRound() {
     speedQuestions = JSON.parse(raw);
   } catch (e) {
     speedQuestions = fallbackQuizData[era].map(q => ({ q: q.q, a: q.a, o: q.o }));
+    showToast("AI unavailable — using a shorter built-in set.", '');
   }
   toggleLoader(false);
+  btn.disabled = false;
   speedIndex = 0; speedScore = 0; speedTimeLeft = 60;
   document.getElementById('speed-play').style.display = 'block';
   document.getElementById('speed-score').innerText = "Score: 0";
@@ -1218,7 +1288,6 @@ async function startSpeedRound() {
     if (speedTimeLeft <= 0) endSpeedRound();
   }, 1000);
 }
-
 function renderSpeedQuestion() {
   if (speedIndex >= speedQuestions.length) { endSpeedRound(); return; }
   const q = speedQuestions[speedIndex];
@@ -1233,26 +1302,27 @@ function renderSpeedQuestion() {
     opts.appendChild(b);
   });
 }
-
-function endSpeedRound() {
+async function endSpeedRound() {
   clearInterval(speedTimerId);
   document.getElementById('speed-play').style.display = 'none';
   document.getElementById('speed-setup').style.display = 'block';
   showToast(`Round over — final score ${speedScore}.`, 'ok');
   awardBadge('speed_runner');
-  saveDatabase();
+  await saveDatabase();
 }
 
+/* AI Tutor chat */
 function renderTutorLog() {
   const log = document.getElementById('tutor-log');
   log.innerHTML = tutorHistory.map(m => `<div class="tutor-msg ${m.role}">${m.text}</div>`).join('');
   log.scrollTop = log.scrollHeight;
 }
-
 async function askTutor() {
   const input = document.getElementById('tutor-input');
+  const sendBtn = document.getElementById('btn-tutor-send');
   const msg = input.value.trim();
   if (!msg) return;
+  sendBtn.disabled = true; input.disabled = true;
   tutorHistory.push({ role: 'user', text: msg });
   renderTutorLog();
   input.value = '';
@@ -1265,12 +1335,16 @@ async function askTutor() {
     tutorHistory[tutorHistory.length - 1] = { role: 'ai', text: "Sorry, the AI tutor is unavailable right now. Try reviewing the module content, or ask again in a moment." };
   }
   renderTutorLog();
+  sendBtn.disabled = false; input.disabled = false; input.focus();
   const u = localDB[currentUser];
   u.tutorCount = (u.tutorCount || 0) + 1;
   if (u.tutorCount >= 5) awardBadge('tutor_pet');
-  saveDatabase();
+  await saveDatabase();
 }
 
+/* ============================================================
+   9. AR
+   ============================================================ */
 function requestCameraAccess() {
   document.getElementById('ar-perm-box').style.display = 'none';
   document.getElementById('ar-overlay-text').style.display = 'block';
@@ -1288,21 +1362,32 @@ function requestCameraAccess() {
   if (u && !u.arViewed) { u.arViewed = true; awardBadge('ar_explorer'); saveDatabase(); }
 }
 
+/* ============================================================
+   10. TEACHER DASHBOARD — fetches the full roster only when opened
+   ============================================================ */
 async function renderTeacherDashboard() {
+  const wrap = document.getElementById('teacher-table-wrap');
   const tbody = document.getElementById('teacher-table-body');
-  tbody.innerHTML = '';
 
-  let dbSource = localDB;
-  try {
-    const res = await fetch(`${DB_ENDPOINT}`);
-    if (res.ok) {
-      const cloudData = await res.json();
-      if (cloudData && typeof cloudData === 'object') dbSource = cloudData;
-    }
-  } catch(e) {}
-
-  for (const [name, dataRaw] of Object.entries(dbSource)) {
-    const data = ensureUserShape(dataRaw);
+  if (!classCode) {
+    wrap.innerHTML = `<div class="dash-msg">No class code set — the dashboard needs a class code to read the shared roster.<br>Set one from the login screen (log out first, or clear "Class code" in your browser storage).</div>`;
+    return;
+  }
+  const roster = await cloudGetAll();
+  if (!roster) {
+    wrap.innerHTML = `<div class="dash-msg">Couldn't reach the class server (wrong code, or it's offline). Showing this device's own progress instead.</div>`;
+    renderTeacherRows({ [currentUser]: { data: localDB[currentUser] } });
+    return;
+  }
+  if (!wrap.querySelector('table')) location.reload(); // restore table markup if we previously swapped it for a message
+  renderTeacherRows(roster);
+}
+function renderTeacherRows(roster) {
+  const wrap = document.getElementById('teacher-table-wrap');
+  wrap.innerHTML = `<table><thead><tr><th>Name</th><th>Score</th><th>Era reached</th><th>Badges</th><th>Status</th></tr></thead><tbody id="teacher-table-body"></tbody></table>`;
+  const tbody = document.getElementById('teacher-table-body');
+  for (const [name, entry] of Object.entries(roster)) {
+    const data = ensureUserShape(entry.data || entry);
     const totalScore = data.eraScores.reduce((a,b) => a+b, 0);
     let highestUnlocked = 0;
     data.unlockedQuests.forEach((u, i) => { if (u) highestUnlocked = i; });
@@ -1320,22 +1405,21 @@ async function renderTeacherDashboard() {
     </tr>`);
   }
 }
-
 function exportCSV() {
   let csv = "Name,TotalScore,EraReached,Badges,Status\n";
-  for (const [name, dataRaw] of Object.entries(localDB)) {
-    const data = ensureUserShape(dataRaw);
-    const total = data.eraScores.reduce((a,b)=>a+b,0);
-    let highest = 0; data.unlockedQuests.forEach((u,i) => { if (u) highest = i; });
-    const status = data.unlockedQuests.every((u,i) => data.eraScores[i] >= 3) ? "Completed" : (total > 0 ? "In progress" : "Not started");
-    csv += `${name},${total},${ERA_NAMES[highest]},${data.badges.length},${status}\n`;
-  }
+  document.querySelectorAll('#teacher-table-body tr').forEach(tr => {
+    const cells = [...tr.children].map(td => td.innerText.replace(/\n/g, ' ').trim());
+    csv += cells.join(',') + '\n';
+  });
   const blob = new Blob([csv], { type: 'text/csv' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a'); a.href = url; a.download = 'lahiquest-progress.csv'; a.click();
   URL.revokeObjectURL(url);
 }
 
+/* ============================================================
+   11. INIT
+   ============================================================ */
 window.addEventListener('load', () => {
   applyStoredTheme();
   setTimeout(() => {
