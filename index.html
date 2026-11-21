@@ -5,9 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>LahiQuest — Philippine History, Reimagined</title>
 <meta name="description" content="Learn Philippine history through AI-generated quests, flashcards, and AR artifacts.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📜</text></svg>">
 
-<script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
-<script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/aframe@1.4.2/dist/aframe.min.js"></script>
+<!-- AR.js loads lazily in JS, only when camera AR is opened -->
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700;9..144,900&family=Sora:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 
 <style>
@@ -23,7 +24,6 @@
     --muted: #6B6153;
     --shadow: 0 18px 40px rgba(34,29,23,0.10);
     --shadow-soft: 0 8px 20px rgba(34,29,23,0.07);
-    --radius: 16px;
     --font-display: 'Fraunces', serif;
     --font-body: 'Sora', sans-serif;
     --font-mono: 'Space Mono', monospace;
@@ -49,40 +49,43 @@
     background: var(--paper);
     color: var(--ink);
     line-height: 1.6;
+    overflow-x: clip; /* parked toasts slide past the right edge; don't let that create scroll */
     transition: background .3s ease, color .3s ease;
   }
   ::selection { background: var(--gold); color: var(--paper-raised); }
   a { color: inherit; }
   button { font-family: var(--font-body); }
-
-  #preloader {
-    position: fixed; inset: 0; z-index: 9999; background: var(--ink);
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    color: var(--gold); transition: opacity .5s ease;
+  a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible {
+    outline: 2px solid var(--gold); outline-offset: 2px;
   }
-  #preloader .brush {
-    width: 64px; height: 64px; border: 3px solid var(--gold); border-top-color: transparent;
-    border-radius: 50%; animation: spin 1s linear infinite; margin-top: 22px;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
+  /* AR.js drops its own raw error popup — we surface errors with toasts instead */
+  #error-popup { display: none !important; }
 
+  /* loading overlay + toast */
   #system-loader {
     position: fixed; inset: 0; z-index: 1500; display: none;
     background: rgba(22,19,15,0.92); backdrop-filter: blur(6px);
     align-items: center; justify-content: center; flex-direction: column; color: #F2EAD8;
   }
-  #system-loader .brush { width: 40px; height: 40px; border: 3px solid #D9A94F; border-top-color: transparent; border-radius: 50%; animation: spin .9s linear infinite; margin-bottom: 16px; }
+  .brush { width: 40px; height: 40px; border: 3px solid #D9A94F; border-top-color: transparent; border-radius: 50%; animation: spin .9s linear infinite; margin-bottom: 16px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
 
   #toast {
     position: fixed; top: 24px; right: 24px; z-index: 2000; max-width: 90vw;
     background: var(--ink); color: var(--paper); padding: 14px 22px; border-radius: 12px;
     font-weight: 600; font-size: .95rem; box-shadow: var(--shadow);
-    transform: translateX(140%); transition: transform .4s cubic-bezier(.2,.9,.3,1.3);
+    transform: translateX(140%); visibility: hidden;
+    transition: transform .4s cubic-bezier(.2,.9,.3,1.3), visibility 0s linear .4s;
+  }
+  #toast.show {
+    transform: translateX(0); visibility: visible;
+    transition: transform .4s cubic-bezier(.2,.9,.3,1.3);
   }
   #toast.err { background: var(--sinag); color: #fff; }
   #toast.ok { background: var(--malachite); color: #fff; }
   #toast.warn { background: var(--gold-deep); color: #fff; }
 
+  /* login */
   #login-modal {
     position: fixed; inset: 0; z-index: 3000; background: rgba(16,14,10,0.72);
     display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px);
@@ -100,6 +103,7 @@
   .login-input:focus { outline: none; border-color: var(--gold); }
   .login-hint { font-size: .78rem; color: var(--muted); margin-bottom: 18px; }
 
+  /* nav */
   nav {
     position: fixed; top: 0; width: 100%; z-index: 1000; height: 76px;
     display: flex; align-items: center; justify-content: space-between; padding: 0 5%;
@@ -108,6 +112,7 @@
   }
   .logo { font-family: var(--font-display); font-weight: 700; font-size: 1.6rem; cursor: pointer; letter-spacing: .3px; }
   .logo span { color: var(--gold-deep); }
+  .nav-right { display: flex; align-items: center; gap: 6px; }
   .nav-links { display: flex; gap: 4px; align-items: center; }
   .nav-links button {
     background: none; border: none; padding: 9px 16px; font-weight: 600; font-size: .92rem;
@@ -119,30 +124,29 @@
     background: none; border: 1px solid var(--line); width: 38px; height: 38px; border-radius: 50%;
     cursor: pointer; font-size: 1rem; color: var(--ink); display: flex; align-items: center; justify-content: center;
   }
-  .sync-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); display: inline-block; margin-right: 6px; }
-  .sync-dot.on { background: var(--malachite); }
-  .sync-dot.off { background: var(--sinag); }
+  .icon-btn:hover { border-color: var(--gold); }
   .user-chip {
     font-family: var(--font-mono); font-size: .78rem; background: var(--gold); color: #201503;
-    padding: 5px 12px; border-radius: 20px; font-weight: 700; display: none; margin-left: 8px; align-items: center;
+    padding: 5px 12px; border-radius: 20px; font-weight: 700; display: none; margin-left: 8px; align-items: center; gap: 6px;
   }
+  .sync-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); display: inline-block; }
+  .sync-dot.on { background: var(--malachite); }
+  .sync-dot.off { background: var(--sinag); }
   .hamburger { display: none; background: none; border: none; font-size: 1.6rem; cursor: pointer; color: var(--ink); }
 
   main { padding-top: 76px; }
-  section {
-    display: none; padding: 56px 5% 100px; max-width: 1180px; margin: auto;
-    animation: fadeUp .5s ease forwards;
-  }
+  section { display: none; padding: 56px 5% 100px; max-width: 1180px; margin: auto; animation: fadeUp .5s ease forwards; }
   .active-section { display: block; }
   @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
 
   .eyebrow { font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 2px; font-size: .74rem; color: var(--malachite); font-weight: 700; margin-bottom: 10px; }
-  .section-title { font-family: var(--font-display); font-weight: 700; font-size: clamp(1.9rem, 4.5vw, 2.7rem); color: var(--ink); margin-bottom: 8px; }
+  .section-title { font-family: var(--font-display); font-weight: 700; font-size: clamp(1.9rem, 4.5vw, 2.7rem); margin-bottom: 8px; }
   .section-desc { color: var(--muted); margin-bottom: 32px; font-size: 1.02rem; max-width: 640px; }
 
+  /* home */
   .hero-flex { display: flex; align-items: center; gap: 60px; flex-wrap: wrap; margin-top: 10px; }
   .hero-text { flex: 1.2; min-width: 320px; }
-  .hero-text h1 { font-family: var(--font-display); font-weight: 900; font-size: clamp(2.4rem, 6.5vw, 4.2rem); line-height: 1.05; color: var(--ink); margin-bottom: 20px; }
+  .hero-text h1 { font-family: var(--font-display); font-weight: 900; font-size: clamp(2.4rem, 6.5vw, 4.2rem); line-height: 1.05; margin-bottom: 20px; }
   .hero-text h1 em { font-style: italic; color: var(--gold-deep); }
   .hero-text p { color: var(--muted); font-size: 1.08rem; max-width: 480px; margin-bottom: 30px; }
   .hero-stats { display: flex; gap: 30px; margin-top: 34px; flex-wrap: wrap; }
@@ -151,7 +155,7 @@
 
   .hero-panel {
     flex: 1; min-width: 300px; background: var(--paper-raised); border: 1px solid var(--line);
-    border-radius: 22px; padding: 30px; box-shadow: var(--shadow); position: relative;
+    border-radius: 22px; padding: 30px; box-shadow: var(--shadow);
   }
   .hero-panel h3 { font-family: var(--font-display); font-size: 1.3rem; margin-bottom: 4px; }
   .hero-panel p.small { color: var(--muted); font-size: .88rem; margin-bottom: 20px; }
@@ -163,6 +167,7 @@
   }
   .badge-pill.locked { background: transparent; color: var(--muted); border-color: var(--line); }
 
+  /* buttons */
   .btn-main {
     background: var(--ink); color: var(--paper); padding: 15px 34px; border: none; border-radius: 12px;
     font-weight: 700; font-size: 1rem; cursor: pointer; display: inline-flex; align-items: center;
@@ -178,6 +183,7 @@
   .btn-ghost:disabled { opacity: .5; cursor: not-allowed; }
   .btn-sm { padding: 9px 18px; font-size: .85rem; border-radius: 10px; }
 
+  /* quest grid + lesson */
   .quest-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 22px; }
   .quest-card {
     background: var(--paper-raised); border-radius: 18px; padding: 30px; position: relative;
@@ -186,90 +192,160 @@
   .quest-card:hover:not(.locked) { transform: translateY(-4px); box-shadow: var(--shadow); border-color: var(--gold); }
   .quest-card.locked { opacity: .55; cursor: not-allowed; }
   .quest-eyebrow { font-family: var(--font-mono); font-size: .72rem; color: var(--malachite); font-weight: 700; letter-spacing: 1px; }
-  .quest-card h3 { font-family: var(--font-display); font-size: 1.35rem; margin: 8px 0 8px; }
+  .quest-card h3 { font-family: var(--font-display); font-size: 1.35rem; margin: 8px 0; }
   .quest-card p { color: var(--muted); font-size: .92rem; }
   .quest-bar { height: 6px; background: var(--line); border-radius: 4px; margin-top: 18px; overflow: hidden; }
-  .quest-bar-fill { height: 100%; background: linear-gradient(90deg, var(--malachite), var(--gold)); border-radius: 4px; }
+  .quest-bar-fill { height: 100%; background: linear-gradient(90deg, var(--malachite), var(--gold)); border-radius: 4px; transition: width .4s ease; }
   .lock-icon { position: absolute; top: 22px; right: 22px; font-size: 1.2rem; opacity: .6; }
 
   .panel {
     background: var(--paper-raised); border-radius: 20px; padding: clamp(26px, 4vw, 46px);
     box-shadow: var(--shadow-soft); border: 1px solid var(--line); display: none; margin-top: 22px;
   }
+  .panel.always { display: block; }
   .panel-header { border-bottom: 1px solid var(--line); padding-bottom: 18px; margin-bottom: 26px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; }
   .lesson-content h3 { font-family: var(--font-display); font-size: 1.4rem; color: var(--gold-deep); margin: 22px 0 12px; }
-  .lesson-content p, .lesson-content li { font-size: 1.02rem; color: var(--ink); margin-bottom: 16px; }
+  .lesson-content p, .lesson-content li { font-size: 1.02rem; margin-bottom: 16px; }
   .lesson-content ul { margin-left: 20px; }
 
+  /* quiz */
+  .quiz-dots { display: flex; gap: 6px; }
+  .quiz-dots span { width: 26px; height: 5px; border-radius: 3px; background: var(--line); }
+  .quiz-dots span.done { background: var(--malachite); }
+  .quiz-dots span.current { background: var(--gold); }
   .option-btn {
     display: block; width: 100%; padding: 16px 22px; margin-bottom: 10px; border: 1.5px solid var(--line);
     border-radius: 12px; text-align: left; background: var(--paper); color: var(--ink); cursor: pointer;
     font-size: 1rem; transition: .15s;
   }
-  .option-btn:hover:not(:disabled) { border-color: var(--gold); }
+  .option-btn:hover:not(:disabled) { border-color: var(--gold); transform: translateX(3px); }
   .option-btn:disabled { cursor: default; }
   .option-btn.correct { background: color-mix(in srgb, var(--malachite) 18%, var(--paper)); border-color: var(--malachite); color: var(--malachite); font-weight: 700; }
   .option-btn.wrong { background: color-mix(in srgb, var(--sinag) 16%, var(--paper)); border-color: var(--sinag); color: var(--sinag); }
 
   .lore-box { display: none; background: var(--paper); border: 1px solid var(--line); border-radius: 14px; padding: 22px; margin-top: 22px; }
   .explain-box { background: var(--paper-raised); border-radius: 10px; padding: 16px; margin-top: 12px; border-left: 3px solid var(--gold); display: none; font-size: .95rem; }
-
   .tag {
     display: inline-block; font-family: var(--font-mono); font-size: .74rem; background: var(--line);
     color: var(--muted); padding: 5px 12px; border-radius: 20px; font-weight: 700;
   }
 
+  /* games */
   .mode-tabs { display: flex; gap: 8px; margin-bottom: 26px; flex-wrap: wrap; }
   .mode-tab {
     background: var(--paper-raised); border: 1.5px solid var(--line); padding: 10px 18px; border-radius: 30px;
     font-weight: 700; font-size: .88rem; cursor: pointer; color: var(--muted);
   }
+  .mode-tab:hover { border-color: var(--gold); color: var(--ink); }
   .mode-tab.active { background: var(--ink); color: var(--paper); border-color: var(--ink); }
   .game-view { display: none; }
   .game-view.active { display: block; }
 
   .timeline-slots { display: flex; justify-content: space-between; gap: 10px; margin: 26px 0; min-height: 90px; position: relative; }
   .timeline-slots::before { content: ''; position: absolute; top: 50%; left: 0; right: 0; height: 2px; background: var(--line); z-index: 0; }
-  .slot { flex: 1; background: var(--paper); border: 2px dashed var(--line); border-radius: 12px; display: flex; align-items: center; justify-content: center; z-index: 1; padding: 14px; font-weight: 700; font-size: .85rem; transition: .25s; color: var(--muted); text-align: center; }
+  .slot {
+    flex: 1; background: var(--paper); border: 2px dashed var(--line); border-radius: 12px;
+    display: flex; align-items: center; justify-content: center; z-index: 1; padding: 14px;
+    font-weight: 700; font-size: .85rem; transition: .25s; color: var(--muted); text-align: center;
+  }
   .slot.filled { border-style: solid; border-color: var(--gold); background: var(--gold); color: #201503; }
-  .slot.correct { background: var(--malachite); border-color: var(--malachite); color: #fff; }
-  .slot.wrong { background: var(--sinag); border-color: var(--sinag); color: #fff; }
+  .slot.wrong { border-color: var(--sinag); animation: shake .35s; }
+  @keyframes shake { 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
   .timeline-choices { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  .choice-btn { background: var(--paper); border: 1.5px solid var(--line); padding: 14px; border-radius: 12px; font-weight: 600; font-size: .92rem; cursor: pointer; color: var(--ink); }
+  .choice-btn {
+    background: var(--paper); border: 1.5px solid var(--line); padding: 14px; border-radius: 12px;
+    font-weight: 600; font-size: .92rem; cursor: pointer; color: var(--ink); transition: .15s;
+  }
   .choice-btn:hover:not(:disabled) { border-color: var(--gold); }
   .choice-btn:disabled { opacity: .45; cursor: not-allowed; }
 
-  .mystery-input, .tutor-input, .flash-input {
+  .mystery-input, .tutor-input, .flash-input, .qr-custom {
     width: 100%; padding: 14px 16px; border: 1.5px solid var(--line); border-radius: 12px;
-    font-size: 1rem; margin-bottom: 12px; background: var(--paper); color: var(--ink);
+    font-size: 1rem; margin-bottom: 12px; background: var(--paper); color: var(--ink); font-family: var(--font-body);
   }
+  .mystery-portrait { width: 100px; height: 100px; border-radius: 50%; object-fit: cover; margin: 0 auto 16px; border: 3px solid var(--gold); display: block; }
+  .clue-list { margin-left: 20px; }
+  .clue-list li { margin-bottom: 8px; }
 
   .flashcard {
     background: var(--paper); border: 1.5px solid var(--line); border-radius: 18px; padding: 30px;
     min-height: 220px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
     font-family: var(--font-display); font-size: 1.25rem; cursor: pointer; margin-bottom: 20px;
   }
+  .flashcard:hover { border-color: var(--gold); }
   .flashcard-img { max-height: 120px; border-radius: 8px; margin-bottom: 14px; object-fit: cover; display: none; }
+  .flash-hint { font-family: var(--font-mono); font-size: .72rem; color: var(--muted); margin-top: 14px; }
   .flash-progress { display: flex; gap: 6px; margin-bottom: 18px; }
   .flash-progress span { flex: 1; height: 5px; border-radius: 3px; background: var(--line); }
   .flash-progress span.done { background: var(--malachite); }
   .flash-progress span.current { background: var(--gold); }
 
-  .speed-timer {
-    font-family: var(--font-mono); font-size: 2.2rem; font-weight: 700; color: var(--sinag);
-    text-align: center; margin-bottom: 18px;
-  }
+  .speed-timer { font-family: var(--font-mono); font-size: 2.2rem; font-weight: 700; color: var(--sinag); text-align: center; margin-bottom: 18px; }
 
   .tutor-log { max-height: 340px; overflow-y: auto; margin-bottom: 16px; display: flex; flex-direction: column; gap: 12px; }
-  .tutor-msg { padding: 12px 16px; border-radius: 12px; font-size: .95rem; max-width: 85%; }
+  .tutor-msg { padding: 12px 16px; border-radius: 12px; font-size: .95rem; max-width: 85%; overflow-wrap: break-word; }
   .tutor-msg.user { background: var(--gold); color: #201503; align-self: flex-end; font-weight: 600; }
   .tutor-msg.ai { background: var(--paper); border: 1px solid var(--line); align-self: flex-start; }
+  .tutor-suggestions { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+  .tutor-suggestions button {
+    background: var(--paper); border: 1px solid var(--line); border-radius: 20px; padding: 7px 14px;
+    font-size: .8rem; cursor: pointer; color: var(--muted);
+  }
+  .tutor-suggestions button:hover { border-color: var(--gold); color: var(--gold-deep); }
 
-  #ar-frame { width: 100%; height: clamp(380px, 55vh, 600px); border-radius: 20px; overflow: hidden; position: relative; background: #10100E; border: 1px solid var(--line); display: flex; align-items: center; justify-content: center; }
-  #ar-frame video, #ar-frame .a-canvas { object-fit: cover !important; width: 100% !important; height: 100% !important; top: 0 !important; left: 0 !important; position: absolute !important; z-index: 1; }
-  .ar-permissions-box { background: var(--paper-raised); padding: 36px; border-radius: 16px; text-align: center; max-width: 90%; z-index: 10; position: relative; }
+  /* AR + QR */
+  .artifact-chips { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 26px; }
+  .artifact-chip {
+    background: var(--paper-raised); border: 1.5px solid var(--line); border-radius: 14px;
+    padding: 12px 18px; cursor: pointer; font-weight: 700; font-size: .88rem; color: var(--muted);
+    display: flex; align-items: center; gap: 10px; transition: .2s;
+  }
+  .artifact-chip .dot { width: 12px; height: 12px; border-radius: 50%; }
+  .artifact-chip:hover { border-color: var(--gold); color: var(--ink); }
+  .artifact-chip.active { border-color: var(--gold); background: color-mix(in srgb, var(--gold) 14%, var(--paper-raised)); color: var(--ink); }
 
-  table { width: 100%; min-width: 640px; border-collapse: separate; border-spacing: 0; background: var(--paper-raised); border-radius: 16px; border: 1px solid var(--line); overflow: hidden; }
+  .ar-grid { display: grid; grid-template-columns: 1.5fr 1fr; gap: 22px; align-items: start; }
+  .ar-grid > * { min-width: 0; }
+  #ar-stage {
+    width: 100%; height: clamp(380px, 55vh, 560px); border-radius: 20px; overflow: hidden;
+    position: relative; background: #14110C; border: 1px solid var(--line);
+    display: flex; align-items: center; justify-content: center;
+  }
+  #ar-stage video, #ar-stage .a-canvas {
+    object-fit: cover !important; width: 100% !important; max-width: 100% !important; height: 100% !important;
+    top: 0 !important; left: 0 !important; position: absolute !important; z-index: 1;
+  }
+  #ar-stage canvas { max-width: 100% !important; }
+  .ar-permissions-box {
+    background: var(--paper-raised); padding: 36px; border-radius: 16px; text-align: center;
+    max-width: 90%; z-index: 10; position: relative;
+  }
+  .ar-overlay-text {
+    position: absolute; bottom: 26px; left: 50%; transform: translateX(-50%);
+    background: rgba(0,0,0,.7); color: #fff; padding: 9px 22px; border-radius: 20px;
+    z-index: 20; display: none; font-size: .88rem; white-space: nowrap;
+  }
+  .ar-side { display: flex; flex-direction: column; gap: 22px; }
+  .ar-card {
+    background: var(--paper-raised); border: 1px solid var(--line); border-radius: 20px;
+    padding: 26px; box-shadow: var(--shadow-soft);
+  }
+  .ar-card h3 { font-family: var(--font-display); font-size: 1.2rem; margin-bottom: 6px; }
+  .ar-card p.small { color: var(--muted); font-size: .88rem; margin-bottom: 16px; }
+  #qr-box { display: flex; justify-content: center; padding: 12px 0; }
+  #qr-box canvas, #qr-box img { border-radius: 12px; background: #fff; padding: 10px; }
+  .qr-note { font-family: var(--font-mono); font-size: .72rem; color: var(--muted); margin-top: 10px; line-height: 1.5; }
+  .marker-sheet { display: flex; gap: 20px; align-items: center; flex-wrap: wrap; }
+  .marker-sheet img { width: 140px; height: 140px; border: 1px solid var(--line); border-radius: 12px; background: #fff; }
+  .artifact-info h3 { font-family: var(--font-display); font-size: 1.5rem; margin-bottom: 4px; }
+  .artifact-info .era { font-family: var(--font-mono); font-size: .78rem; color: var(--malachite); font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+  .artifact-info p { color: var(--muted); font-size: .95rem; margin-top: 10px; }
+
+  /* dashboard */
+  table {
+    width: 100%; min-width: 640px; border-collapse: separate; border-spacing: 0;
+    background: var(--paper-raised); border-radius: 16px; border: 1px solid var(--line); overflow: hidden;
+  }
   th, td { padding: 16px 22px; text-align: left; }
   th { background: var(--paper); font-weight: 700; font-size: .78rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid var(--line); }
   tr:not(:last-child) td { border-bottom: 1px solid var(--line); }
@@ -278,26 +354,42 @@
   .mini-bar-fill { height: 100%; background: var(--gold); }
   .dash-msg { text-align: center; padding: 40px 20px; color: var(--muted); background: var(--paper-raised); border-radius: 16px; border: 1px solid var(--line); }
 
-  .mystery-portrait { width: 100px; height: 100px; border-radius: 50%; object-fit: cover; margin: 0 auto 16px; border: 3px solid var(--gold); display: block; }
-
-  a:focus-visible, button:focus-visible, input:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+  /* printable AR sheet (only visible when printing) */
+  #print-sheet { display: none; }
+  @media print {
+    body > *:not(#print-sheet) { display: none !important; }
+    #print-sheet { display: block; padding: 24px; font-family: var(--font-body); color: #000; }
+    #print-sheet .ps-title { font-family: var(--font-display); font-size: 1.6rem; margin-bottom: 4px; }
+    #print-sheet .ps-sub { color: #555; margin-bottom: 20px; }
+    #print-sheet .ps-row { display: flex; gap: 32px; align-items: flex-start; }
+    #print-sheet img { border: 2px solid #000; border-radius: 8px; }
+    #print-sheet .ps-steps { margin-top: 24px; margin-left: 20px; }
+    #print-sheet .ps-steps li { margin-bottom: 8px; }
+  }
 
   @media (prefers-reduced-motion: reduce) { * { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
 
+  @media (max-width: 900px) {
+    .ar-grid { grid-template-columns: 1fr; }
+  }
   @media (max-width: 768px) {
     .hamburger { display: block; }
-    .nav-links { position: absolute; top: 76px; left: 0; width: 100%; background: var(--paper); backdrop-filter: blur(14px); flex-direction: column; padding: 16px 5%; transform: translateY(-140%); transition: .3s; opacity: 0; pointer-events: none; border-bottom: 1px solid var(--line); }
+    .nav-links {
+      position: absolute; top: 76px; left: 0; width: 100%; background: var(--paper);
+      backdrop-filter: blur(14px); flex-direction: column; padding: 16px 5%;
+      transform: translateY(-140%); transition: .3s; opacity: 0; pointer-events: none; border-bottom: 1px solid var(--line);
+    }
     .nav-links.open { transform: translateY(0); opacity: 1; pointer-events: all; }
     .nav-links button { width: 100%; text-align: left; padding: 14px 16px; }
     .timeline-choices { grid-template-columns: 1fr; }
     .timeline-slots { flex-direction: column; min-height: auto; gap: 10px; }
     .timeline-slots::before { width: 2px; height: 100%; left: 50%; top: 0; }
+    .user-chip { display: none !important; }
   }
 </style>
 </head>
 <body>
 
-<div id="preloader"><div style="font-family:var(--font-display); font-weight:900; font-size:clamp(2.2rem,9vw,4.5rem);">Lahi<span style="color:var(--gold)">Quest</span></div><div class="brush"></div></div>
 <div id="system-loader"><div class="brush"></div><p id="loader-text" style="font-family:var(--font-mono); font-size:.85rem; letter-spacing:1px;">Loading…</p></div>
 <div id="toast" role="status" aria-live="polite">Message</div>
 
@@ -305,16 +397,16 @@
   <div class="login-box">
     <h2>LahiQuest</h2>
     <p style="color:var(--muted); font-size:.92rem; margin-bottom:18px;">Enter your name and the class code your teacher gave you.</p>
-    <input type="text" id="student-name" class="login-input" placeholder="Your name" onkeypress="if(event.key==='Enter') document.getElementById('class-code-input').focus()">
-    <input type="text" id="class-code-input" class="login-input" placeholder="Class code" onkeypress="if(event.key==='Enter') loginUser()">
+    <input type="text" id="student-name" class="login-input" placeholder="Your name" autocomplete="name">
+    <input type="text" id="class-code-input" class="login-input" placeholder="Class code" autocomplete="off">
     <p class="login-hint">No code? You can still play — progress just stays on this device instead of syncing to the class dashboard.</p>
-    <button class="btn-main" style="width:100%;" onclick="loginUser()">Start learning</button>
+    <button class="btn-main" style="width:100%;" onclick="login()">Start learning</button>
   </div>
 </div>
 
 <nav>
   <div class="logo" onclick="navigate('home')">Lahi<span>Quest</span></div>
-  <div style="display:flex; align-items:center; gap:6px;">
+  <div class="nav-right">
     <div class="nav-links" id="nav-menu">
       <button onclick="navigate('home', this)" class="active">Home</button>
       <button onclick="navigate('learn', this)">Modules</button>
@@ -322,21 +414,21 @@
       <button onclick="navigate('ar', this)">WebAR</button>
       <button onclick="navigate('teacher', this)">Dashboard</button>
     </div>
-    <button class="icon-btn" id="theme-toggle" onclick="toggleTheme()" title="Toggle dark mode" aria-label="Toggle dark mode">◐</button>
+    <button class="icon-btn" onclick="toggleTheme()" title="Toggle dark mode" aria-label="Toggle dark mode">◐</button>
     <span class="user-chip" id="nav-user-badge"><span class="sync-dot" id="sync-dot"></span><span id="nav-user-name"></span></span>
+    <button class="icon-btn" id="btn-logout" onclick="logout()" title="Log out" aria-label="Log out" style="display:none;">⏻</button>
     <button class="hamburger" onclick="toggleMenu()" aria-label="Menu">☰</button>
   </div>
 </nav>
 
 <main>
 
-  <!-- HOME -->
   <section id="home" class="active-section">
     <div class="hero-flex">
       <div class="hero-text">
         <div class="eyebrow">Digital Interactive Media · MAPEH 10</div>
         <h1>Philippine history, <em>played</em> not just read.</h1>
-        <p>Five eras, AI-generated quizzes that never repeat themselves, AR artifacts, and a tutor that answers your questions in plain language.</p>
+        <p>Five eras, quizzes that never repeat themselves, AR artifacts you can scan with a QR code, and a tutor that answers in plain language.</p>
         <div style="display:flex; gap:14px; flex-wrap:wrap;">
           <button class="btn-main" onclick="navigate('learn')">Continue quest →</button>
           <button class="btn-ghost" onclick="navigate('games')">Play a minigame</button>
@@ -356,12 +448,11 @@
     </div>
   </section>
 
-  <!-- LEARN -->
   <section id="learn">
     <div id="modules-grid-view">
       <div class="eyebrow">Learning path</div>
       <h2 class="section-title">Five eras of Philippine history</h2>
-      <p class="section-desc">Read the module, then take an assessment. Score 3 out of 4 to unlock the next era — the questions are generated fresh by AI each time.</p>
+      <p class="section-desc">Read the module, then take an assessment. Score 3 out of 4 to unlock the next era — questions are written fresh by the AI each time.</p>
       <div class="quest-grid" id="quest-grid"></div>
     </div>
 
@@ -373,23 +464,24 @@
       <div id="lesson-content" class="lesson-content"></div>
       <div style="margin-top:34px; padding-top:26px; border-top:1px solid var(--line); text-align:center;">
         <h3 style="font-family:var(--font-display); font-size:1.25rem; margin-bottom:8px;">Ready for assessment?</h3>
-        <p style="color:var(--muted); margin-bottom:18px;">The AI will write four new questions focused on this module.</p>
-        <button class="btn-main" id="btn-start-quiz" onclick="generateAndStartQuiz()">Start assessment</button>
+        <p style="color:var(--muted); margin-bottom:18px;">Four new questions focused on this module, written on the spot.</p>
+        <button class="btn-main" id="btn-start-quiz" onclick="startAssessment()">Start assessment</button>
       </div>
     </div>
 
     <div id="quiz-block" class="panel">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:22px; flex-wrap:wrap; gap:10px;">
         <span class="tag" id="quiz-source-tag">Assessment</span>
+        <div class="quiz-dots" id="quiz-dots"></div>
         <span style="font-family:var(--font-mono); font-weight:700; color:var(--muted); font-size:.85rem;" id="quiz-tracker">1 / 4</span>
       </div>
-      <h2 id="q-text" style="font-family:var(--font-display); font-size:1.35rem; margin-bottom:26px; color:var(--ink);">Loading question…</h2>
+      <h2 id="q-text" style="font-family:var(--font-display); font-size:1.35rem; margin-bottom:26px;">Loading question…</h2>
       <div id="q-options"></div>
       <div id="lore-block" class="lore-box">
         <h4 style="margin-bottom:8px; color:var(--gold-deep); font-family:var(--font-display);">Historical context</h4>
         <p style="color:var(--muted); font-size:.95rem; margin-bottom:18px;" id="lore-text"></p>
         <div style="display:flex; gap:10px; flex-wrap:wrap;">
-          <button class="btn-ghost btn-sm" id="btn-deep-dive" onclick="getMoreContext()">Tell me more</button>
+          <button class="btn-ghost btn-sm" id="btn-deep-dive" onclick="moreContext()">Tell me more</button>
           <button class="btn-main btn-sm" onclick="nextQuestion()">Next →</button>
         </div>
         <div id="explain-box" class="explain-box"></div>
@@ -397,82 +489,80 @@
     </div>
   </section>
 
-  <!-- GAMES -->
   <section id="games">
     <div class="eyebrow">Practice</div>
     <h2 class="section-title">Play &amp; practice</h2>
-    <p class="section-desc">Reinforce what you've learned using interactive mini-games and tools.</p>
+    <p class="section-desc">Reinforce what you've learned with mini-games and study tools.</p>
 
     <div class="mode-tabs">
-      <button class="mode-tab active" data-mode="timeline" onclick="switchGameMode('timeline', this)">🕰 Timeline Sequence</button>
-      <button class="mode-tab" data-mode="mystery" onclick="switchGameMode('mystery', this)">🔍 Mystery Figure</button>
-      <button class="mode-tab" data-mode="flash" onclick="switchGameMode('flash', this)">🗂 Flashcard Drill</button>
-      <button class="mode-tab" data-mode="speed" onclick="switchGameMode('speed', this)">⚡ Speed Round</button>
-      <button class="mode-tab" data-mode="tutor" onclick="switchGameMode('tutor', this)">💬 Ask the Tutor</button>
+      <button class="mode-tab active" data-mode="timeline" onclick="switchGame('timeline', this)">🕰 Timeline Sequence</button>
+      <button class="mode-tab" data-mode="mystery" onclick="switchGame('mystery', this)">🔍 Mystery Figure</button>
+      <button class="mode-tab" data-mode="flash" onclick="switchGame('flash', this)">🗂 Flashcard Drill</button>
+      <button class="mode-tab" data-mode="speed" onclick="switchGame('speed', this)">⚡ Speed Round</button>
+      <button class="mode-tab" data-mode="tutor" onclick="switchGame('tutor', this)">💬 Ask the Tutor</button>
     </div>
 
     <div class="game-view active" id="mode-timeline">
-      <div class="panel" style="display:block;">
+      <div class="panel always">
         <h3 style="font-family:var(--font-display); font-size:1.3rem; margin-bottom:4px;">Arrange the events</h3>
-        <p style="color:var(--muted); font-size:.92rem; margin-bottom:20px;">Oldest to newest — four random events pulled from all five eras.</p>
+        <p style="color:var(--muted); font-size:.92rem; margin-bottom:20px;">Oldest to newest — four random events from all five eras.</p>
         <div class="timeline-slots" id="timeline-slots"></div>
         <div class="timeline-choices" id="timeline-choices"></div>
-        <button class="btn-main btn-sm" id="btn-next-timeline" style="margin-top:26px; display:none;" onclick="initTimelineGame()">Play again</button>
+        <button class="btn-main btn-sm" id="btn-next-timeline" style="margin-top:26px; display:none;" onclick="startTimeline()">Play again</button>
       </div>
     </div>
 
     <div class="game-view" id="mode-mystery">
-      <div class="panel" style="display:block;">
+      <div class="panel always">
         <h3 style="font-family:var(--font-display); font-size:1.3rem; margin-bottom:4px;">Who is it?</h3>
-        <p style="color:var(--muted); font-size:.92rem; margin-bottom:20px;">Guess the historical figure from AI-written clues.</p>
+        <p style="color:var(--muted); font-size:.92rem; margin-bottom:20px;">Guess the historical figure from three clues. Surnames count.</p>
         <img id="mystery-portrait-img" class="mystery-portrait" style="display:none;" alt="Historical figure portrait">
         <div id="mystery-clues" style="display:none; background:var(--paper); padding:20px; border-radius:12px; margin-bottom:18px; border:1px solid var(--line);">
-          <ul id="clue-list" style="margin-left:20px;"></ul>
+          <ul class="clue-list" id="clue-list"></ul>
         </div>
         <div id="mystery-input-area" style="display:none;">
-          <input type="text" id="mystery-guess" class="mystery-input" placeholder="Type the name…" onkeypress="if(event.key==='Enter') checkMysteryGuess()">
-          <div style="display:flex; gap:10px;">
-            <button class="btn-main btn-sm" onclick="checkMysteryGuess()">Submit guess</button>
-            <button class="btn-ghost btn-sm" onclick="initMysteryGame()">Skip</button>
+          <input type="text" id="mystery-guess" class="mystery-input" placeholder="Type the name…" autocomplete="off">
+          <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <button class="btn-main btn-sm" onclick="guessMystery()">Submit guess</button>
+            <button class="btn-ghost btn-sm" onclick="revealMystery()">Give up</button>
           </div>
         </div>
-        <button class="btn-main btn-sm" id="btn-start-mystery" onclick="initMysteryGame()">Open a new case</button>
+        <button class="btn-main btn-sm" id="btn-start-mystery" onclick="startMystery()">Open a new case</button>
       </div>
     </div>
 
     <div class="game-view" id="mode-flash">
-      <div class="panel" style="display:block;">
+      <div class="panel always">
         <h3 style="font-family:var(--font-display); font-size:1.3rem; margin-bottom:4px;">Flashcard drill</h3>
-        <p style="color:var(--muted); font-size:.92rem; margin-bottom:20px;">Cards pull an image from Wikipedia when one's available.</p>
+        <p style="color:var(--muted); font-size:.92rem; margin-bottom:20px;">Cards pull an image from Wikipedia when one's available. Cards you miss come back later.</p>
         <div id="flash-setup">
-          <select id="flash-era-select" class="flash-input">
-            <option value="all">All eras</option>
-          </select>
+          <select id="flash-era-select" class="flash-input"><option value="all">All eras</option></select>
           <button class="btn-main btn-sm" id="btn-gen-deck" onclick="startFlashcards()">Generate deck</button>
         </div>
         <div id="flash-play" style="display:none;">
           <div class="flash-progress" id="flash-progress"></div>
-          <div class="flashcard" id="flashcard-el" onclick="flipFlashcard()">
+          <div class="flashcard" id="flashcard-el" onclick="flipCard()" title="Click to flip">
             <img id="flash-card-img" class="flashcard-img" alt="Historical illustration">
             <span class="face" id="flashcard-face">Loading…</span>
+            <span class="flash-hint">space to flip · 1 = still learning · 2 = got it</span>
           </div>
           <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
-            <button class="btn-ghost btn-sm" onclick="rateFlashcard(false)">Still learning</button>
-            <button class="btn-main btn-sm" onclick="rateFlashcard(true)">Got it</button>
+            <button class="btn-ghost btn-sm" onclick="rateCard(false)">Still learning</button>
+            <button class="btn-main btn-sm" onclick="rateCard(true)">Got it</button>
           </div>
         </div>
       </div>
     </div>
 
     <div class="game-view" id="mode-speed">
-      <div class="panel" style="display:block;">
+      <div class="panel always">
         <h3 style="font-family:var(--font-display); font-size:1.3rem; margin-bottom:4px;">60-second speed round</h3>
-        <p style="color:var(--muted); font-size:.92rem; margin-bottom:20px;">Answer as many AI questions as you can before time runs out.</p>
+        <p style="color:var(--muted); font-size:.92rem; margin-bottom:20px;">Answer as many questions as you can before time runs out. <span id="speed-best" style="font-family:var(--font-mono);"></span></p>
         <div id="speed-setup">
-          <button class="btn-main btn-sm" id="btn-start-speed" onclick="startSpeedRound()">Start round</button>
+          <button class="btn-main btn-sm" id="btn-start-speed" onclick="startSpeed()">Start round</button>
         </div>
         <div id="speed-play" style="display:none;">
-          <div class="speed-timer" id="speed-timer">0:60</div>
+          <div class="speed-timer" id="speed-timer">1:00</div>
           <h2 id="speed-q" style="font-family:var(--font-display); font-size:1.2rem; margin-bottom:20px; text-align:center;"></h2>
           <div id="speed-options"></div>
           <p style="text-align:center; color:var(--muted); margin-top:14px; font-family:var(--font-mono);" id="speed-score">Score: 0</p>
@@ -481,145 +571,138 @@
     </div>
 
     <div class="game-view" id="mode-tutor">
-      <div class="panel" style="display:block;">
+      <div class="panel always">
         <h3 style="font-family:var(--font-display); font-size:1.3rem; margin-bottom:4px;">Ask the tutor</h3>
         <p style="color:var(--muted); font-size:.92rem; margin-bottom:20px;">Ask anything about Philippine history — Taglish is fine.</p>
         <div class="tutor-log" id="tutor-log"></div>
-        <input type="text" id="tutor-input" class="tutor-input" placeholder="e.g. bakit natalo ang Katipunan sa una?" onkeypress="if(event.key==='Enter') askTutor()">
+        <div class="tutor-suggestions" id="tutor-suggestions">
+          <button onclick="askTutor('Sino si Jose Rizal?')">Sino si Jose Rizal?</button>
+          <button onclick="askTutor('Ano ang Katipunan?')">Ano ang Katipunan?</button>
+          <button onclick="askTutor('Bakit mahalaga ang EDSA 1986?')">Bakit mahalaga ang EDSA 1986?</button>
+          <button onclick="askTutor('Ano ang Baybayin?')">Ano ang Baybayin?</button>
+        </div>
+        <input type="text" id="tutor-input" class="tutor-input" placeholder="e.g. bakit natalo ang Katipunan sa una?" autocomplete="off">
         <button class="btn-main btn-sm" id="btn-tutor-send" onclick="askTutor()">Send</button>
       </div>
     </div>
   </section>
 
-  <!-- AR -->
   <section id="ar">
     <div class="eyebrow">WebAR</div>
     <h2 class="section-title">AR artifacts</h2>
-    <p class="section-desc">Point your camera at a Hiro marker to view a 3D artifact tied to your current module.</p>
-    <div id="ar-frame">
-      <div class="ar-permissions-box" id="ar-perm-box">
-        <h3 style="font-family:var(--font-display); margin-bottom:12px;">Camera access needed</h3>
-        <p style="color:var(--muted); margin-bottom:22px; font-size:.92rem;">Allow camera permissions to view artifacts in AR.</p>
-        <button class="btn-main btn-sm" onclick="requestCameraAccess()">Allow camera</button>
+    <p class="section-desc">Spin the artifact in 3D, print the tracking marker for the classroom, or generate a QR code that opens this artifact on any phone.</p>
+
+    <div class="artifact-chips" id="artifact-chips"></div>
+
+    <div class="ar-grid">
+      <div>
+        <div id="ar-stage">
+          <div class="ar-permissions-box" id="ar-perm-box" style="display:none;">
+            <h3 style="font-family:var(--font-display); margin-bottom:12px;">Camera access needed</h3>
+            <p style="color:var(--muted); margin-bottom:22px; font-size:.92rem;">The camera is used only to anchor the artifact to the printed marker. Nothing is recorded or uploaded.</p>
+            <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+              <button class="btn-main btn-sm" onclick="confirmCamera()">Allow camera</button>
+              <button class="btn-ghost btn-sm" onclick="dismissPerm()">Not now</button>
+            </div>
+          </div>
+          <div class="ar-overlay-text" id="ar-overlay-text">Point the camera at the printed Hiro marker…</div>
+        </div>
+        <div style="display:flex; gap:10px; margin-top:16px; flex-wrap:wrap;">
+          <button class="btn-ghost btn-sm" id="btn-ar-camera" onclick="openCameraPrompt()">Open camera AR</button>
+          <button class="btn-ghost btn-sm" id="btn-ar-preview" onclick="showPreview()" style="display:none;">Back to 3D preview</button>
+          <button class="btn-ghost btn-sm" onclick="printMarkerSheet()">🖨 Print marker sheet</button>
+        </div>
+        <div class="artifact-info" style="margin-top:22px;">
+          <div class="era" id="artifact-era"></div>
+          <h3 id="artifact-name"></h3>
+          <p id="artifact-blurb"></p>
+        </div>
       </div>
-      <div id="ar-overlay-text" style="position:absolute; bottom:26px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,.7); color:#fff; padding:9px 22px; border-radius:20px; z-index:20; display:none; font-size:.88rem;">Tracking Hiro marker…</div>
+
+      <div class="ar-side">
+        <div class="ar-card">
+          <h3>Scan to view on a phone</h3>
+          <p class="small">Point any phone camera at the code — it opens this artifact's 3D view.</p>
+          <select id="qr-mode" class="flash-input" onchange="refreshQr()">
+            <option value="link">Link to this app (works once hosted)</option>
+            <option value="demo">Standalone 3D page (no hosting needed)</option>
+            <option value="custom">Custom link</option>
+          </select>
+          <input type="text" id="qr-custom" class="qr-custom" style="display:none;" placeholder="https://…" oninput="refreshQr()">
+          <div id="qr-box"></div>
+          <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <button class="btn-main btn-sm" onclick="downloadQr()">Download QR</button>
+            <button class="btn-ghost btn-sm" onclick="refreshQr()">Refresh</button>
+          </div>
+          <p class="qr-note" id="qr-note"></p>
+        </div>
+
+        <div class="ar-card">
+          <h3>Tracking marker</h3>
+          <p class="small">AR.js tracks this Hiro marker — print it and stick it on a wall or desk.</p>
+          <div class="marker-sheet">
+            <img id="marker-img" alt="Hiro AR tracking marker">
+            <div>
+              <button class="btn-main btn-sm" onclick="printMarkerSheet()">Print marker + QR</button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </section>
 
-  <!-- DASHBOARD -->
   <section id="teacher">
     <div class="eyebrow">Class overview</div>
     <h2 class="section-title">Progress dashboard</h2>
     <p class="section-desc">Pulled live from the class database when a valid class code is set.</p>
     <div style="display:flex; justify-content:flex-end; margin-bottom:14px; gap:10px;">
-      <button class="btn-ghost btn-sm" onclick="renderTeacherDashboard()">Refresh</button>
+      <button class="btn-ghost btn-sm" onclick="renderDashboard()">Refresh</button>
       <button class="btn-ghost btn-sm" onclick="exportCSV()">Export CSV</button>
     </div>
-    <div id="teacher-table-wrap" style="overflow-x:auto;">
-      <table>
-        <thead><tr><th>Name</th><th>Score</th><th>Era reached</th><th>Badges</th><th>Status</th></tr></thead>
-        <tbody id="teacher-table-body"></tbody>
-      </table>
-    </div>
+    <div id="teacher-table-wrap" style="overflow-x:auto;"></div>
   </section>
 
 </main>
 
+<div id="print-sheet">
+  <div class="ps-title">LahiQuest — AR marker sheet</div>
+  <div class="ps-sub" id="ps-sub"></div>
+  <div class="ps-row">
+    <div>
+      <img id="ps-marker" width="300" height="300" alt="Hiro marker">
+      <p style="text-align:center; font-size:.85rem; margin-top:6px;">AR tracking marker (Hiro)</p>
+    </div>
+    <div>
+      <img id="ps-qr" width="300" height="300" alt="QR code">
+      <p style="text-align:center; font-size:.85rem; margin-top:6px;">QR code — opens the 3D artifact</p>
+    </div>
+  </div>
+  <ol class="ps-steps">
+    <li>Place the marker sheet flat on a table or tape it to a wall.</li>
+    <li>Open LahiQuest on a phone or laptop and go to <strong>WebAR</strong>.</li>
+    <li>Allow the camera and point it at the marker — the artifact appears on top of it.</li>
+    <li>Or just scan the QR code with any phone camera to view the artifact in 3D.</li>
+  </ol>
+</div>
+
 <script>
-/* ============================================================
-   0. ENDPOINTS + CLASS-CODE AUTH
-   All /api/db and /api/search calls carry an x-class-code header.
-   Without a valid code the server returns 401 and the app quietly
-   falls back to local-only storage (still fully playable).
-   ============================================================ */
-const AI_ENDPOINT = "/api/ai";
-const DB_ENDPOINT = "/api/db";
-const SEARCH_ENDPOINT = "/api/search";
+/* QR code generator (qrcodejs, MIT — davidshimjs) inlined so the page works offline. */
+var QRCode;!function(){function a(a){this.mode=c.MODE_8BIT_BYTE,this.data=a,this.parsedData=[];for(var b=[],d=0,e=this.data.length;e>d;d++){var f=this.data.charCodeAt(d);f>65536?(b[0]=240|(1835008&f)>>>18,b[1]=128|(258048&f)>>>12,b[2]=128|(4032&f)>>>6,b[3]=128|63&f):f>2048?(b[0]=224|(61440&f)>>>12,b[1]=128|(4032&f)>>>6,b[2]=128|63&f):f>128?(b[0]=192|(1984&f)>>>6,b[1]=128|63&f):b[0]=f,this.parsedData=this.parsedData.concat(b)}this.parsedData.length!=this.data.length&&(this.parsedData.unshift(191),this.parsedData.unshift(187),this.parsedData.unshift(239))}function b(a,b){this.typeNumber=a,this.errorCorrectLevel=b,this.modules=null,this.moduleCount=0,this.dataCache=null,this.dataList=[]}function i(a,b){if(void 0==a.length)throw new Error(a.length+"/"+b);for(var c=0;c<a.length&&0==a[c];)c++;this.num=new Array(a.length-c+b);for(var d=0;d<a.length-c;d++)this.num[d]=a[d+c]}function j(a,b){this.totalCount=a,this.dataCount=b}function k(){this.buffer=[],this.length=0}function m(){return"undefined"!=typeof CanvasRenderingContext2D}function n(){var a=!1,b=navigator.userAgent;return/android/i.test(b)&&(a=!0,aMat=b.toString().match(/android ([0-9]\.[0-9])/i),aMat&&aMat[1]&&(a=parseFloat(aMat[1]))),a}function r(a,b){for(var c=1,e=s(a),f=0,g=l.length;g>=f;f++){var h=0;switch(b){case d.L:h=l[f][0];break;case d.M:h=l[f][1];break;case d.Q:h=l[f][2];break;case d.H:h=l[f][3]}if(h>=e)break;c++}if(c>l.length)throw new Error("Too long data");return c}function s(a){var b=encodeURI(a).toString().replace(/\%[0-9a-fA-F]{2}/g,"a");return b.length+(b.length!=a?3:0)}a.prototype={getLength:function(){return this.parsedData.length},write:function(a){for(var b=0,c=this.parsedData.length;c>b;b++)a.put(this.parsedData[b],8)}},b.prototype={addData:function(b){var c=new a(b);this.dataList.push(c),this.dataCache=null},isDark:function(a,b){if(0>a||this.moduleCount<=a||0>b||this.moduleCount<=b)throw new Error(a+","+b);return this.modules[a][b]},getModuleCount:function(){return this.moduleCount},make:function(){this.makeImpl(!1,this.getBestMaskPattern())},makeImpl:function(a,c){this.moduleCount=4*this.typeNumber+17,this.modules=new Array(this.moduleCount);for(var d=0;d<this.moduleCount;d++){this.modules[d]=new Array(this.moduleCount);for(var e=0;e<this.moduleCount;e++)this.modules[d][e]=null}this.setupPositionProbePattern(0,0),this.setupPositionProbePattern(this.moduleCount-7,0),this.setupPositionProbePattern(0,this.moduleCount-7),this.setupPositionAdjustPattern(),this.setupTimingPattern(),this.setupTypeInfo(a,c),this.typeNumber>=7&&this.setupTypeNumber(a),null==this.dataCache&&(this.dataCache=b.createData(this.typeNumber,this.errorCorrectLevel,this.dataList)),this.mapData(this.dataCache,c)},setupPositionProbePattern:function(a,b){for(var c=-1;7>=c;c++)if(!(-1>=a+c||this.moduleCount<=a+c))for(var d=-1;7>=d;d++)-1>=b+d||this.moduleCount<=b+d||(this.modules[a+c][b+d]=c>=0&&6>=c&&(0==d||6==d)||d>=0&&6>=d&&(0==c||6==c)||c>=2&&4>=c&&d>=2&&4>=d?!0:!1)},getBestMaskPattern:function(){for(var a=0,b=0,c=0;8>c;c++){this.makeImpl(!0,c);var d=f.getLostPoint(this);(0==c||a>d)&&(a=d,b=c)}return b},createMovieClip:function(a,b,c){var d=a.createEmptyMovieClip(b,c),e=1;this.make();for(var f=0;f<this.modules.length;f++)for(var g=f*e,h=0;h<this.modules[f].length;h++){var i=h*e,j=this.modules[f][h];j&&(d.beginFill(0,100),d.moveTo(i,g),d.lineTo(i+e,g),d.lineTo(i+e,g+e),d.lineTo(i,g+e),d.endFill())}return d},setupTimingPattern:function(){for(var a=8;a<this.moduleCount-8;a++)null==this.modules[a][6]&&(this.modules[a][6]=0==a%2);for(var b=8;b<this.moduleCount-8;b++)null==this.modules[6][b]&&(this.modules[6][b]=0==b%2)},setupPositionAdjustPattern:function(){for(var a=f.getPatternPosition(this.typeNumber),b=0;b<a.length;b++)for(var c=0;c<a.length;c++){var d=a[b],e=a[c];if(null==this.modules[d][e])for(var g=-2;2>=g;g++)for(var h=-2;2>=h;h++)this.modules[d+g][e+h]=-2==g||2==g||-2==h||2==h||0==g&&0==h?!0:!1}},setupTypeNumber:function(a){for(var b=f.getBCHTypeNumber(this.typeNumber),c=0;18>c;c++){var d=!a&&1==(1&b>>c);this.modules[Math.floor(c/3)][c%3+this.moduleCount-8-3]=d}for(var c=0;18>c;c++){var d=!a&&1==(1&b>>c);this.modules[c%3+this.moduleCount-8-3][Math.floor(c/3)]=d}},setupTypeInfo:function(a,b){for(var c=this.errorCorrectLevel<<3|b,d=f.getBCHTypeInfo(c),e=0;15>e;e++){var g=!a&&1==(1&d>>e);6>e?this.modules[e][8]=g:8>e?this.modules[e+1][8]=g:this.modules[this.moduleCount-15+e][8]=g}for(var e=0;15>e;e++){var g=!a&&1==(1&d>>e);8>e?this.modules[8][this.moduleCount-e-1]=g:9>e?this.modules[8][15-e-1+1]=g:this.modules[8][15-e-1]=g}this.modules[this.moduleCount-8][8]=!a},mapData:function(a,b){for(var c=-1,d=this.moduleCount-1,e=7,g=0,h=this.moduleCount-1;h>0;h-=2)for(6==h&&h--;;){for(var i=0;2>i;i++)if(null==this.modules[d][h-i]){var j=!1;g<a.length&&(j=1==(1&a[g]>>>e));var k=f.getMask(b,d,h-i);k&&(j=!j),this.modules[d][h-i]=j,e--,-1==e&&(g++,e=7)}if(d+=c,0>d||this.moduleCount<=d){d-=c,c=-c;break}}}},b.PAD0=236,b.PAD1=17,b.createData=function(a,c,d){for(var e=j.getRSBlocks(a,c),g=new k,h=0;h<d.length;h++){var i=d[h];g.put(i.mode,4),g.put(i.getLength(),f.getLengthInBits(i.mode,a)),i.write(g)}for(var l=0,h=0;h<e.length;h++)l+=e[h].dataCount;if(g.getLengthInBits()>8*l)throw new Error("code length overflow. ("+g.getLengthInBits()+">"+8*l+")");for(g.getLengthInBits()+4<=8*l&&g.put(0,4);0!=g.getLengthInBits()%8;)g.putBit(!1);for(;;){if(g.getLengthInBits()>=8*l)break;if(g.put(b.PAD0,8),g.getLengthInBits()>=8*l)break;g.put(b.PAD1,8)}return b.createBytes(g,e)},b.createBytes=function(a,b){for(var c=0,d=0,e=0,g=new Array(b.length),h=new Array(b.length),j=0;j<b.length;j++){var k=b[j].dataCount,l=b[j].totalCount-k;d=Math.max(d,k),e=Math.max(e,l),g[j]=new Array(k);for(var m=0;m<g[j].length;m++)g[j][m]=255&a.buffer[m+c];c+=k;var n=f.getErrorCorrectPolynomial(l),o=new i(g[j],n.getLength()-1),p=o.mod(n);h[j]=new Array(n.getLength()-1);for(var m=0;m<h[j].length;m++){var q=m+p.getLength()-h[j].length;h[j][m]=q>=0?p.get(q):0}}for(var r=0,m=0;m<b.length;m++)r+=b[m].totalCount;for(var s=new Array(r),t=0,m=0;d>m;m++)for(var j=0;j<b.length;j++)m<g[j].length&&(s[t++]=g[j][m]);for(var m=0;e>m;m++)for(var j=0;j<b.length;j++)m<h[j].length&&(s[t++]=h[j][m]);return s};for(var c={MODE_NUMBER:1,MODE_ALPHA_NUM:2,MODE_8BIT_BYTE:4,MODE_KANJI:8},d={L:1,M:0,Q:3,H:2},e={PATTERN000:0,PATTERN001:1,PATTERN010:2,PATTERN011:3,PATTERN100:4,PATTERN101:5,PATTERN110:6,PATTERN111:7},f={PATTERN_POSITION_TABLE:[[],[6,18],[6,22],[6,26],[6,30],[6,34],[6,22,38],[6,24,42],[6,26,46],[6,28,50],[6,30,54],[6,32,58],[6,34,62],[6,26,46,66],[6,26,48,70],[6,26,50,74],[6,30,54,78],[6,30,56,82],[6,30,58,86],[6,34,62,90],[6,28,50,72,94],[6,26,50,74,98],[6,30,54,78,102],[6,28,54,80,106],[6,32,58,84,110],[6,30,58,86,114],[6,34,62,90,118],[6,26,50,74,98,122],[6,30,54,78,102,126],[6,26,52,78,104,130],[6,30,56,82,108,134],[6,34,60,86,112,138],[6,30,58,86,114,142],[6,34,62,90,118,146],[6,30,54,78,102,126,150],[6,24,50,76,102,128,154],[6,28,54,80,106,132,158],[6,32,58,84,110,136,162],[6,26,54,82,110,138,166],[6,30,58,86,114,142,170]],G15:1335,G18:7973,G15_MASK:21522,getBCHTypeInfo:function(a){for(var b=a<<10;f.getBCHDigit(b)-f.getBCHDigit(f.G15)>=0;)b^=f.G15<<f.getBCHDigit(b)-f.getBCHDigit(f.G15);return(a<<10|b)^f.G15_MASK},getBCHTypeNumber:function(a){for(var b=a<<12;f.getBCHDigit(b)-f.getBCHDigit(f.G18)>=0;)b^=f.G18<<f.getBCHDigit(b)-f.getBCHDigit(f.G18);return a<<12|b},getBCHDigit:function(a){for(var b=0;0!=a;)b++,a>>>=1;return b},getPatternPosition:function(a){return f.PATTERN_POSITION_TABLE[a-1]},getMask:function(a,b,c){switch(a){case e.PATTERN000:return 0==(b+c)%2;case e.PATTERN001:return 0==b%2;case e.PATTERN010:return 0==c%3;case e.PATTERN011:return 0==(b+c)%3;case e.PATTERN100:return 0==(Math.floor(b/2)+Math.floor(c/3))%2;case e.PATTERN101:return 0==b*c%2+b*c%3;case e.PATTERN110:return 0==(b*c%2+b*c%3)%2;case e.PATTERN111:return 0==(b*c%3+(b+c)%2)%2;default:throw new Error("bad maskPattern:"+a)}},getErrorCorrectPolynomial:function(a){for(var b=new i([1],0),c=0;a>c;c++)b=b.multiply(new i([1,g.gexp(c)],0));return b},getLengthInBits:function(a,b){if(b>=1&&10>b)switch(a){case c.MODE_NUMBER:return 10;case c.MODE_ALPHA_NUM:return 9;case c.MODE_8BIT_BYTE:return 8;case c.MODE_KANJI:return 8;default:throw new Error("mode:"+a)}else if(27>b)switch(a){case c.MODE_NUMBER:return 12;case c.MODE_ALPHA_NUM:return 11;case c.MODE_8BIT_BYTE:return 16;case c.MODE_KANJI:return 10;default:throw new Error("mode:"+a)}else{if(!(41>b))throw new Error("type:"+b);switch(a){case c.MODE_NUMBER:return 14;case c.MODE_ALPHA_NUM:return 13;case c.MODE_8BIT_BYTE:return 16;case c.MODE_KANJI:return 12;default:throw new Error("mode:"+a)}}},getLostPoint:function(a){for(var b=a.getModuleCount(),c=0,d=0;b>d;d++)for(var e=0;b>e;e++){for(var f=0,g=a.isDark(d,e),h=-1;1>=h;h++)if(!(0>d+h||d+h>=b))for(var i=-1;1>=i;i++)0>e+i||e+i>=b||(0!=h||0!=i)&&g==a.isDark(d+h,e+i)&&f++;f>5&&(c+=3+f-5)}for(var d=0;b-1>d;d++)for(var e=0;b-1>e;e++){var j=0;a.isDark(d,e)&&j++,a.isDark(d+1,e)&&j++,a.isDark(d,e+1)&&j++,a.isDark(d+1,e+1)&&j++,(0==j||4==j)&&(c+=3)}for(var d=0;b>d;d++)for(var e=0;b-6>e;e++)a.isDark(d,e)&&!a.isDark(d,e+1)&&a.isDark(d,e+2)&&a.isDark(d,e+3)&&a.isDark(d,e+4)&&!a.isDark(d,e+5)&&a.isDark(d,e+6)&&(c+=40);for(var e=0;b>e;e++)for(var d=0;b-6>d;d++)a.isDark(d,e)&&!a.isDark(d+1,e)&&a.isDark(d+2,e)&&a.isDark(d+3,e)&&a.isDark(d+4,e)&&!a.isDark(d+5,e)&&a.isDark(d+6,e)&&(c+=40);for(var k=0,e=0;b>e;e++)for(var d=0;b>d;d++)a.isDark(d,e)&&k++;var l=Math.abs(100*k/b/b-50)/5;return c+=10*l}},g={glog:function(a){if(1>a)throw new Error("glog("+a+")");return g.LOG_TABLE[a]},gexp:function(a){for(;0>a;)a+=255;for(;a>=256;)a-=255;return g.EXP_TABLE[a]},EXP_TABLE:new Array(256),LOG_TABLE:new Array(256)},h=0;8>h;h++)g.EXP_TABLE[h]=1<<h;for(var h=8;256>h;h++)g.EXP_TABLE[h]=g.EXP_TABLE[h-4]^g.EXP_TABLE[h-5]^g.EXP_TABLE[h-6]^g.EXP_TABLE[h-8];for(var h=0;255>h;h++)g.LOG_TABLE[g.EXP_TABLE[h]]=h;i.prototype={get:function(a){return this.num[a]},getLength:function(){return this.num.length},multiply:function(a){for(var b=new Array(this.getLength()+a.getLength()-1),c=0;c<this.getLength();c++)for(var d=0;d<a.getLength();d++)b[c+d]^=g.gexp(g.glog(this.get(c))+g.glog(a.get(d)));return new i(b,0)},mod:function(a){if(this.getLength()-a.getLength()<0)return this;for(var b=g.glog(this.get(0))-g.glog(a.get(0)),c=new Array(this.getLength()),d=0;d<this.getLength();d++)c[d]=this.get(d);for(var d=0;d<a.getLength();d++)c[d]^=g.gexp(g.glog(a.get(d))+b);return new i(c,0).mod(a)}},j.RS_BLOCK_TABLE=[[1,26,19],[1,26,16],[1,26,13],[1,26,9],[1,44,34],[1,44,28],[1,44,22],[1,44,16],[1,70,55],[1,70,44],[2,35,17],[2,35,13],[1,100,80],[2,50,32],[2,50,24],[4,25,9],[1,134,108],[2,67,43],[2,33,15,2,34,16],[2,33,11,2,34,12],[2,86,68],[4,43,27],[4,43,19],[4,43,15],[2,98,78],[4,49,31],[2,32,14,4,33,15],[4,39,13,1,40,14],[2,121,97],[2,60,38,2,61,39],[4,40,18,2,41,19],[4,40,14,2,41,15],[2,146,116],[3,58,36,2,59,37],[4,36,16,4,37,17],[4,36,12,4,37,13],[2,86,68,2,87,69],[4,69,43,1,70,44],[6,43,19,2,44,20],[6,43,15,2,44,16],[4,101,81],[1,80,50,4,81,51],[4,50,22,4,51,23],[3,36,12,8,37,13],[2,116,92,2,117,93],[6,58,36,2,59,37],[4,46,20,6,47,21],[7,42,14,4,43,15],[4,133,107],[8,59,37,1,60,38],[8,44,20,4,45,21],[12,33,11,4,34,12],[3,145,115,1,146,116],[4,64,40,5,65,41],[11,36,16,5,37,17],[11,36,12,5,37,13],[5,109,87,1,110,88],[5,65,41,5,66,42],[5,54,24,7,55,25],[11,36,12],[5,122,98,1,123,99],[7,73,45,3,74,46],[15,43,19,2,44,20],[3,45,15,13,46,16],[1,135,107,5,136,108],[10,74,46,1,75,47],[1,50,22,15,51,23],[2,42,14,17,43,15],[5,150,120,1,151,121],[9,69,43,4,70,44],[17,50,22,1,51,23],[2,42,14,19,43,15],[3,141,113,4,142,114],[3,70,44,11,71,45],[17,47,21,4,48,22],[9,39,13,16,40,14],[3,135,107,5,136,108],[3,67,41,13,68,42],[15,54,24,5,55,25],[15,43,15,10,44,16],[4,144,116,4,145,117],[17,68,42],[17,50,22,6,51,23],[19,46,16,6,47,17],[2,139,111,7,140,112],[17,74,46],[7,54,24,16,55,25],[34,37,13],[4,151,121,5,152,122],[4,75,47,14,76,48],[11,54,24,14,55,25],[16,45,15,14,46,16],[6,147,117,4,148,118],[6,73,45,14,74,46],[11,54,24,16,55,25],[30,46,16,2,47,17],[8,132,106,4,133,107],[8,75,47,13,76,48],[7,54,24,22,55,25],[22,45,15,13,46,16],[10,142,114,2,143,115],[19,74,46,4,75,47],[28,50,22,6,51,23],[33,46,16,4,47,17],[8,152,122,4,153,123],[22,73,45,3,74,46],[8,53,23,26,54,24],[12,45,15,28,46,16],[3,147,117,10,148,118],[3,73,45,23,74,46],[4,54,24,31,55,25],[11,45,15,31,46,16],[7,146,116,7,147,117],[21,73,45,7,74,46],[1,53,23,37,54,24],[19,45,15,26,46,16],[5,145,115,10,146,116],[19,75,47,10,76,48],[15,54,24,25,55,25],[23,45,15,25,46,16],[13,145,115,3,146,116],[2,74,46,29,75,47],[42,54,24,1,55,25],[23,45,15,28,46,16],[17,145,115],[10,74,46,23,75,47],[10,54,24,35,55,25],[19,45,15,35,46,16],[17,145,115,1,146,116],[14,74,46,21,75,47],[29,54,24,19,55,25],[11,45,15,46,46,16],[13,145,115,6,146,116],[14,74,46,23,75,47],[44,54,24,7,55,25],[59,46,16,1,47,17],[12,151,121,7,152,122],[12,75,47,26,76,48],[39,54,24,14,55,25],[22,45,15,41,46,16],[6,151,121,14,152,122],[6,75,47,34,76,48],[46,54,24,10,55,25],[2,45,15,64,46,16],[17,152,122,4,153,123],[29,74,46,14,75,47],[49,54,24,10,55,25],[24,45,15,46,46,16],[4,152,122,18,153,123],[13,74,46,32,75,47],[48,54,24,14,55,25],[42,45,15,32,46,16],[20,147,117,4,148,118],[40,75,47,7,76,48],[43,54,24,22,55,25],[10,45,15,67,46,16],[19,148,118,6,149,119],[18,75,47,31,76,48],[34,54,24,34,55,25],[20,45,15,61,46,16]],j.getRSBlocks=function(a,b){var c=j.getRsBlockTable(a,b);if(void 0==c)throw new Error("bad rs block @ typeNumber:"+a+"/errorCorrectLevel:"+b);for(var d=c.length/3,e=[],f=0;d>f;f++)for(var g=c[3*f+0],h=c[3*f+1],i=c[3*f+2],k=0;g>k;k++)e.push(new j(h,i));return e},j.getRsBlockTable=function(a,b){switch(b){case d.L:return j.RS_BLOCK_TABLE[4*(a-1)+0];case d.M:return j.RS_BLOCK_TABLE[4*(a-1)+1];case d.Q:return j.RS_BLOCK_TABLE[4*(a-1)+2];case d.H:return j.RS_BLOCK_TABLE[4*(a-1)+3];default:return void 0}},k.prototype={get:function(a){var b=Math.floor(a/8);return 1==(1&this.buffer[b]>>>7-a%8)},put:function(a,b){for(var c=0;b>c;c++)this.putBit(1==(1&a>>>b-c-1))},getLengthInBits:function(){return this.length},putBit:function(a){var b=Math.floor(this.length/8);this.buffer.length<=b&&this.buffer.push(0),a&&(this.buffer[b]|=128>>>this.length%8),this.length++}};var l=[[17,14,11,7],[32,26,20,14],[53,42,32,24],[78,62,46,34],[106,84,60,44],[134,106,74,58],[154,122,86,64],[192,152,108,84],[230,180,130,98],[271,213,151,119],[321,251,177,137],[367,287,203,155],[425,331,241,177],[458,362,258,194],[520,412,292,220],[586,450,322,250],[644,504,364,280],[718,560,394,310],[792,624,442,338],[858,666,482,382],[929,711,509,403],[1003,779,565,439],[1091,857,611,461],[1171,911,661,511],[1273,997,715,535],[1367,1059,751,593],[1465,1125,805,625],[1528,1190,868,658],[1628,1264,908,698],[1732,1370,982,742],[1840,1452,1030,790],[1952,1538,1112,842],[2068,1628,1168,898],[2188,1722,1228,958],[2303,1809,1283,983],[2431,1911,1351,1051],[2563,1989,1423,1093],[2699,2099,1499,1139],[2809,2213,1579,1219],[2953,2331,1663,1273]],o=function(){var a=function(a,b){this._el=a,this._htOption=b};return a.prototype.draw=function(a){function g(a,b){var c=document.createElementNS("http://www.w3.org/2000/svg",a);for(var d in b)b.hasOwnProperty(d)&&c.setAttribute(d,b[d]);return c}var b=this._htOption,c=this._el,d=a.getModuleCount();Math.floor(b.width/d),Math.floor(b.height/d),this.clear();var h=g("svg",{viewBox:"0 0 "+String(d)+" "+String(d),width:"100%",height:"100%",fill:b.colorLight});h.setAttributeNS("http://www.w3.org/2000/xmlns/","xmlns:xlink","http://www.w3.org/1999/xlink"),c.appendChild(h),h.appendChild(g("rect",{fill:b.colorDark,width:"1",height:"1",id:"template"}));for(var i=0;d>i;i++)for(var j=0;d>j;j++)if(a.isDark(i,j)){var k=g("use",{x:String(i),y:String(j)});k.setAttributeNS("http://www.w3.org/1999/xlink","href","#template"),h.appendChild(k)}},a.prototype.clear=function(){for(;this._el.hasChildNodes();)this._el.removeChild(this._el.lastChild)},a}(),p="svg"===document.documentElement.tagName.toLowerCase(),q=p?o:m()?function(){function a(){this._elImage.src=this._elCanvas.toDataURL("image/png"),this._elImage.style.display="block",this._elCanvas.style.display="none"}function d(a,b){var c=this;if(c._fFail=b,c._fSuccess=a,null===c._bSupportDataURI){var d=document.createElement("img"),e=function(){c._bSupportDataURI=!1,c._fFail&&_fFail.call(c)},f=function(){c._bSupportDataURI=!0,c._fSuccess&&c._fSuccess.call(c)};return d.onabort=e,d.onerror=e,d.onload=f,d.src="data:image/gif;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO9TXL0Y4OHwAAAABJRU5ErkJggg==",void 0}c._bSupportDataURI===!0&&c._fSuccess?c._fSuccess.call(c):c._bSupportDataURI===!1&&c._fFail&&c._fFail.call(c)}if(this._android&&this._android<=2.1){var b=1/window.devicePixelRatio,c=CanvasRenderingContext2D.prototype.drawImage;CanvasRenderingContext2D.prototype.drawImage=function(a,d,e,f,g,h,i,j){if("nodeName"in a&&/img/i.test(a.nodeName))for(var l=arguments.length-1;l>=1;l--)arguments[l]=arguments[l]*b;else"undefined"==typeof j&&(arguments[1]*=b,arguments[2]*=b,arguments[3]*=b,arguments[4]*=b);c.apply(this,arguments)}}var e=function(a,b){this._bIsPainted=!1,this._android=n(),this._htOption=b,this._elCanvas=document.createElement("canvas"),this._elCanvas.width=b.width,this._elCanvas.height=b.height,a.appendChild(this._elCanvas),this._el=a,this._oContext=this._elCanvas.getContext("2d"),this._bIsPainted=!1,this._elImage=document.createElement("img"),this._elImage.style.display="none",this._el.appendChild(this._elImage),this._bSupportDataURI=null};return e.prototype.draw=function(a){var b=this._elImage,c=this._oContext,d=this._htOption,e=a.getModuleCount(),f=d.width/e,g=d.height/e,h=Math.round(f),i=Math.round(g);b.style.display="none",this.clear();for(var j=0;e>j;j++)for(var k=0;e>k;k++){var l=a.isDark(j,k),m=k*f,n=j*g;c.strokeStyle=l?d.colorDark:d.colorLight,c.lineWidth=1,c.fillStyle=l?d.colorDark:d.colorLight,c.fillRect(m,n,f,g),c.strokeRect(Math.floor(m)+.5,Math.floor(n)+.5,h,i),c.strokeRect(Math.ceil(m)-.5,Math.ceil(n)-.5,h,i)}this._bIsPainted=!0},e.prototype.makeImage=function(){this._bIsPainted&&d.call(this,a)},e.prototype.isPainted=function(){return this._bIsPainted},e.prototype.clear=function(){this._oContext.clearRect(0,0,this._elCanvas.width,this._elCanvas.height),this._bIsPainted=!1},e.prototype.round=function(a){return a?Math.floor(1e3*a)/1e3:a},e}():function(){var a=function(a,b){this._el=a,this._htOption=b};return a.prototype.draw=function(a){for(var b=this._htOption,c=this._el,d=a.getModuleCount(),e=Math.floor(b.width/d),f=Math.floor(b.height/d),g=['<table style="border:0;border-collapse:collapse;">'],h=0;d>h;h++){g.push("<tr>");for(var i=0;d>i;i++)g.push('<td style="border:0;border-collapse:collapse;padding:0;margin:0;width:'+e+"px;height:"+f+"px;background-color:"+(a.isDark(h,i)?b.colorDark:b.colorLight)+';"></td>');g.push("</tr>")}g.push("</table>"),c.innerHTML=g.join("");var j=c.childNodes[0],k=(b.width-j.offsetWidth)/2,l=(b.height-j.offsetHeight)/2;k>0&&l>0&&(j.style.margin=l+"px "+k+"px")},a.prototype.clear=function(){this._el.innerHTML=""},a}();QRCode=function(a,b){if(this._htOption={width:256,height:256,typeNumber:4,colorDark:"#000000",colorLight:"#ffffff",correctLevel:d.H},"string"==typeof b&&(b={text:b}),b)for(var c in b)this._htOption[c]=b[c];"string"==typeof a&&(a=document.getElementById(a)),this._android=n(),this._el=a,this._oQRCode=null,this._oDrawing=new q(this._el,this._htOption),this._htOption.text&&this.makeCode(this._htOption.text)},QRCode.prototype.makeCode=function(a){this._oQRCode=new b(r(a,this._htOption.correctLevel),this._htOption.correctLevel),this._oQRCode.addData(a),this._oQRCode.make(),this._el.title=a,this._oDrawing.draw(this._oQRCode),this.makeImage()},QRCode.prototype.makeImage=function(){"function"==typeof this._oDrawing.makeImage&&(!this._android||this._android>=3)&&this._oDrawing.makeImage()},QRCode.prototype.clear=function(){this._oDrawing.clear()},QRCode.CorrectLevel=d}();
 
-let classCode = localStorage.getItem('LahiQuestClassCode') || '';
-let cloudAvailable = false; // updated after first successful/failed call
+const HIRO_MARKER = 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjL/wAARCAIRAmMDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwD3+iiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiise+8WeG9MvJLO/wDEGlWl1HjfDPexxuuQCMqTkZBB/GgDYorn/wDhO/B//Q16H/4MYf8A4qj/AITvwf8A9DXof/gxh/8AiqAOgorn/wDhO/B//Q16H/4MYf8A4qj/AITvwf8A9DXof/gxh/8AiqAOgorn/wDhO/B//Q16H/4MYf8A4qj/AITvwf8A9DXof/gxh/8AiqAOgorn/wDhO/B//Q16H/4MYf8A4qj/AITvwf8A9DXof/gxh/8AiqAOgorn/wDhO/B//Q16H/4MYf8A4qj/AITvwf8A9DXof/gxh/8AiqAOgorn/wDhO/B//Q16H/4MYf8A4qj/AITvwf8A9DXof/gxh/8AiqAOgorn/wDhO/B//Q16H/4MYf8A4qj/AITvwf8A9DXof/gxh/8AiqAOgorn/wDhO/B//Q16H/4MYf8A4qj/AITvwf8A9DXof/gxh/8AiqAOgorn/wDhO/B//Q16H/4MYf8A4qj/AITvwf8A9DXof/gxh/8AiqAOgorn/wDhO/B//Q16H/4MYf8A4qj/AITvwf8A9DXof/gxh/8AiqAOgorn/wDhO/B//Q16H/4MYf8A4qj/AITvwf8A9DXof/gxh/8AiqAOgorn/wDhO/B//Q16H/4MYf8A4qj/AITvwf8A9DXof/gxh/8AiqAOgorn/wDhO/B//Q16H/4MYf8A4qj/AITvwf8A9DXof/gxh/8AiqAOgorn/wDhO/B//Q16H/4MYf8A4qj/AITvwf8A9DXof/gxh/8AiqAOgorn/wDhO/B//Q16H/4MYf8A4qj/AITvwf8A9DXof/gxh/8AiqAOgorn/wDhO/B//Q16H/4MYf8A4qj/AITvwf8A9DXof/gxh/8AiqAOgorn/wDhO/B//Q16H/4MYf8A4qj/AITvwf8A9DXof/gxh/8AiqAOgorn/wDhO/B//Q16H/4MYf8A4qj/AITvwf8A9DXof/gxh/8AiqAOgorn/wDhO/B//Q16H/4MYf8A4qj/AITvwf8A9DXof/gxh/8AiqAOgorn/wDhO/B//Q16H/4MYf8A4qj/AITvwf8A9DXof/gxh/8AiqAOgorn/wDhO/B//Q16H/4MYf8A4qj/AITvwf8A9DXof/gxh/8AiqAOgorn/wDhO/B//Q16H/4MYf8A4qj/AITvwf8A9DXof/gxh/8AiqAOgorn/wDhO/B//Q16H/4MYf8A4qj/AITvwf8A9DXof/gxh/8AiqAOgorn/wDhO/B//Q16H/4MYf8A4qj/AITvwf8A9DXof/gxh/8AiqAOgorn/wDhO/B//Q16H/4MYf8A4qj/AITvwf8A9DXof/gxh/8A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N/8AttAHgFFe/wD/AAzL/wBTd/5Tf/ttH/DMv/U3f+U3/wC20AeAUV7/AP8ADMv/AFN3/lN/+20f8My/9Td/5Tf/ALbQB4BRXv8A/wAMy/8AU3f+U3/7bR/wzL/1N3/lN/8AttAHgFFe/wD/AAzL/wBTd/5Tf/ttH/DMv/U3f+U3/wC20AeAUV7/AP8ADMv/AFN3/lN/+20f8My/9Td/5Tf/ALbQB4BRXv8A/wAMy/8AU3f+U3/7bWB42+Bf/CHeEL7X/wDhI/tn2Xy/3H2Hy926RU+95hxjdnp2oA8fooooAKKKKACiiigAooooAKKKKACiiigAr6f/AGcf+Seah/2FZP8A0VFXzBX0/wDs4/8AJPNQ/wCwrJ/6KioA9gooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACvkD42/8le13/t3/APSeOvr+vkD42/8AJXtd/wC3f/0njoA8/ooooAKKKKACiiigAooooAKKKKACiiigDoPAn/JQ/DX/AGFbX/0atfb9fEHgT/kofhr/ALCtr/6NWvt+gAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigArz/wCNv/JIdd/7d/8A0ojr0CvP/jb/AMkh13/t3/8ASiOgD5AooooAKKKKACiiigAooooAKKKKACiiigAr6f8A2cf+Seah/wBhWT/0VFXzBX0/+zj/AMk81D/sKyf+ioqAPYKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAr5A+Nv/ACV7Xf8At3/9J46+v6+QPjb/AMle13/t3/8ASeOgDz+iiigAooooAKKKKACiiigAooooAKKKKAOg8Cf8lD8Nf9hW1/8ARq19v18QeBP+Sh+Gv+wra/8Ao1a+36ACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACvP8A42/8kh13/t3/APSiOvQK8/8Ajb/ySHXf+3f/ANKI6APkCiiigAooooAKKKKACiiigAooooAKKKKACvp/9nH/AJJ5qH/YVk/9FRV8wV9P/s4/8k81D/sKyf8AoqKgD2CiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAK+QPjb/AMle13/t3/8ASeOvr+vkD42/8le13/t3/wDSeOgDz+iiigAooooAKKKKACiiigAooooAKKKKAOg8Cf8AJQ/DX/YVtf8A0atfb9fEHgT/AJKH4a/7Ctr/AOjVr7foAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAK8/+Nv/ACSHXf8At3/9KI69Arz/AONv/JIdd/7d/wD0ojoA+QKKKKACiiigAooooAKKKKACiiigAooooAK+n/2cf+Seah/2FZP/AEVFXzBX0/8As4/8k81D/sKyf+ioqAPYKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAr5A+Nv/JXtd/7d/8A0njr6/r5A+Nv/JXtd/7d/wD0njoA8/ooooAKKKKACiiigAooooAKKKKACiiigDoPAn/JQ/DX/YVtf/Rq19v18QeBP+Sh+Gv+wra/+jVr7foAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAK8/+Nv8AySHXf+3f/wBKI69Arz/42/8AJIdd/wC3f/0ojoA+QKKKKACiiigAooooAKKKKACiiigAooooAK+n/wBnH/knmof9hWT/ANFRV8wV9P8A7OP/ACTzUP8AsKyf+ioqAPYKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAr5A+Nv/JXtd/7d/wD0njr6/r5A+Nv/ACV7Xf8At3/9J46APP6KKKACiiigAooooAKKKKACiiigAooooA6DwJ/yUPw1/wBhW1/9GrX2/XxB4E/5KH4a/wCwra/+jVr7foAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAK8/8Ajb/ySHXf+3f/ANKI69Arz/42/wDJIdd/7d//AEojoA+QKKKKACiiigAooooAKKKKACiiigAooooAK+n/ANnH/knmof8AYVk/9FRV8wV9P/s4/wDJPNQ/7Csn/oqKgD2CiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAK+QPjb/wAle13/ALd//SeOvr+vkD42/wDJXtd/7d//AEnjoA8/ooooAKKKKACiiigAooooAKKKKACiiigDoPAn/JQ/DX/YVtf/AEatfb9fEHgT/kofhr/sK2v/AKNWvt+gAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigArz/AONv/JIdd/7d/wD0ojr0CvP/AI2/8kh13/t3/wDSiOgD5AooooAKKKKACiiigAooooAKKKKACiiigAr6f/Zx/wCSeah/2FZP/RUVfMFfT/7OP/JPNQ/7Csn/AKKioA9gooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACvkD42/wDJXtd/7d//AEnjr6/r5A+Nv/JXtd/7d/8A0njoA8/ooooAKKKKACiiigAooooAKKKKACiiigDoPAn/ACUPw1/2FbX/ANGrX2/XxB4E/wCSh+Gv+wra/wDo1a+36ACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACvP/jb/wAkh13/ALd//SiOvQK8/wDjb/ySHXf+3f8A9KI6APkCiiigAooooAKKKKACiiigAooooAKKKKACvp/9nH/knmof9hWT/wBFRV8wV9P/ALOP/JPNQ/7Csn/oqKgD2CiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAK+QPjb/yV7Xf+3f/ANJ46+v6+QPjb/yV7Xf+3f8A9J46APP6KKKACiiigAooooAKKKKACiiigAooooA6DwJ/yUPw1/2FbX/0atfb9fEHgT/kofhr/sK2v/o1a+y/EupTaN4V1fVLdY2nsrKa4jWQEqWRCwBwQcZHqKANSivmD/ho7xh/0DdD/wC/E3/x2tTw18ffFWs+KtI0u40/Rlgvb2G3kaOGUMFdwpIzIRnB9DQB9F0UUUAFFFeX/GD4j6x8P/7G/sm2sZvt3n+Z9rR2xs8vGNrL/fPXPagD1CivmD/ho7xh/wBA3Q/+/E3/AMdru/hN8Wde8eeKrrS9UtNNhgisnuFa1jdWLB0XB3Owxhz29KAPZKKK+dPEvx98VaN4q1fS7fT9GaCyvZreNpIZSxVHKgnEgGcD0FAH0XRXzB/w0d4w/wCgbof/AH4m/wDjtex/CbxrqXjzwrdapqkF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KKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACvp/wDZx/5J5qH/AGFZP/RUVfMFfT/7OP8AyTzUP+wrJ/6KioA9gooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACvkD42/8AJXtd/wC3f/0njr6/r5A+Nv8AyV7Xf+3f/wBJ46APP6KKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAr6f/AGcf+Seah/2FZP8A0VFXzBX0/wDs4/8AJPNQ/wCwrJ/6KioA9gooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACvkD42/8le13/t3/APSeOvr+vkD42/8AJXtd/wC3f/0njoA8/ooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACvp/9nH/knmof9hWT/wBFRV8wV9P/ALOP/JPNQ/7Csn/oqKgD2CiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAK+QPjb/yV7Xf+3f/ANJ46+v6+QPjb/yV7Xf+3f8A9J46APP6KKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAr6f/Zx/wCSeah/2FZP/RUVfMFfT/7OP/JPNQ/7Csn/AKKioA9gooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACvkD42/wDJXtd/7d//AEnjr6/r5A+Nv/JXtd/7d/8A0njoA8/ooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAo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';
 
-function authHeaders(extra = {}) {
-  return { ...extra, 'x-class-code': classCode };
-}
-function setSyncState(on) {
-  cloudAvailable = on;
-  const dot = document.getElementById('sync-dot');
-  if (dot) dot.className = 'sync-dot ' + (on ? 'on' : 'off');
-  const txt = document.getElementById('sync-status-text');
-  if (txt) txt.innerText = on ? "Synced with the class dashboard." : "Local only — no class code, or the class code is invalid.";
-}
-
-async function callAI(prompt, temperature = 0.5) {
-  const res = await fetch(AI_ENDPOINT, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ prompt, temperature })
-  });
-  if (!res.ok) throw new Error("AI endpoint unavailable");
-  const data = await res.json();
-  if (!data.text) throw new Error("Empty AI response");
-  return data.text.trim().replace(/^```(json)?/i, "").replace(/```$/, "").trim();
-}
-
-// GET one user's cloud record. Returns null if offline/unauthorized/not found.
-async function cloudGetUser(username) {
-  try {
-    const res = await fetch(`${DB_ENDPOINT}?username=${encodeURIComponent(username)}`, { headers: authHeaders() });
-    if (res.status === 401) { setSyncState(false); return null; }
-    if (!res.ok) { setSyncState(false); return null; }
-    setSyncState(true);
-    return await res.json(); // { data, updatedAt } | null
-  } catch (e) { setSyncState(false); return null; }
-}
-
-// GET the whole roster — only used by the teacher dashboard.
-async function cloudGetAll() {
-  try {
-    const res = await fetch(DB_ENDPOINT, { headers: authHeaders() });
-    if (res.status === 401) { setSyncState(false); return null; }
-    if (!res.ok) { setSyncState(false); return null; }
-    setSyncState(true);
-    return await res.json(); // { [username]: { data, updatedAt } }
-  } catch (e) { setSyncState(false); return null; }
-}
-
-// POST current user's data. Fails silently to local-only.
-async function cloudSaveUser(username, data) {
-  try {
-    const res = await fetch(DB_ENDPOINT, {
-      method: 'POST',
-      headers: authHeaders({ 'Content-Type': 'application/json' }),
-      body: JSON.stringify({ username, data })
-    });
-    if (res.status === 401) { setSyncState(false); return false; }
-    setSyncState(res.ok);
-    return res.ok;
-  } catch (e) { setSyncState(false); return false; }
-}
-
-// Cached image/summary lookup, used by flashcards + mystery figure.
-async function cloudSearch(q, type) {
-  try {
-    const url = `${SEARCH_ENDPOINT}?q=${encodeURIComponent(q)}${type ? `&type=${type}` : ''}`;
-    const res = await fetch(url, { headers: authHeaders() });
-    if (!res.ok) return null;
-    return await res.json();
-  } catch (e) { return null; }
-}
-
-/* ============================================================
-   1. LESSON DATA — five eras
-   ============================================================ */
-const lessonsData = [
+// ------------------------------------------------------------------
+// Lesson content for the five eras. Each entry feeds the lesson view,
+// the quiz prompt sent to the AI, and the AR artifact picker.
+// ------------------------------------------------------------------
+const LESSONS = [
   {
     title: "Module 1 · Pre-Colonial Philippines",
     topicContext: "Pre-Colonial Philippines: barangay governance, the datu and social classes, the babaylan, trade networks, and the Baybayin script.",
     subtopics: ["barangay governance and the datu", "social classes (maharlika, timawa, alipin)", "the babaylan and spiritual beliefs", "the Baybayin writing system", "regional trade networks before 1521"],
     content: `<h3>Early society</h3><p>The Philippines had complex societies and trade networks before 1521. Communities were organized into independent units called <strong>barangays</strong>, typically led by a <strong>datu</strong>.</p>
     <h3>Social structure</h3><ul><li><strong>Maharlika / Timawa:</strong> nobles and freemen.</li><li><strong>Alipin:</strong> dependents, often based on debt rather than chattel slavery.</li></ul>
-    <h3>Culture and beliefs</h3><p>The <strong>babaylan</strong> served as spiritual leaders and healers. Early Filipinos used a syllabic script called <strong>Baybayin</strong>.</p>`,
-    ar: { name: "Manunggul Jar", color: "#B9873A" }
+    <h3>Culture and beliefs</h3><p>The <strong>babaylan</strong> served as spiritual leaders and healers. Early Filipinos used a syllabic script called <strong>Baybayin</strong>.</p>`
   },
   {
     title: "Module 2 · The Spanish Era (1521–1898)",
@@ -627,8 +710,7 @@ const lessonsData = [
     subtopics: ["Legazpi and the founding of Manila", "the Galleon Trade economy", "Polo y Servicio forced labor", "early revolts (Dagohoy, Silang)", "GOMBURZA and rising nationalism"],
     content: `<h3>Colonization</h3><p>Following Magellan's arrival in 1521, <strong>Miguel López de Legazpi</strong> formally established Spanish colonial rule in 1571.</p>
     <h3>Economic systems</h3><ul><li><strong>Polo y Servicio:</strong> forced labor for males aged 16–60.</li><li><strong>Galleon Trade:</strong> maritime trade connecting Manila to Acapulco.</li></ul>
-    <h3>Resistance</h3><p>In 1872, the execution of three priests known as <strong>GOMBURZA</strong> catalyzed Filipino nationalism.</p>`,
-    ar: { name: "Baybayin Tablet", color: "#2E6E5E" }
+    <h3>Resistance</h3><p>In 1872, the execution of three priests known as <strong>GOMBURZA</strong> catalyzed Filipino nationalism.</p>`
   },
   {
     title: "Module 3 · The Philippine Revolution",
@@ -636,8 +718,7 @@ const lessonsData = [
     subtopics: ["founding and structure of the Katipunan", "Andres Bonifacio's leadership", "the Cry of Pugad Lawin", "the 1898 Declaration of Independence", "the Treaty of Paris and its consequences"],
     content: `<h3>The Katipunan</h3><p><strong>Andres Bonifacio</strong> founded the <strong>Katipunan (KKK)</strong> in 1892, advocating armed independence from Spain.</p>
     <h3>Key events</h3><ul><li><strong>Cry of Pugad Lawin (1896):</strong> members tore their tax certificates, symbolizing revolt.</li></ul>
-    <h3>Transition of power</h3><p>Independence was declared on June 12, 1898. The Treaty of Paris then transferred control to the United States, leading to the Philippine-American War.</p>`,
-    ar: { name: "Katipunan Flag", color: "#A73B2E" }
+    <h3>Transition of power</h3><p>Independence was declared on June 12, 1898. The Treaty of Paris then transferred control to the United States, leading to the Philippine-American War.</p>`
   },
   {
     title: "Module 4 · American Era & World War II",
@@ -645,8 +726,7 @@ const lessonsData = [
     subtopics: ["the Philippine-American War", "the Commonwealth government under Quezon", "the Japanese occupation", "Bataan Death March and guerrilla resistance", "the road to 1946 independence"],
     content: `<h3>American rule</h3><p>After the Philippine-American War, the U.S. introduced public education and infrastructure while delaying full independence. The <strong>Commonwealth</strong> era began in 1935 under President Manuel Quezon.</p>
     <h3>World War II</h3><p>Japan occupied the Philippines from 1942. The <strong>Bataan Death March</strong> followed the fall of Bataan, while guerrilla units continued resisting occupation.</p>
-    <h3>Independence</h3><p>The Philippines gained full independence on <strong>July 4, 1946</strong>, later commemorated on June 12 to honor the 1898 declaration.</p>`,
-    ar: { name: "Guerrilla Radio Set", color: "#6B6153" }
+    <h3>Independence</h3><p>The Philippines gained full independence on <strong>July 4, 1946</strong>, later commemorated on June 12 to honor the 1898 declaration.</p>`
   },
   {
     title: "Module 5 · Modern Filipino Culture",
@@ -654,16 +734,14 @@ const lessonsData = [
     subtopics: ["the 1986 EDSA People Power Revolution", "regional festivals and living traditions", "overseas Filipino workers and diaspora identity", "indigenous crafts like weaving and pottery today", "how history shapes modern Filipino identity"],
     content: `<h3>People Power</h3><p>The <strong>1986 EDSA Revolution</strong> peacefully ended the Marcos era and became a global model of nonviolent political change.</p>
     <h3>Living heritage</h3><p>Festivals, regional cuisine, and traditional weaving and pottery continue practices that trace back centuries, adapted for modern life.</p>
-    <h3>A global identity</h3><p>Millions of overseas Filipino workers carry this history and culture abroad, shaping a modern Filipino identity that spans continents.</p>`,
-    ar: { name: "Banig Weave Pattern", color: "#B9873A" }
+    <h3>A global identity</h3><p>Millions of overseas Filipino workers carry this history and culture abroad, shaping a modern Filipino identity that spans continents.</p>`
   }
 ];
-const ERA_NAMES = lessonsData.map(l => l.title.split("·")[1].trim());
+const ERA_NAMES = LESSONS.map(l => l.title.split('·')[1].trim());
 
-/* ============================================================
-   2. OFFLINE FALLBACK DATA
-   ============================================================ */
-const fallbackQuizData = [
+// Built-in question banks. Used whenever the AI endpoint is unreachable,
+// so the app is fully playable offline.
+const FALLBACK_QUIZZES = [
   [
     { q: "What was the basic socio-political unit in pre-colonial Philippines?", a: "Barangay", o: ["Barrio", "Pueblo", "Barangay", "Encomienda"], lore: "Barangays were named after the balangay boats used by early settlers." },
     { q: "Who acted as the primary healers and spiritual leaders?", a: "Babaylan", o: ["Datu", "Timawa", "Maharlika", "Babaylan"], lore: "Babaylans were highly influential figures, often women, in early communities." },
@@ -695,23 +773,20 @@ const fallbackQuizData = [
     { q: "EDSA People Power is often cited internationally as a model for what?", a: "Nonviolent political change", o: ["Nonviolent political change", "Trade agreements", "Military coups", "Colonial rule"], lore: "It inspired similar movements in other countries." }
   ]
 ];
-const fallbackMysteries = [
+
+const FALLBACK_MYSTERIES = [
   { name: "Jose Rizal", clues: ["He wrote two novels that exposed colonial abuses.", "He was executed in Bagumbayan in 1896.", "He is honored as the national hero of the Philippines."] },
   { name: "Andres Bonifacio", clues: ["He founded a secret revolutionary society.", "He is known as the Great Plebeian.", "He led the Cry of Pugad Lawin."] },
   { name: "Gabriela Silang", clues: ["She led a revolt in the Ilocos region.", "She took command after her husband's assassination.", "She was eventually captured and executed by the Spanish."] }
 ];
 
-/* ============================================================
-   3. STATE
-   ============================================================ */
-let currentUser = "Guest";
-let localDB = {};
-let activeQuizData = [];
-let gameState = { currentEra: 0, questionIndex: 0, score: 0 };
-let mysteryAnswer = "";
-let flashDeck = [], flashIndex = 0, flashFlipped = false;
-let speedTimerId = null, speedTimeLeft = 60, speedScore = 0, speedQuestions = [], speedIndex = 0;
-let tutorHistory = [];
+const TIMELINE_EVENTS = [
+  { year: 1521, text: "Arrival of Ferdinand Magellan" }, { year: 1571, text: "Founding of Manila" },
+  { year: 1872, text: "Execution of GOMBURZA" }, { year: 1892, text: "Founding of the Katipunan" },
+  { year: 1896, text: "Cry of Pugad Lawin" }, { year: 1898, text: "Declaration of Independence" },
+  { year: 1935, text: "Start of the Commonwealth era" }, { year: 1942, text: "Fall of Bataan" },
+  { year: 1946, text: "Full independence from the US" }, { year: 1986, text: "EDSA People Power Revolution" }
+];
 
 const BADGES = [
   { id: "first_quest", label: "First Quest", desc: "Complete Module 1" },
@@ -723,60 +798,273 @@ const BADGES = [
   { id: "graduate", label: "Kasaysayan Scholar", desc: "Clear all five modules" }
 ];
 
-function freshUser() {
+// The AR artifacts. Geometry is plain A-Frame primitives, listed here as
+// data so the same shapes can be reused by the preview scene, the marker
+// scene, and the standalone page encoded in the QR code (tiny: true parts
+// are dropped from the QR page to keep the payload small).
+const ARTIFACTS = [
+  {
+    slug: 'manunggul-jar', name: 'Manunggul Jar', era: 'Module 1 · Pre-Colonial',
+    blurb: 'A burial jar from the Manunggul Cave in Palawan (c. 890–710 BCE). The lid carries two figures paddling a boat to the afterlife — one of the earliest Filipino beliefs about the soul’s journey.',
+    parts: [
+      { tag: 'cylinder', attrs: 'radius="0.5" height="0.9" position="0 0 0"', mat: 'color:#B9873A; metalness:0.35; roughness:0.5' },
+      { tag: 'cylinder', attrs: 'radius="0.38" height="0.3" position="0 0.58 0"', mat: 'color:#C79A4E; metalness:0.35; roughness:0.5' },
+      { tag: 'cylinder', attrs: 'radius="0.17" height="0.18" position="0 0.8 0"', mat: 'color:#A87A32' },
+      { tag: 'cylinder', attrs: 'radius="0.24" height="0.09" position="0 0.93 0"', mat: 'color:#8F6425; metalness:0.4; roughness:0.45' },
+      { tag: 'torus', attrs: 'radius="0.13" tube="0.035" position="0.47 0.42 0"', mat: 'color:#8F6425' },
+      { tag: 'torus', attrs: 'radius="0.13" tube="0.035" position="-0.47 0.42 0"', mat: 'color:#8F6425' },
+      { tag: 'torus', attrs: 'radius="0.5" tube="0.022" rotation="90 0 0" position="0 0.22 0"', mat: 'color:#8F6425' },
+      { tag: 'cylinder', attrs: 'radius="0.045" height="0.14" position="0 1.02 0"', mat: 'color:#8F6425', tiny: true },
+      { tag: 'sphere', attrs: 'radius="0.085" position="0 1.14 0"', mat: 'color:#8F6425', tiny: true },
+      { tag: 'cylinder', attrs: 'radius="0.045" height="0.12" position="0.1 1.01 0"', mat: 'color:#8F6425', tiny: true },
+      { tag: 'sphere', attrs: 'radius="0.075" position="0.1 1.12 0"', mat: 'color:#8F6425', tiny: true }
+    ]
+  },
+  {
+    slug: 'baybayin-tablet', name: 'Baybayin Tablet', era: 'Module 2 · Spanish Era',
+    blurb: 'Baybayin was the pre-colonial syllabic script of the islands. Spanish friars later recorded it, debated it, and partly replaced it with the Latin alphabet — it survives today on tattoos, signage, and the ₱10 coin.',
+    parts: [
+      { tag: 'box', attrs: 'width="1.05" height="1.3" depth="0.12" position="0 0 0"', mat: 'color:#5C5348; roughness:0.85' },
+      { tag: 'box', attrs: 'width="0.88" height="1.12" depth="0.03" position="0 0 0.07"', mat: 'color:#6E6357; roughness:0.8' },
+      { tag: 'box', attrs: 'width="1.05" height="0.1" depth="0.15" position="0 0.6 0"', mat: 'color:#B9873A; metalness:0.35' },
+      { tag: 'box', attrs: 'width="1.05" height="0.1" depth="0.15" position="0 -0.6 0"', mat: 'color:#B9873A; metalness:0.35' },
+      { tag: 'box', attrs: 'width="0.11" height="0.15" depth="0.02" position="-0.3 0.34 0.09"', mat: 'color:#D9A94F', tiny: true },
+      { tag: 'box', attrs: 'width="0.11" height="0.15" depth="0.02" position="-0.1 0.34 0.09"', mat: 'color:#D9A94F', tiny: true },
+      { tag: 'box', attrs: 'width="0.11" height="0.15" depth="0.02" position="0.1 0.34 0.09"', mat: 'color:#D9A94F', tiny: true },
+      { tag: 'box', attrs: 'width="0.11" height="0.15" depth="0.02" position="0.3 0.34 0.09"', mat: 'color:#D9A94F', tiny: true },
+      { tag: 'box', attrs: 'width="0.11" height="0.15" depth="0.02" position="-0.2 0 0.09"', mat: 'color:#D9A94F', tiny: true },
+      { tag: 'box', attrs: 'width="0.11" height="0.15" depth="0.02" position="0 0 0.09"', mat: 'color:#D9A94F', tiny: true },
+      { tag: 'box', attrs: 'width="0.11" height="0.15" depth="0.02" position="0.2 0 0.09"', mat: 'color:#D9A94F', tiny: true },
+      { tag: 'box', attrs: 'width="0.11" height="0.15" depth="0.02" position="-0.3 -0.34 0.09"', mat: 'color:#D9A94F', tiny: true },
+      { tag: 'box', attrs: 'width="0.11" height="0.15" depth="0.02" position="-0.1 -0.34 0.09"', mat: 'color:#D9A94F', tiny: true },
+      { tag: 'box', attrs: 'width="0.11" height="0.15" depth="0.02" position="0.1 -0.34 0.09"', mat: 'color:#D9A94F', tiny: true },
+      { tag: 'box', attrs: 'width="0.11" height="0.15" depth="0.02" position="0.3 -0.34 0.09"', mat: 'color:#D9A94F', tiny: true }
+    ]
+  },
+  {
+    slug: 'katipunan-flag', name: 'Katipunan Flag', era: 'Module 3 · Revolution',
+    blurb: 'The flag of the Katipunan: a red field for courage, a white sun for the eight provinces that rose against Spain. Members tore their cedulas under this banner in 1896.',
+    parts: [
+      { tag: 'cylinder', attrs: 'radius="0.035" height="2.1" position="-0.78 0.1 0"', mat: 'color:#3B2F22; roughness:0.7' },
+      { tag: 'sphere', attrs: 'radius="0.07" position="-0.78 1.18 0"', mat: 'color:#B9873A; metalness:0.4', tiny: true },
+      { tag: 'box', attrs: 'width="1.35" height="0.85" depth="0.02" position="0 0.62 0"', mat: 'color:#A73B2E; roughness:0.85' },
+      { tag: 'cylinder', attrs: 'radius="0.2" height="0.02" rotation="90 0 0" position="0 0.62 0.03"', mat: 'color:#F2C14E' },
+      { tag: 'torus', attrs: 'radius="0.32" tube="0.028" position="0 0.62 0.03"', mat: 'color:#F2C14E' },
+      { tag: 'box', attrs: 'width="0.04" height="0.12" depth="0.02" position="0 1.0 0.03"', mat: 'color:#F2C14E', tiny: true },
+      { tag: 'box', attrs: 'width="0.04" height="0.12" depth="0.02" position="0 0.24 0.03"', mat: 'color:#F2C14E', tiny: true },
+      { tag: 'box', attrs: 'width="0.12" height="0.04" depth="0.02" position="0.38 0.62 0.03"', mat: 'color:#F2C14E', tiny: true },
+      { tag: 'box', attrs: 'width="0.12" height="0.04" depth="0.02" position="-0.38 0.62 0.03"', mat: 'color:#F2C14E', tiny: true },
+      { tag: 'box', attrs: 'width="0.09" height="0.04" depth="0.02" rotation="0 0 45" position="0.27 0.89 0.03"', mat: 'color:#F2C14E', tiny: true },
+      { tag: 'box', attrs: 'width="0.09" height="0.04" depth="0.02" rotation="0 0 45" position="-0.27 0.35 0.03"', mat: 'color:#F2C14E', tiny: true },
+      { tag: 'box', attrs: 'width="0.09" height="0.04" depth="0.02" rotation="0 0 -45" position="-0.27 0.89 0.03"', mat: 'color:#F2C14E', tiny: true },
+      { tag: 'box', attrs: 'width="0.09" height="0.04" depth="0.02" rotation="0 0 -45" position="0.27 0.35 0.03"', mat: 'color:#F2C14E', tiny: true }
+    ]
+  },
+  {
+    slug: 'guerrilla-radio', name: 'Guerrilla Radio Set', era: 'Module 4 · WWII',
+    blurb: 'Hand-carried radio sets kept guerrilla units in contact across the islands during the Japanese occupation, smuggling intelligence to Allied forces and coordinating resistance.',
+    parts: [
+      { tag: 'box', attrs: 'width="1.05" height="0.62" depth="0.42" position="0 -0.2 0"', mat: 'color:#4E5140; roughness:0.8' },
+      { tag: 'box', attrs: 'width="0.9" height="0.48" depth="0.02" position="0 -0.2 0.22"', mat: 'color:#3B3E31; roughness:0.85' },
+      { tag: 'torus', attrs: 'radius="0.22" tube="0.03" position="0 0.16 0"', mat: 'color:#2E2B22' },
+      { tag: 'cylinder', attrs: 'radius="0.012" height="1.1" rotation="0 0 -12" position="0.38 0.55 0"', mat: 'color:#2E2B22' },
+      { tag: 'sphere', attrs: 'radius="0.035" position="0.49 1.07 0"', mat: 'color:#2E2B22', tiny: true },
+      { tag: 'cylinder', attrs: 'radius="0.1" height="0.03" rotation="90 0 0" position="-0.28 -0.2 0.25"', mat: 'color:#D9A94F; metalness:0.4', tiny: true },
+      { tag: 'cylinder', attrs: 'radius="0.06" height="0.03" rotation="90 0 0" position="-0.05 -0.2 0.25"', mat: 'color:#D9A94F; metalness:0.4', tiny: true },
+      { tag: 'cylinder', attrs: 'radius="0.022" height="0.02" rotation="90 0 0" position="0.14 -0.3 0.25"', mat: 'color:#221D17', tiny: true },
+      { tag: 'cylinder', attrs: 'radius="0.022" height="0.02" rotation="90 0 0" position="0.26 -0.3 0.25"', mat: 'color:#221D17', tiny: true },
+      { tag: 'cylinder', attrs: 'radius="0.022" height="0.02" rotation="90 0 0" position="0.38 -0.3 0.25"', mat: 'color:#221D17', tiny: true },
+      { tag: 'cylinder', attrs: 'radius="0.022" height="0.02" rotation="90 0 0" position="0.14 -0.12 0.25"', mat: 'color:#221D17', tiny: true },
+      { tag: 'cylinder', attrs: 'radius="0.022" height="0.02" rotation="90 0 0" position="0.26 -0.12 0.25"', mat: 'color:#221D17', tiny: true },
+      { tag: 'cylinder', attrs: 'radius="0.022" height="0.02" rotation="90 0 0" position="0.38 -0.12 0.25"', mat: 'color:#221D17', tiny: true }
+    ]
+  },
+  {
+    slug: 'banig-weave', name: 'Banig Weave', era: 'Module 5 · Living Heritage',
+    blurb: 'Banig is a handwoven mat, usually from buri, pandan, or sea grass. Weavers in Basey, Samar and other towns still pass the patterns down family by family — geometry you can sleep on.',
+    parts: [
+      { tag: 'box', attrs: 'width="1.45" height="0.05" depth="1.45" position="0 -0.5 0"', mat: 'color:#C79A4E; roughness:0.85' },
+      { tag: 'box', attrs: 'width="1.32" height="0.03" depth="0.13" position="0 -0.46 -0.5"', mat: 'color:#2E6E5E' },
+      { tag: 'box', attrs: 'width="1.32" height="0.03" depth="0.13" position="0 -0.46 -0.25"', mat: 'color:#A73B2E' },
+      { tag: 'box', attrs: 'width="1.32" height="0.03" depth="0.13" position="0 -0.46 0"', mat: 'color:#2E6E5E' },
+      { tag: 'box', attrs: 'width="1.32" height="0.03" depth="0.13" position="0 -0.46 0.25"', mat: 'color:#A73B2E' },
+      { tag: 'box', attrs: 'width="1.32" height="0.03" depth="0.13" position="0 -0.46 0.5"', mat: 'color:#2E6E5E' },
+      { tag: 'box', attrs: 'width="0.13" height="0.04" depth="1.32" position="-0.5 -0.43 0"', mat: 'color:#8F6425' },
+      { tag: 'box', attrs: 'width="0.13" height="0.04" depth="1.32" position="-0.25 -0.43 0"', mat: 'color:#E8C179' },
+      { tag: 'box', attrs: 'width="0.13" height="0.04" depth="1.32" position="0 -0.43 0"', mat: 'color:#8F6425' },
+      { tag: 'box', attrs: 'width="0.13" height="0.04" depth="1.32" position="0.25 -0.43 0"', mat: 'color:#E8C179' },
+      { tag: 'box', attrs: 'width="0.13" height="0.04" depth="1.32" position="0.5 -0.43 0"', mat: 'color:#8F6425' }
+    ]
+  }
+];
+
+// ------------------------------------------------------------------
+// App state. Progress lives in localStorage first (always available),
+// and mirrors to the class server when a class code is set.
+// ------------------------------------------------------------------
+const ENDPOINTS = { ai: '/api/ai', db: '/api/db', search: '/api/search' };
+const ARJS_URL = 'https://cdn.jsdelivr.net/npm/@ar-js-org/ar.js@3.4.5/aframe/build/aframe-ar.js';
+
+let playerName = 'Guest';
+let classCode = localStorage.getItem('LahiQuestClassCode') || '';
+let db = {};
+let cloudAvailable = false;
+
+let quiz = { era: 0, items: [], index: 0, score: 0 };
+let mysteryAnswer = '';
+let flashDeck = [], flashIndex = 0, flashFlipped = false;
+let speedTimer = null, speedTimeLeft = 60, speedScore = 0, speedQuestions = [], speedIndex = 0;
+let tutorHistory = [], tutorBusy = false;
+let timelineEvents = [], timelineIndex = 0;
+let artifactIndex = 0;
+let cameraOn = false, videoPoll = null;
+let lastRoster = null;
+
+function blankRecord() {
   return {
     unlockedQuests: [true, false, false, false, false],
     eraScores: [0, 0, 0, 0, 0],
     badges: [],
     passStreak: 0,
-    askedQuestions: {0:[],1:[],2:[],3:[],4:[]},
+    askedQuestions: { 0: [], 1: [], 2: [], 3: [], 4: [] },
     mysteryUsed: [],
     tutorCount: 0,
-    arViewed: false
+    arViewed: false,
+    speedBest: 0
   };
 }
-function ensureUserShape(u) {
-  const f = freshUser();
-  const out = { ...u };
-  for (const k in f) if (out[k] === undefined) out[k] = f[k];
-  out.askedQuestions = { ...f.askedQuestions, ...(out.askedQuestions || {}) };
-  for (let i=0;i<5;i++) if (!out.askedQuestions[i]) out.askedQuestions[i] = [];
+
+// Older saves won't have every field — fill in what's missing instead of
+// crashing on undefined.
+function withDefaults(record) {
+  const out = { ...blankRecord(), ...record };
+  out.askedQuestions = { ...blankRecord().askedQuestions, ...(record.askedQuestions || {}) };
+  for (let i = 0; i < 5; i++) if (!Array.isArray(out.askedQuestions[i])) out.askedQuestions[i] = [];
   return out;
 }
 
-/* ============================================================
-   4. LOGIN + SYNC
-   Strategy: local storage is always the working copy. On login we
-   pull the cloud copy (if a class code is set) and only adopt it
-   if it's newer than what's on this device, so offline progress
-   never gets silently clobbered.
-   ============================================================ */
-function loadLocalCache() {
-  try { const s = localStorage.getItem('LahiQuestDB'); if (s) localDB = JSON.parse(s); } catch(e) { localDB = {}; }
-}
-function persistLocalCache() { localStorage.setItem('LahiQuestDB', JSON.stringify(localDB)); }
+function currentRecord() { return db[playerName]; }
 
-async function saveDatabase() {
-  persistLocalCache();
+function esc(text) {
+  return String(text).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+}
+
+function shuffle(list) {
+  for (let i = list.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [list[i], list[j]] = [list[j], list[i]];
+  }
+  return list;
+}
+
+// ------------------------------------------------------------------
+// AI + class-server calls. Everything degrades gracefully: no server
+// means built-in content and local-only progress.
+// ------------------------------------------------------------------
+async function aiText(prompt, temperature = 0.5) {
+  const res = await fetch(ENDPOINTS.ai, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ prompt, temperature })
+  });
+  if (!res.ok) throw new Error('AI endpoint unavailable');
+  const data = await res.json();
+  if (!data.text) throw new Error('Empty AI response');
+  // the model sometimes wraps JSON in markdown fences despite instructions
+  return data.text.trim().replace(/^```(json)?/i, '').replace(/```$/, '').trim();
+}
+
+function authHeaders(extra = {}) { return { ...extra, 'x-class-code': classCode }; }
+
+function setSyncState(on) {
+  cloudAvailable = on;
+  const dot = document.getElementById('sync-dot');
+  if (dot) dot.className = 'sync-dot ' + (on ? 'on' : 'off');
+  const txt = document.getElementById('sync-status-text');
+  if (txt) txt.innerText = on ? 'Synced with the class dashboard.' : 'Local only — no class code, or the class code is invalid.';
+}
+
+async function cloudGetUser(name) {
+  try {
+    const res = await fetch(`${ENDPOINTS.db}?username=${encodeURIComponent(name)}`, { headers: authHeaders() });
+    if (!res.ok) { setSyncState(false); return null; }
+    setSyncState(true);
+    return await res.json(); // { data, updatedAt } or null
+  } catch (e) { setSyncState(false); return null; }
+}
+
+async function cloudGetAll() {
+  try {
+    const res = await fetch(ENDPOINTS.db, { headers: authHeaders() });
+    if (!res.ok) { setSyncState(false); return null; }
+    setSyncState(true);
+    return await res.json(); // { name: { data, updatedAt } }
+  } catch (e) { setSyncState(false); return null; }
+}
+
+async function cloudSaveUser(name, data) {
+  try {
+    const res = await fetch(ENDPOINTS.db, {
+      method: 'POST',
+      headers: authHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ username: name, data })
+    });
+    setSyncState(res.ok);
+    return res.ok;
+  } catch (e) { setSyncState(false); return false; }
+}
+
+async function cloudSearch(q, type) {
+  try {
+    const url = `${ENDPOINTS.search}?q=${encodeURIComponent(q)}${type ? `&type=${type}` : ''}`;
+    const res = await fetch(url, { headers: authHeaders() });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch (e) { return null; }
+}
+
+// ------------------------------------------------------------------
+// Login / sync. localStorage is always the working copy; a newer copy
+// from the class server replaces it, so offline progress isn't lost.
+// ------------------------------------------------------------------
+function saveProgress() {
+  const record = currentRecord();
+  if (record) record._localUpdatedAt = new Date().toISOString();
+  localStorage.setItem('LahiQuestDB', JSON.stringify(db));
   renderHome();
-  if (currentUser && localDB[currentUser]) {
-    localDB[currentUser]._localUpdatedAt = new Date().toISOString();
-    persistLocalCache();
-    if (classCode) {
-      const ok = await cloudSaveUser(currentUser, localDB[currentUser]);
-      if (!ok) showToast("Saved on this device — couldn't reach the class server.", 'warn');
-    }
+  if (record && classCode) {
+    cloudSaveUser(playerName, record).then(ok => {
+      if (!ok) showToast('Saved on this device — couldn\'t reach the class server.', 'warn');
+    });
   }
 }
 
+async function syncFromCloud() {
+  const remote = await cloudGetUser(playerName);
+  if (!remote || !remote.data) return;
+  const localTime = new Date(currentRecord()?._localUpdatedAt || 0).getTime();
+  const remoteTime = new Date(remote.updatedAt || 0).getTime();
+  if (remoteTime > localTime) {
+    db[playerName] = withDefaults(remote.data);
+    localStorage.setItem('LahiQuestDB', JSON.stringify(db));
+    showToast('Progress restored from the class server.', 'ok');
+  }
+}
+
+function showUserChip() {
+  document.getElementById('nav-user-name').innerText = playerName;
+  document.getElementById('nav-user-badge').style.display = 'inline-flex';
+  document.getElementById('btn-logout').style.display = 'flex';
+}
+
 async function checkLogin() {
-  loadLocalCache();
+  try { db = JSON.parse(localStorage.getItem('LahiQuestDB')) || {}; } catch (e) { db = {}; }
   const session = sessionStorage.getItem('LahiQuestActiveUser');
-  if (session && localDB[session]) {
-    currentUser = session;
-    localDB[currentUser] = ensureUserShape(localDB[currentUser]);
-    setUserChip();
-    if (classCode) await syncCurrentUserFromCloud();
+  if (session && db[session]) {
+    playerName = session;
+    db[playerName] = withDefaults(db[playerName]);
+    showUserChip();
+    if (classCode) await syncFromCloud();
     afterLogin();
   } else {
     document.getElementById('login-modal').style.display = 'flex';
@@ -784,650 +1072,1111 @@ async function checkLogin() {
   }
 }
 
-async function syncCurrentUserFromCloud() {
-  const remote = await cloudGetUser(currentUser); // { data, updatedAt } | null
-  if (!remote || !remote.data) return;
-  const localTime = new Date(localDB[currentUser]?._localUpdatedAt || 0).getTime();
-  const remoteTime = new Date(remote.updatedAt || 0).getTime();
-  if (remoteTime > localTime) {
-    localDB[currentUser] = ensureUserShape(remote.data);
-    persistLocalCache();
-    showToast("Progress restored from the class server.", 'ok');
-  }
-}
-
-function setUserChip() {
-  document.getElementById('nav-user-name').innerText = currentUser;
-  document.getElementById('nav-user-badge').style.display = 'inline-flex';
-}
-
-async function loginUser() {
+async function login() {
   const name = document.getElementById('student-name').value.trim();
   const code = document.getElementById('class-code-input').value.trim();
-  if (!name) return showToast("Please enter your name.", 'err');
+  if (!name) return showToast('Please enter your name.', 'err');
 
   classCode = code;
   localStorage.setItem('LahiQuestClassCode', classCode);
-  currentUser = name;
-  sessionStorage.setItem('LahiQuestActiveUser', currentUser);
+  playerName = name;
+  sessionStorage.setItem('LahiQuestActiveUser', playerName);
+  db[playerName] = db[playerName] ? withDefaults(db[playerName]) : blankRecord();
 
-  if (!localDB[currentUser]) localDB[currentUser] = freshUser();
-  else localDB[currentUser] = ensureUserShape(localDB[currentUser]);
+  if (classCode) await syncFromCloud();
+  localStorage.setItem('LahiQuestDB', JSON.stringify(db));
 
-  if (classCode) await syncCurrentUserFromCloud();
-
-  persistLocalCache();
   document.getElementById('login-modal').style.display = 'none';
-  setUserChip();
+  showUserChip();
   afterLogin();
-  showToast(`Welcome, ${currentUser}.`, 'ok');
-  await saveDatabase();
+  showToast(`Welcome, ${playerName}.`, 'ok');
+  saveProgress();
+}
+
+function logout() {
+  sessionStorage.removeItem('LahiQuestActiveUser');
+  location.hash = '';
+  location.reload();
 }
 
 function afterLogin() {
   buildQuestGrid();
-  updateQuestsUI();
+  refreshQuestCards();
   renderHome();
   populateFlashEraSelect();
   setSyncState(cloudAvailable);
+  openDeepLink();
 }
 
-/* ============================================================
-   5. THEME + NAV
-   ============================================================ */
+// A scanned QR code lands here: #artifact=2 opens the AR page on artifact 2.
+function openDeepLink() {
+  const match = location.hash.match(/artifact=(\d+)/);
+  if (!match) return;
+  const idx = Math.min(ARTIFACTS.length - 1, parseInt(match[1], 10) || 0);
+  navigate('ar');
+  selectArtifact(idx);
+  showToast(`QR scanned — showing the ${ARTIFACTS[idx].name}.`, 'ok');
+}
+
+// ------------------------------------------------------------------
+// Chrome: theme, navigation, toasts, loading overlay.
+// ------------------------------------------------------------------
 function toggleTheme() {
   const html = document.documentElement;
-  const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-  if (next === 'dark') html.setAttribute('data-theme', 'dark'); else html.removeAttribute('data-theme');
-  localStorage.setItem('LahiQuestTheme', next);
+  const dark = html.getAttribute('data-theme') === 'dark';
+  if (dark) html.removeAttribute('data-theme'); else html.setAttribute('data-theme', 'dark');
+  localStorage.setItem('LahiQuestTheme', dark ? 'light' : 'dark');
 }
+
 function applyStoredTheme() {
   if (localStorage.getItem('LahiQuestTheme') === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
 }
 
-function navigate(pageId, btn = null) {
-  if (pageId !== 'ar') {
-    document.querySelectorAll('video').forEach(el => { if (el.srcObject) el.srcObject.getTracks().forEach(t => t.stop()); el.remove(); });
-    document.querySelectorAll('a-scene').forEach(s => s.remove());
-    const permBox = document.getElementById('ar-perm-box'); if (permBox) permBox.style.display = 'block';
-    const overlay = document.getElementById('ar-overlay-text'); if (overlay) overlay.style.display = 'none';
-  }
-  if (pageId === 'games' && document.getElementById('timeline-slots').children.length === 0) initTimelineGame();
-  if (pageId === 'teacher') renderTeacherDashboard();
+function navigate(pageId, btn) {
+  if (pageId !== 'ar') teardownAr();
+  if (pageId !== 'games') abortSpeed();
+
+  if (pageId === 'games' && !document.getElementById('timeline-slots').children.length) startTimeline();
+  if (pageId === 'teacher') renderDashboard();
   if (pageId === 'home') renderHome();
+  if (pageId === 'learn') closeLesson();
+  if (pageId === 'ar') renderArSection();
 
   document.querySelectorAll('main > section').forEach(s => s.classList.remove('active-section'));
   document.getElementById(pageId).classList.add('active-section');
   document.getElementById('nav-menu').classList.remove('open');
-  if (btn) { document.querySelectorAll('.nav-links button').forEach(b => b.classList.remove('active')); btn.classList.add('active'); }
+  if (btn) {
+    document.querySelectorAll('.nav-links button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  }
   window.scrollTo({ top: 0, behavior: 'smooth' });
-  if (pageId === 'learn') closeLesson();
 }
+
 function toggleMenu() { document.getElementById('nav-menu').classList.toggle('open'); }
 
 function showToast(msg, type = '') {
   const t = document.getElementById('toast');
-  t.innerText = msg; t.className = type;
-  t.style.transform = 'translateX(0)';
+  t.innerText = msg;
+  t.className = type ? `show ${type}` : 'show';
   clearTimeout(t._timer);
-  t._timer = setTimeout(() => t.style.transform = 'translateX(140%)', 3200);
+  t._timer = setTimeout(() => t.classList.remove('show'), 3200);
 }
-function toggleLoader(show, text = "Loading…") {
+
+function setLoading(show, text = 'Loading…') {
   document.getElementById('loader-text').innerText = text;
   document.getElementById('system-loader').style.display = show ? 'flex' : 'none';
 }
 
-/* ============================================================
-   6. HOME + QUEST GRID
-   ============================================================ */
+// ------------------------------------------------------------------
+// Home + quest grid.
+// ------------------------------------------------------------------
 function buildQuestGrid() {
   const grid = document.getElementById('quest-grid');
   grid.innerHTML = '';
-  lessonsData.forEach((l, i) => {
+  LESSONS.forEach((lesson, i) => {
     const div = document.createElement('div');
-    div.className = 'quest-card'; div.id = `quest-${i}`;
+    div.className = 'quest-card';
+    div.id = `quest-${i}`;
     div.onclick = () => openLesson(i);
     div.innerHTML = `
       <span class="lock-icon" id="lock-${i}">🔒</span>
-      <div class="quest-eyebrow">Module ${i+1} of 5</div>
-      <h3>${l.title.split('·')[1].trim()}</h3>
-      <p>${l.content.replace(/<[^>]+>/g, '').slice(0, 90)}…</p>
+      <div class="quest-eyebrow">Module ${i + 1} of 5</div>
+      <h3>${esc(lesson.title.split('·')[1].trim())}</h3>
+      <p>${esc(lesson.content.replace(/<[^>]+>/g, '').slice(0, 90))}…</p>
       <div class="quest-bar"><div class="quest-bar-fill" id="bar-${i}" style="width:0%"></div></div>`;
     grid.appendChild(div);
   });
 }
-function updateQuestsUI() {
-  const u = localDB[currentUser]; if (!u) return;
-  u.unlockedQuests.forEach((unlocked, i) => {
+
+function refreshQuestCards() {
+  const record = currentRecord();
+  if (!record) return;
+  record.unlockedQuests.forEach((unlocked, i) => {
     const card = document.getElementById(`quest-${i}`);
     if (!card) return;
     card.classList.toggle('locked', !unlocked);
     const lock = document.getElementById(`lock-${i}`);
-    if (lock) lock.innerText = !unlocked ? '🔒' : (u.eraScores[i] >= 3 ? '✅' : '▶');
+    if (lock) lock.innerText = !unlocked ? '🔒' : (record.eraScores[i] >= 3 ? '✅' : '▶');
     const bar = document.getElementById(`bar-${i}`);
-    if (bar) bar.style.width = Math.min(100, (u.eraScores[i] / 4) * 100) + '%';
+    if (bar) bar.style.width = Math.min(100, (record.eraScores[i] / 4) * 100) + '%';
   });
 }
+
 function renderHome() {
-  const u = localDB[currentUser];
-  if (!u) return;
-  const cleared = u.unlockedQuests.filter((x,i)=> u.eraScores[i] >= 3).length;
+  const record = currentRecord();
+  if (!record) return;
+  const cleared = record.eraScores.filter(s => s >= 3).length;
   document.getElementById('stat-modules').innerText = `${cleared}/5`;
-  document.getElementById('stat-score').innerText = u.eraScores.reduce((a,b)=>a+b,0);
-  document.getElementById('stat-streak').innerText = u.passStreak;
+  document.getElementById('stat-score').innerText = record.eraScores.reduce((a, b) => a + b, 0);
+  document.getElementById('stat-streak').innerText = record.passStreak;
 
   document.getElementById('home-quest-list').innerHTML = ERA_NAMES.map((name, i) => {
-    const pct = Math.min(100, (u.eraScores[i]/4)*100);
+    const pct = Math.min(100, (record.eraScores[i] / 4) * 100);
     return `<div style="margin-bottom:12px;">
       <div style="display:flex; justify-content:space-between; font-size:.82rem; margin-bottom:4px;">
-        <span>${name}</span><span style="font-family:var(--font-mono); color:var(--muted);">${u.eraScores[i]}/4</span>
+        <span>${esc(name)}</span><span style="font-family:var(--font-mono); color:var(--muted);">${record.eraScores[i]}/4</span>
       </div>
       <div class="quest-bar"><div class="quest-bar-fill" style="width:${pct}%"></div></div>
     </div>`;
   }).join('');
 
   document.getElementById('home-badges').innerHTML = BADGES.map(b => {
-    const earned = u.badges.includes(b.id);
-    return `<span class="badge-pill ${earned ? '' : 'locked'}" title="${b.desc}">${earned ? '★' : '☆'} ${b.label}</span>`;
+    const earned = record.badges.includes(b.id);
+    return `<span class="badge-pill ${earned ? '' : 'locked'}" title="${esc(b.desc)}">${earned ? '★' : '☆'} ${esc(b.label)}</span>`;
   }).join('');
-}
-function awardBadge(id) {
-  const u = localDB[currentUser];
-  if (!u.badges.includes(id)) {
-    u.badges.push(id);
-    showToast(`Badge earned: ${BADGES.find(x => x.id === id).label}`, 'ok');
-  }
+
+  const best = document.getElementById('speed-best');
+  if (best) best.innerText = record.speedBest ? `Your best: ${record.speedBest}.` : '';
 }
 
-/* ============================================================
-   7. LESSON + QUIZ (anti-repetition + button locking)
-   ============================================================ */
+function awardBadge(id) {
+  const record = currentRecord();
+  if (!record || record.badges.includes(id)) return;
+  record.badges.push(id);
+  showToast(`Badge earned: ${BADGES.find(b => b.id === id).label}`, 'ok');
+}
+
+// ------------------------------------------------------------------
+// Lessons + assessments. The AI writes fresh questions each round, and
+// we remember which questions were asked so they don't repeat.
+// ------------------------------------------------------------------
 function openLesson(eraIndex) {
-  const u = localDB[currentUser];
-  if (!u || !u.unlockedQuests[eraIndex]) return showToast("This module is locked. Clear the previous one first.", 'err');
-  gameState.currentEra = eraIndex;
+  const record = currentRecord();
+  if (!record || !record.unlockedQuests[eraIndex]) return showToast('This module is locked. Clear the previous one first.', 'err');
+  quiz.era = eraIndex;
+  const lesson = LESSONS[eraIndex];
   document.getElementById('modules-grid-view').style.display = 'none';
   document.getElementById('quiz-block').style.display = 'none';
-  const lesson = lessonsData[eraIndex];
   document.getElementById('lesson-title').innerText = lesson.title;
   document.getElementById('lesson-content').innerHTML = lesson.content;
   document.getElementById('lesson-container').style.display = 'block';
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
+
 function closeLesson() {
   document.getElementById('lesson-container').style.display = 'none';
   document.getElementById('quiz-block').style.display = 'none';
   document.getElementById('modules-grid-view').style.display = 'block';
 }
 
-async function generateAndStartQuiz() {
+// AI output is untrusted — validate it before it reaches the quiz UI.
+function normalizeQuiz(raw, limit) {
+  const items = [];
+  for (const item of Array.isArray(raw) ? raw : []) {
+    const q = typeof item?.q === 'string' ? item.q.trim() : '';
+    const a = typeof item?.a === 'string' ? item.a.trim() : '';
+    let options = Array.isArray(item?.o) ? item.o.map(o => String(o).trim()).filter(Boolean) : [];
+    if (!q || !a || options.length < 3) continue;
+    options = [...new Set(options)];
+    if (!options.includes(a)) options.unshift(a);
+    while (options.length > 4) {
+      const drop = options.findIndex(o => o !== a);
+      if (drop < 0) break;
+      options.splice(drop, 1);
+    }
+    if (options.length < 4) continue;
+    items.push({ q, a, o: options, lore: typeof item?.lore === 'string' ? item.lore.trim() : '' });
+    if (items.length === limit) break;
+  }
+  return items;
+}
+
+async function startAssessment() {
   const btn = document.getElementById('btn-start-quiz');
   btn.disabled = true;
   document.getElementById('lesson-container').style.display = 'none';
-  toggleLoader(true, "Writing new questions…");
+  setLoading(true, 'Writing new questions…');
 
-  const era = gameState.currentEra;
-  const lesson = lessonsData[era];
-  const u = localDB[currentUser];
-  const askedList = u.askedQuestions[era].slice(-15);
-  const shuffledTopics = [...lesson.subtopics].sort(() => Math.random() - 0.5).slice(0, 3);
+  const lesson = LESSONS[quiz.era];
+  const record = currentRecord();
+  const alreadyAsked = record.askedQuestions[quiz.era].slice(-15);
+  const angles = shuffle([...lesson.subtopics]).slice(0, 3);
 
   const prompt = `You are writing a Grade 10 Philippine history quiz.
 Topic: ${lesson.topicContext}
-Focus mainly on these angles this time: ${shuffledTopics.join('; ')}.
+Focus mainly on these angles this time: ${angles.join('; ')}.
 Write EXACTLY 4 multiple-choice questions, each with 4 options and one correct answer.
-Do NOT reuse or closely rephrase any of these previously-asked questions: ${askedList.length ? JSON.stringify(askedList) : "(none yet)"}.
+Do NOT reuse or closely rephrase any of these previously-asked questions: ${alreadyAsked.length ? JSON.stringify(alreadyAsked) : '(none yet)'}.
 Vary question style (dates, cause-effect, terminology, key figures).
 Reply ONLY with a valid JSON array, no markdown fences, formatted exactly like:
 [{"q":"Question?","a":"Correct answer","o":["Option1","Option2","Correct answer","Option4"],"lore":"one factual sentence of context"}]`;
 
   try {
-    const raw = await callAI(prompt, 0.75);
-    const generated = JSON.parse(raw);
-    if (!Array.isArray(generated) || generated.length < 4) throw new Error("bad format");
-    activeQuizData = generated.slice(0, 4);
-    document.getElementById('quiz-source-tag').innerText = "AI-generated assessment";
+    const generated = normalizeQuiz(JSON.parse(await aiText(prompt, 0.75)), 4);
+    if (generated.length < 4) throw new Error('not enough valid questions');
+    quiz.items = generated;
+    document.getElementById('quiz-source-tag').innerText = 'AI-generated assessment';
   } catch (err) {
-    activeQuizData = fallbackQuizData[era];
-    document.getElementById('quiz-source-tag').innerText = "Offline assessment";
-    showToast("AI unavailable — using built-in question bank.", '');
+    quiz.items = FALLBACK_QUIZZES[quiz.era];
+    document.getElementById('quiz-source-tag').innerText = 'Offline assessment';
+    showToast('AI unavailable — using built-in question bank.', '');
   }
 
-  toggleLoader(false);
+  setLoading(false);
   btn.disabled = false;
   document.getElementById('quiz-block').style.display = 'block';
-  gameState.questionIndex = 0;
-  gameState.score = 0;
+  quiz.index = 0;
+  quiz.score = 0;
   renderQuestion();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function renderQuestion() {
-  const q = activeQuizData[gameState.questionIndex];
-  document.getElementById('quiz-tracker').innerText = `${gameState.questionIndex + 1} / ${activeQuizData.length}`;
+  const q = quiz.items[quiz.index];
+  document.getElementById('quiz-tracker').innerText = `${quiz.index + 1} / ${quiz.items.length}`;
+  document.getElementById('quiz-dots').innerHTML = quiz.items.map((_, i) =>
+    `<span class="${i < quiz.index ? 'done' : i === quiz.index ? 'current' : ''}"></span>`).join('');
   document.getElementById('q-text').innerText = q.q;
-  const oc = document.getElementById('q-options'); oc.innerHTML = '';
-  const options = [...q.o].sort(() => Math.random() - 0.5);
-  options.forEach(opt => {
+
+  const box = document.getElementById('q-options');
+  box.innerHTML = '';
+  shuffle([...q.o]).forEach(opt => {
     const b = document.createElement('button');
-    b.className = 'option-btn'; b.innerText = opt;
-    b.onclick = () => validateAnswer(opt, q.a, b);
-    oc.appendChild(b);
+    b.className = 'option-btn';
+    b.innerText = opt;
+    b.onclick = () => answerQuestion(opt, b);
+    box.appendChild(b);
   });
+
   document.getElementById('lore-block').style.display = 'none';
   document.getElementById('explain-box').style.display = 'none';
 }
 
-function validateAnswer(sel, corr, btn) {
-  document.querySelectorAll('#q-options .option-btn').forEach(b => { b.disabled = true; });
-  const q = activeQuizData[gameState.questionIndex];
-  const u = localDB[currentUser];
-  u.askedQuestions[gameState.currentEra].push(q.q);
-  if (u.askedQuestions[gameState.currentEra].length > 40) u.askedQuestions[gameState.currentEra].shift();
+function answerQuestion(selected, btn) {
+  const q = quiz.items[quiz.index];
+  document.querySelectorAll('#q-options .option-btn').forEach(b => b.disabled = true);
 
-  if (sel === corr) { btn.classList.add('correct'); gameState.score++; showToast("Correct.", 'ok'); }
-  else {
+  const record = currentRecord();
+  record.askedQuestions[quiz.era].push(q.q);
+  if (record.askedQuestions[quiz.era].length > 40) record.askedQuestions[quiz.era].shift();
+
+  if (selected === q.a) {
+    btn.classList.add('correct');
+    quiz.score++;
+    showToast('Correct.', 'ok');
+  } else {
     btn.classList.add('wrong');
-    document.querySelectorAll('#q-options .option-btn').forEach(b => { if (b.innerText === corr) b.classList.add('correct'); });
-    showToast("Incorrect.", 'err');
+    document.querySelectorAll('#q-options .option-btn').forEach(b => {
+      if (b.innerText === q.a) b.classList.add('correct');
+    });
+    showToast('Incorrect.', 'err');
   }
-  document.getElementById('lore-text').innerText = q.lore;
+
+  document.getElementById('lore-text').innerText = q.lore || '—';
   document.getElementById('lore-block').style.display = 'block';
-  const aiBtn = document.getElementById('btn-deep-dive');
-  aiBtn.innerText = "Tell me more"; aiBtn.disabled = false;
+  const deepBtn = document.getElementById('btn-deep-dive');
+  deepBtn.innerText = 'Tell me more';
+  deepBtn.disabled = false;
 }
 
-async function getMoreContext() {
-  const q = activeQuizData[gameState.questionIndex];
+async function moreContext() {
+  const q = quiz.items[quiz.index];
   const btn = document.getElementById('btn-deep-dive');
   const box = document.getElementById('explain-box');
-  btn.innerText = "Fetching…"; btn.disabled = true;
-  box.style.display = 'block'; box.innerHTML = "<em>Retrieving additional context…</em>";
+  btn.innerText = 'Fetching…';
+  btn.disabled = true;
+  box.style.display = 'block';
+  box.innerHTML = '<em>Retrieving additional context…</em>';
   try {
-    const text = await callAI(`In two short sentences, add historical detail beyond this fact (Grade 10 level, plain English): "${q.lore}"`, 0.4);
-    box.innerText = text;
+    box.innerText = await aiText(`In two short sentences, add historical detail beyond this fact (Grade 10 level, plain English): "${q.lore}"`, 0.4);
   } catch (e) {
-    box.innerHTML = "<em>Additional detail isn't available right now — the fact above still stands.</em>";
+    box.innerHTML = '<em>Additional detail isn\'t available right now — the fact above still stands.</em>';
   }
-  btn.innerText = "Tell me more"; btn.disabled = false;
+  btn.innerText = 'Tell me more';
+  btn.disabled = false;
 }
 
 function nextQuestion() {
-  gameState.questionIndex++;
-  if (gameState.questionIndex < activeQuizData.length) renderQuestion();
-  else finishQuest();
+  quiz.index++;
+  if (quiz.index < quiz.items.length) renderQuestion();
+  else finishAssessment();
 }
 
-async function finishQuest() {
-  const max = activeQuizData.length;
-  const u = localDB[currentUser];
-  const era = gameState.currentEra;
-  if (gameState.score > u.eraScores[era]) u.eraScores[era] = gameState.score;
+async function finishAssessment() {
+  const max = quiz.items.length;
+  const record = currentRecord();
+  const era = quiz.era;
+  if (quiz.score > record.eraScores[era]) record.eraScores[era] = quiz.score;
 
-  if (gameState.score >= 3) {
-    showToast(`Passed — ${gameState.score}/${max}.`, 'ok');
-    u.passStreak++;
-    if (era + 1 < u.unlockedQuests.length) u.unlockedQuests[era + 1] = true;
+  if (quiz.score >= 3) {
+    showToast(`Passed — ${quiz.score}/${max}.`, 'ok');
+    record.passStreak++;
+    if (era + 1 < record.unlockedQuests.length) record.unlockedQuests[era + 1] = true;
     if (era === 0) awardBadge('first_quest');
-    if (gameState.score === max) awardBadge('history_buff');
-    if (u.passStreak >= 3) awardBadge('perfect_streak');
-    if (u.unlockedQuests.every((x,i)=> u.eraScores[i] >= 3)) awardBadge('graduate');
+    if (quiz.score === max) awardBadge('history_buff');
+    if (record.passStreak >= 3) awardBadge('perfect_streak');
+    if (record.eraScores.every(s => s >= 3)) awardBadge('graduate');
   } else {
-    showToast(`Not yet — ${gameState.score}/${max}. Needs 3/4 to pass. Try again.`, 'err');
-    u.passStreak = 0;
+    showToast(`Not yet — ${quiz.score}/${max}. Needs 3/4 to pass. Try again.`, 'err');
+    record.passStreak = 0;
   }
-  await saveDatabase();
-  updateQuestsUI();
+  saveProgress();
+  refreshQuestCards();
   closeLesson();
 }
 
-/* ============================================================
-   8. GAME MODES
-   ============================================================ */
-function switchGameMode(mode, btn) {
+// ------------------------------------------------------------------
+// Mini-games.
+// ------------------------------------------------------------------
+function switchGame(mode, btn) {
+  if (mode !== 'speed') abortSpeed();
   document.querySelectorAll('.mode-tab').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   document.querySelectorAll('.game-view').forEach(v => v.classList.remove('active'));
   document.getElementById(`mode-${mode}`).classList.add('active');
 }
 
-const ALL_TIMELINE_EVENTS = [
-  { year: 1521, text: "Arrival of Ferdinand Magellan" }, { year: 1571, text: "Founding of Manila" },
-  { year: 1872, text: "Execution of GOMBURZA" }, { year: 1892, text: "Founding of the Katipunan" },
-  { year: 1896, text: "Cry of Pugad Lawin" }, { year: 1898, text: "Declaration of Independence" },
-  { year: 1935, text: "Start of the Commonwealth era" }, { year: 1942, text: "Fall of Bataan" },
-  { year: 1946, text: "Full independence from the US" }, { year: 1986, text: "EDSA People Power Revolution" }
-];
-let currentGameEvents = [], selectedIndex = 0;
-function shuffle(a) { for (let c=a.length,r; c!==0;) { r=Math.floor(Math.random()*c); c--; [a[c],a[r]]=[a[r],a[c]]; } return a; }
-
-function initTimelineGame() {
-  selectedIndex = 0;
+// Timeline sequence
+function startTimeline() {
+  timelineIndex = 0;
   document.getElementById('btn-next-timeline').style.display = 'none';
+
   const slotsEl = document.getElementById('timeline-slots');
   slotsEl.innerHTML = '';
   for (let i = 0; i < 4; i++) {
     const s = document.createElement('div');
-    s.className = 'slot'; s.id = `slot-${i}`;
-    s.innerText = `${i+1}${i===0?'st':i===1?'nd':i===2?'rd':'th'} event`;
+    s.className = 'slot';
+    s.id = `slot-${i}`;
+    s.innerText = `${i + 1}${i === 0 ? 'st' : i === 1 ? 'nd' : i === 2 ? 'rd' : 'th'} event`;
     slotsEl.appendChild(s);
   }
-  const pool = shuffle([...ALL_TIMELINE_EVENTS]).slice(0, 4);
-  currentGameEvents = pool.map(e => ({...e})).sort((a,b) => a.year - b.year);
+
+  const picks = shuffle([...TIMELINE_EVENTS]).slice(0, 4);
+  timelineEvents = picks.map(e => ({ ...e })).sort((a, b) => a.year - b.year);
+
   const choicesEl = document.getElementById('timeline-choices');
   choicesEl.innerHTML = '';
-  shuffle([...pool]).forEach(evt => {
+  shuffle([...picks]).forEach(evt => {
     const btn = document.createElement('button');
-    btn.className = 'choice-btn'; btn.innerText = evt.text;
-    btn.onclick = () => handleTimelineChoice(btn, evt);
+    btn.className = 'choice-btn';
+    btn.innerText = evt.text;
+    btn.onclick = () => pickTimelineEvent(btn, evt);
     choicesEl.appendChild(btn);
   });
 }
-function handleTimelineChoice(btn, eventObj) {
-  const exp = currentGameEvents[selectedIndex], slot = document.getElementById(`slot-${selectedIndex}`);
-  if (eventObj.year === exp.year) {
-    btn.disabled = true; slot.innerText = `${eventObj.year}: ${eventObj.text}`; slot.classList.add('filled', 'correct'); selectedIndex++;
-    if (selectedIndex === 4) { showToast("Correct sequence.", 'ok'); document.getElementById('btn-next-timeline').style.display = 'inline-flex'; }
+
+function pickTimelineEvent(btn, evt) {
+  const expected = timelineEvents[timelineIndex];
+  const slot = document.getElementById(`slot-${timelineIndex}`);
+  if (evt.year === expected.year) {
+    btn.disabled = true;
+    slot.innerText = `${evt.year}: ${evt.text}`;
+    slot.classList.add('filled');
+    timelineIndex++;
+    if (timelineIndex === 4) {
+      showToast('Correct sequence.', 'ok');
+      document.getElementById('btn-next-timeline').style.display = 'inline-flex';
+    }
   } else {
-    slot.classList.add('wrong'); setTimeout(() => slot.classList.remove('wrong'), 400); showToast("Not quite — try another.", 'err');
+    slot.classList.add('wrong');
+    setTimeout(() => slot.classList.remove('wrong'), 450);
+    showToast('Not quite — try another.', 'err');
   }
 }
 
-/* Mystery Figure — uses cloudSearch() for a cached Wikipedia portrait */
-async function initMysteryGame() {
+// Mystery figure
+async function startMystery() {
   const startBtn = document.getElementById('btn-start-mystery');
   startBtn.disabled = true;
+  startBtn.innerText = 'Open a new case';
   document.getElementById('mystery-input-area').style.display = 'none';
   document.getElementById('mystery-portrait-img').style.display = 'none';
   const clueList = document.getElementById('clue-list');
   document.getElementById('mystery-clues').style.display = 'block';
-  clueList.innerHTML = "<li>Opening case file…</li>";
+  clueList.innerHTML = '<li>Opening case file…</li>';
 
-  const u = localDB[currentUser];
-  const usedNames = u.mysteryUsed.slice(-10);
+  const record = currentRecord();
+  const usedNames = record.mysteryUsed.slice(-10);
   const prompt = `Pick ONE widely known Philippine historical figure (not necessarily a president) that is NOT in this list: ${JSON.stringify(usedNames)}.
 Reply ONLY with JSON, no markdown: {"name":"Full Name","clues":["clue 1 (broad)","clue 2 (more specific)","clue 3 (very specific)"]}`;
 
   try {
-    const raw = await callAI(prompt, 0.85);
-    const result = JSON.parse(raw);
+    const result = JSON.parse(await aiText(prompt, 0.85));
+    if (!result.name || !Array.isArray(result.clues) || !result.clues.length) throw new Error('bad format');
     mysteryAnswer = result.name;
-    u.mysteryUsed.push(mysteryAnswer);
-    if (u.mysteryUsed.length > 20) u.mysteryUsed.shift();
-    await saveDatabase();
-    clueList.innerHTML = result.clues.map(c => `<li>${c}</li>`).join('');
+    record.mysteryUsed.push(mysteryAnswer);
+    if (record.mysteryUsed.length > 20) record.mysteryUsed.shift();
+    saveProgress();
+    clueList.innerHTML = result.clues.map(c => `<li>${esc(c)}</li>`).join('');
   } catch (e) {
-    const pick = fallbackMysteries[Math.floor(Math.random() * fallbackMysteries.length)];
+    const pick = FALLBACK_MYSTERIES[Math.floor(Math.random() * FALLBACK_MYSTERIES.length)];
     mysteryAnswer = pick.name;
-    clueList.innerHTML = pick.clues.map(c => `<li>${c}</li>`).join('');
-    showToast("AI unavailable — using a built-in case.", '');
+    clueList.innerHTML = pick.clues.map(c => `<li>${esc(c)}</li>`).join('');
+    showToast('AI unavailable — using a built-in case.', '');
   }
 
   const wiki = await cloudSearch(mysteryAnswer, 'wiki');
-  if (wiki?.thumbnail) {
+  if (wiki && wiki.thumbnail) {
     const img = document.getElementById('mystery-portrait-img');
-    img.src = wiki.thumbnail; img.style.display = 'block';
+    img.src = wiki.thumbnail;
+    img.style.display = 'block';
   }
 
   startBtn.disabled = false;
+  startBtn.style.display = 'none';
   document.getElementById('mystery-input-area').style.display = 'block';
-  document.getElementById('mystery-guess').value = '';
-  document.getElementById('mystery-guess').focus();
+  const guess = document.getElementById('mystery-guess');
+  guess.value = '';
+  guess.focus();
 }
-function checkMysteryGuess() {
-  const guess = document.getElementById('mystery-guess').value.trim().toLowerCase();
+
+function normalizeName(text) {
+  return String(text).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z ]/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+// Surname-only guesses count ("Rizal" for Jose Rizal), typos don't.
+function nameMatches(guess, answer) {
+  const g = normalizeName(guess);
+  const a = normalizeName(answer);
+  if (g.length < 3) return false;
+  return a === g || a.includes(g) || g.includes(a) || a.split(' ').includes(g);
+}
+
+function guessMystery() {
+  const guess = document.getElementById('mystery-guess').value.trim();
   if (!guess) return;
-  if (mysteryAnswer.toLowerCase().includes(guess) || guess.includes(mysteryAnswer.toLowerCase())) {
-    showToast("Correct! It was " + mysteryAnswer + ".", 'ok');
+  if (nameMatches(guess, mysteryAnswer)) {
+    showToast(`Correct! It was ${mysteryAnswer}.`, 'ok');
     document.getElementById('mystery-input-area').style.display = 'none';
     const btn = document.getElementById('btn-start-mystery');
-    btn.style.display = 'inline-flex'; btn.innerText = "Open another case";
+    btn.style.display = 'inline-flex';
+    btn.innerText = 'Open another case';
+    btn.focus();
   } else {
-    showToast("Not quite — try again.", 'err');
+    showToast('Not quite — try again.', 'err');
   }
 }
 
-/* Flashcards — images cached on the card object so re-flipping never re-fetches */
+function revealMystery() {
+  showToast(`It was ${mysteryAnswer}.`, 'warn');
+  document.getElementById('mystery-input-area').style.display = 'none';
+  const btn = document.getElementById('btn-start-mystery');
+  btn.style.display = 'inline-flex';
+  btn.innerText = 'Open another case';
+}
+
+// Flashcards. Card images are cached on the card so flipping back and
+// forth never re-fetches.
 function populateFlashEraSelect() {
   const sel = document.getElementById('flash-era-select');
-  sel.innerHTML = '<option value="all">All eras</option>' + ERA_NAMES.map((n,i) => `<option value="${i}">${n}</option>`).join('');
+  sel.innerHTML = '<option value="all">All eras</option>' +
+    ERA_NAMES.map((n, i) => `<option value="${i}">${esc(n)}</option>`).join('');
 }
+
 async function startFlashcards() {
   const btn = document.getElementById('btn-gen-deck');
   btn.disabled = true;
   const eraChoice = document.getElementById('flash-era-select').value;
   document.getElementById('flash-setup').style.display = 'none';
-  toggleLoader(true, "Building flashcard deck…");
-  const eras = eraChoice === 'all' ? [0,1,2,3,4] : [parseInt(eraChoice)];
-  const topics = eras.map(i => lessonsData[i].topicContext).join(' | ');
+  setLoading(true, 'Building flashcard deck…');
+
+  const eras = eraChoice === 'all' ? [0, 1, 2, 3, 4] : [parseInt(eraChoice, 10)];
+  const topics = eras.map(i => LESSONS[i].topicContext).join(' | ');
   const prompt = `Create 8 flashcards for Grade 10 Philippine history covering: ${topics}.
 Each flashcard is a short term/question on the front and a concise 1-sentence answer on the back.
 Reply ONLY with JSON: [{"front":"term or question","back":"answer"}]`;
+
   try {
-    const raw = await callAI(prompt, 0.6);
-    const cards = JSON.parse(raw);
-    flashDeck = cards.map(c => ({...c, weak: false, imageUrl: null, imageChecked: false}));
+    const cards = JSON.parse(await aiText(prompt, 0.6));
+    flashDeck = cards
+      .filter(c => c && typeof c.front === 'string' && typeof c.back === 'string')
+      .map(c => ({ front: c.front.trim(), back: c.back.trim(), weak: false, imageUrl: null, imageChecked: false }));
+    if (!flashDeck.length) throw new Error('empty deck');
   } catch (e) {
-    flashDeck = eras.flatMap(i => fallbackQuizData[i].map(q => ({ front: q.q, back: q.a, imageUrl: null, imageChecked: false })));
-    showToast("AI unavailable — using built-in flashcards.", '');
+    flashDeck = eras.flatMap(i => FALLBACK_QUIZZES[i].map(q => ({
+      front: q.q, back: q.a, weak: false, imageUrl: null, imageChecked: false
+    })));
+    showToast('AI unavailable — using built-in flashcards.', '');
   }
-  toggleLoader(false);
+
+  setLoading(false);
   btn.disabled = false;
-  flashIndex = 0; flashFlipped = false;
-  document.getElementById('flash-play').style.display = 'block';
-  renderFlashcard();
-}
-async function renderFlashcard() {
-  const prog = document.getElementById('flash-progress');
-  prog.innerHTML = flashDeck.map((_, i) => `<span class="${i < flashIndex ? 'done' : i === flashIndex ? 'current' : ''}"></span>`).join('');
-  const card = flashDeck[flashIndex];
+  flashIndex = 0;
   flashFlipped = false;
+  document.getElementById('flash-play').style.display = 'block';
+  showCard();
+}
+
+async function showCard() {
+  const prog = document.getElementById('flash-progress');
+  prog.innerHTML = flashDeck.map((_, i) =>
+    `<span class="${i < flashIndex ? 'done' : i === flashIndex ? 'current' : ''}"></span>`).join('');
+
+  const card = flashDeck[flashIndex];
   const faceEl = document.getElementById('flashcard-face');
   const imgEl = document.getElementById('flash-card-img');
-  if (!card) { faceEl.innerText = "Deck complete 🎉"; imgEl.style.display = 'none'; return; }
-  faceEl.innerText = card.front;
-
-  if (card.imageUrl) {
-    imgEl.src = card.imageUrl; imgEl.style.display = 'block';
-  } else {
+  if (!card) {
+    faceEl.innerText = 'Deck complete 🎉';
     imgEl.style.display = 'none';
-    if (!card.imageChecked) {
-      card.imageChecked = true; // only ever fetch once per card, even if requeued
-      const result = await cloudSearch(card.front);
-      if (result?.imageUrl && flashDeck[flashIndex] === card) { // still on this card
-        card.imageUrl = result.imageUrl;
-        imgEl.src = card.imageUrl; imgEl.style.display = 'block';
-      }
+    return;
+  }
+
+  flashFlipped = false;
+  faceEl.innerText = card.front;
+  if (card.imageUrl) {
+    imgEl.src = card.imageUrl;
+    imgEl.style.display = 'block';
+    return;
+  }
+  imgEl.style.display = 'none';
+  if (!card.imageChecked) {
+    card.imageChecked = true; // fetch each image at most once per card
+    const result = await cloudSearch(card.front);
+    if (result && result.imageUrl && flashDeck[flashIndex] === card) {
+      card.imageUrl = result.imageUrl;
+      imgEl.src = card.imageUrl;
+      imgEl.style.display = 'block';
     }
   }
 }
-function flipFlashcard() {
-  const card = flashDeck[flashIndex]; if (!card) return;
+
+function flipCard() {
+  const card = flashDeck[flashIndex];
+  if (!card) return;
   flashFlipped = !flashFlipped;
   document.getElementById('flashcard-face').innerText = flashFlipped ? card.back : card.front;
 }
-function rateFlashcard(gotIt) {
-  const card = flashDeck[flashIndex]; if (!card) return;
-  if (!gotIt) { card.weak = true; flashDeck.push(card); }
+
+function rateCard(gotIt) {
+  const card = flashDeck[flashIndex];
+  if (!card) return;
+  if (!gotIt) {
+    card.weak = true;
+    flashDeck.push(card); // missed cards come back later in the deck
+  }
   flashIndex++;
   if (flashIndex >= flashDeck.length) {
-    showToast("Deck complete.", 'ok');
-    document.getElementById('flashcard-face').innerText = "Deck complete 🎉";
+    showToast('Deck complete.', 'ok');
+    document.getElementById('flashcard-face').innerText = 'Deck complete 🎉';
     document.getElementById('flash-card-img').style.display = 'none';
     document.getElementById('flash-progress').innerHTML = '';
-    setTimeout(() => { document.getElementById('flash-play').style.display = 'none'; document.getElementById('flash-setup').style.display = 'block'; }, 1400);
+    setTimeout(() => {
+      document.getElementById('flash-play').style.display = 'none';
+      document.getElementById('flash-setup').style.display = 'block';
+    }, 1400);
     return;
   }
-  renderFlashcard();
+  showCard();
 }
 
-async function startSpeedRound() {
+// Speed round
+async function startSpeed() {
   const btn = document.getElementById('btn-start-speed');
   btn.disabled = true;
   document.getElementById('speed-setup').style.display = 'none';
-  toggleLoader(true, "Preparing rapid-fire questions…");
+  setLoading(true, 'Preparing rapid-fire questions…');
+
   const era = Math.floor(Math.random() * 5);
-  const prompt = `Write 12 very short, rapid-fire multiple-choice trivia questions (4 options each) about: ${lessonsData[era].topicContext}. Keep questions under 12 words. Reply ONLY with JSON: [{"q":"...","a":"correct","o":["a","b","c","d"]}]`;
+  const prompt = `Write 12 very short, rapid-fire multiple-choice trivia questions (4 options each) about: ${LESSONS[era].topicContext}. Keep questions under 12 words. Reply ONLY with JSON: [{"q":"...","a":"correct","o":["a","b","c","d"]}]`;
+
   try {
-    const raw = await callAI(prompt, 0.8);
-    speedQuestions = JSON.parse(raw);
+    speedQuestions = normalizeQuiz(JSON.parse(await aiText(prompt, 0.8)), 12);
+    if (!speedQuestions.length) throw new Error('no questions');
   } catch (e) {
-    speedQuestions = fallbackQuizData[era].map(q => ({ q: q.q, a: q.a, o: q.o }));
-    showToast("AI unavailable — using a shorter built-in set.", '');
+    speedQuestions = FALLBACK_QUIZZES[era].map(q => ({ q: q.q, a: q.a, o: q.o }));
+    showToast('AI unavailable — using a shorter built-in set.', '');
   }
-  toggleLoader(false);
+
+  setLoading(false);
   btn.disabled = false;
-  speedIndex = 0; speedScore = 0; speedTimeLeft = 60;
+  speedIndex = 0;
+  speedScore = 0;
+  speedTimeLeft = 60;
   document.getElementById('speed-play').style.display = 'block';
-  document.getElementById('speed-score').innerText = "Score: 0";
-  renderSpeedQuestion();
-  clearInterval(speedTimerId);
-  speedTimerId = setInterval(() => {
+  document.getElementById('speed-score').innerText = 'Score: 0';
+  showSpeedQuestion();
+
+  clearInterval(speedTimer);
+  speedTimer = setInterval(() => {
     speedTimeLeft--;
-    document.getElementById('speed-timer').innerText = `0:${String(speedTimeLeft).padStart(2,'0')}`;
-    if (speedTimeLeft <= 0) endSpeedRound();
+    document.getElementById('speed-timer').innerText = `1:${String(speedTimeLeft % 60).padStart(2, '0')}`;
+    if (speedTimeLeft <= 0) endSpeed();
   }, 1000);
 }
-function renderSpeedQuestion() {
-  if (speedIndex >= speedQuestions.length) { endSpeedRound(); return; }
+
+function showSpeedQuestion() {
+  if (speedIndex >= speedQuestions.length) return endSpeed();
   const q = speedQuestions[speedIndex];
   document.getElementById('speed-q').innerText = q.q;
-  const opts = document.getElementById('speed-options'); opts.innerHTML = '';
-  [...q.o].sort(() => Math.random()-0.5).forEach(opt => {
-    const b = document.createElement('button'); b.className = 'option-btn'; b.innerText = opt;
+  const opts = document.getElementById('speed-options');
+  opts.innerHTML = '';
+  shuffle([...q.o]).forEach(opt => {
+    const b = document.createElement('button');
+    b.className = 'option-btn';
+    b.innerText = opt;
     b.onclick = () => {
-      if (opt === q.a) { speedScore++; document.getElementById('speed-score').innerText = `Score: ${speedScore}`; }
-      speedIndex++; renderSpeedQuestion();
+      if (opt === q.a) {
+        speedScore++;
+        document.getElementById('speed-score').innerText = `Score: ${speedScore}`;
+      }
+      speedIndex++;
+      showSpeedQuestion();
     };
     opts.appendChild(b);
   });
 }
-async function endSpeedRound() {
-  clearInterval(speedTimerId);
+
+function endSpeed() {
+  clearInterval(speedTimer);
+  speedTimer = null;
   document.getElementById('speed-play').style.display = 'none';
   document.getElementById('speed-setup').style.display = 'block';
+  document.getElementById('speed-timer').innerText = '1:00';
   showToast(`Round over — final score ${speedScore}.`, 'ok');
   awardBadge('speed_runner');
-  await saveDatabase();
+
+  const record = currentRecord();
+  if (speedScore > (record.speedBest || 0)) {
+    record.speedBest = speedScore;
+    showToast(`New personal best: ${speedScore}!`, 'ok');
+  }
+  saveProgress();
 }
 
-/* AI Tutor chat */
-function renderTutorLog() {
+// Leaving the speed tab mid-round shouldn't leave a timer ticking.
+function abortSpeed() {
+  if (!speedTimer) return;
+  clearInterval(speedTimer);
+  speedTimer = null;
+  document.getElementById('speed-play').style.display = 'none';
+  document.getElementById('speed-setup').style.display = 'block';
+}
+
+// Tutor chat
+function renderTutor() {
   const log = document.getElementById('tutor-log');
-  log.innerHTML = tutorHistory.map(m => `<div class="tutor-msg ${m.role}">${m.text}</div>`).join('');
+  log.innerHTML = tutorHistory.map(m => `<div class="tutor-msg ${m.role}">${esc(m.text)}</div>`).join('');
   log.scrollTop = log.scrollHeight;
 }
-async function askTutor() {
+
+async function askTutor(preset) {
   const input = document.getElementById('tutor-input');
-  const sendBtn = document.getElementById('btn-tutor-send');
-  const msg = input.value.trim();
-  if (!msg) return;
-  sendBtn.disabled = true; input.disabled = true;
-  tutorHistory.push({ role: 'user', text: msg });
-  renderTutorLog();
+  const msg = (typeof preset === 'string' ? preset : input.value).trim();
+  if (!msg || tutorBusy) return;
+
+  tutorBusy = true;
+  document.getElementById('btn-tutor-send').disabled = true;
+  input.disabled = true;
   input.value = '';
+  tutorHistory.push({ role: 'user', text: msg });
   tutorHistory.push({ role: 'ai', text: '…' });
-  renderTutorLog();
+  renderTutor();
+
   try {
-    const text = await callAI(`You are a friendly Grade 10 Philippine history tutor. A student asks (may be in Taglish): "${msg}". Answer clearly in 2-4 sentences, factually, at a Grade 10 level.`, 0.5);
-    tutorHistory[tutorHistory.length - 1] = { role: 'ai', text };
+    const answer = await aiText(`You are a friendly Grade 10 Philippine history tutor. A student asks (may be in Taglish): "${msg}". Answer clearly in 2-4 sentences, factually, at a Grade 10 level.`, 0.5);
+    tutorHistory[tutorHistory.length - 1] = { role: 'ai', text: answer };
   } catch (e) {
-    tutorHistory[tutorHistory.length - 1] = { role: 'ai', text: "Sorry, the AI tutor is unavailable right now. Try reviewing the module content, or ask again in a moment." };
+    tutorHistory[tutorHistory.length - 1] = {
+      role: 'ai',
+      text: 'Sorry, the AI tutor is unavailable right now. Try reviewing the module content, or ask again in a moment.'
+    };
   }
-  renderTutorLog();
-  sendBtn.disabled = false; input.disabled = false; input.focus();
-  const u = localDB[currentUser];
-  u.tutorCount = (u.tutorCount || 0) + 1;
-  if (u.tutorCount >= 5) awardBadge('tutor_pet');
-  await saveDatabase();
+  renderTutor();
+
+  tutorBusy = false;
+  document.getElementById('btn-tutor-send').disabled = false;
+  input.disabled = false;
+  input.focus();
+
+  const record = currentRecord();
+  record.tutorCount = (record.tutorCount || 0) + 1;
+  if (record.tutorCount >= 5) awardBadge('tutor_pet');
+  saveProgress();
 }
 
-/* ============================================================
-   9. AR
-   ============================================================ */
-function requestCameraAccess() {
-  document.getElementById('ar-perm-box').style.display = 'none';
+// ------------------------------------------------------------------
+// AR artifacts + QR codes. One A-Frame scene lives in #ar-stage: it
+// shows the rotating 3D preview until the camera starts, then AR.js
+// takes over and anchors the artifact to the printed Hiro marker.
+// ------------------------------------------------------------------
+function artifactParts(artifact, mini = false) {
+  return artifact.parts
+    .filter(p => !(mini && p.tiny))
+    .map(p => {
+      // the QR page only needs color — metalness/roughness would bloat the payload
+      const mat = mini ? p.mat.split(';')[0] : p.mat;
+      return `<a-${p.tag} ${p.attrs} material="${mat}"></a-${p.tag}>`;
+    })
+    .join('');
+}
+
+function renderArtifactChips() {
+  document.getElementById('artifact-chips').innerHTML = ARTIFACTS.map((a, i) =>
+    `<button class="artifact-chip ${i === artifactIndex ? 'active' : ''}" onclick="selectArtifact(${i})">
+       <span class="dot" style="background:${a.parts[0].mat.match(/color:(#[0-9A-Fa-f]{6})/)[1]}"></span>${esc(a.name)}
+     </button>`).join('');
+}
+
+function renderArtifactInfo() {
+  const a = ARTIFACTS[artifactIndex];
+  document.getElementById('artifact-era').innerText = a.era;
+  document.getElementById('artifact-name').innerText = a.name;
+  document.getElementById('artifact-blurb').innerText = a.blurb;
+}
+
+function selectArtifact(i) {
+  artifactIndex = i;
+  renderArtifactInfo();
+  renderArtifactChips();
+  cameraOn ? buildCameraScene() : buildPreviewScene();
+  refreshQr();
+}
+
+function renderArSection() {
+  renderArtifactChips();
+  renderArtifactInfo();
+  cameraOn ? buildCameraScene() : buildPreviewScene();
+  refreshQr();
+}
+
+function buildPreviewScene() {
+  const stage = document.getElementById('ar-stage');
+  stage.querySelectorAll('a-scene').forEach(s => s.remove());
+  const art = ARTIFACTS[artifactIndex];
+  stage.insertAdjacentHTML('beforeend', `
+    <a-scene embedded vr-mode-ui="enabled: false" loading-screen="enabled: false" renderer="antialias: true">
+      <a-sky color="#14110C"></a-sky>
+      <a-entity light="type: ambient; color: #FFF4DE; intensity: 0.85"></a-entity>
+      <a-entity light="type: directional; color: #FFE3B3; intensity: 0.7" position="2 4 3"></a-entity>
+      <a-circle position="0 -0.85 0" rotation="-90 0 0" radius="1.5" color="#221A12"></a-circle>
+      <a-entity position="0 0.05 0" animation="property: rotation; to: 0 360 0; loop: true; dur: 16000; easing: linear">
+        ${artifactParts(art)}
+      </a-entity>
+      <a-camera position="0 1.15 3.1" rotation="-10 0 0" look-controls="enabled: false" wasd-controls="enabled: false"></a-camera>
+    </a-scene>`);
+  document.getElementById('ar-overlay-text').style.display = 'none';
+  document.getElementById('btn-ar-preview').style.display = 'none';
+  document.getElementById('btn-ar-camera').style.display = 'inline-flex';
+}
+
+function buildCameraScene() {
+  const stage = document.getElementById('ar-stage');
+  stage.querySelectorAll('a-scene').forEach(s => s.remove());
+  const art = ARTIFACTS[artifactIndex];
+  stage.insertAdjacentHTML('beforeend', `
+    <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false;" vr-mode-ui="enabled: false" loading-screen="enabled: false">
+      <a-marker preset="hiro" smooth="true" smoothCount="6" smoothTolerance="0.05">
+        <a-entity position="0 0.55 0" scale="0.8 0.8 0.8" animation="property: rotation; to: 0 360 0; loop: true; dur: 14000; easing: linear">
+          ${artifactParts(art)}
+        </a-entity>
+      </a-marker>
+      <a-entity camera></a-entity>
+    </a-scene>`);
+  stealArVideo();
   document.getElementById('ar-overlay-text').style.display = 'block';
-  document.querySelectorAll('a-scene, video').forEach(el => { if (el.srcObject) el.srcObject.getTracks().forEach(t => t.stop()); el.remove(); });
-  const artifact = lessonsData[gameState.currentEra]?.ar || lessonsData[0].ar;
-  const f = document.getElementById('ar-frame');
-  f.insertAdjacentHTML('beforeend', `<a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false;">
-    <a-marker preset="hiro"><a-entity position="0 0 0">
-      <a-cylinder radius="0.8" height="1.5" color="${artifact.color}"></a-cylinder>
-      <a-sphere position="0 1.0 0" radius="0.85" color="${artifact.color}"></a-sphere>
-    </a-entity></a-marker>
-    <a-entity camera></a-entity></a-scene>`);
-  let checkVideo = setInterval(() => { let v = document.querySelector('video'); if (v && v.parentElement !== f) { f.appendChild(v); clearInterval(checkVideo); } }, 100);
-  const u = localDB[currentUser];
-  if (u && !u.arViewed) { u.arViewed = true; awardBadge('ar_explorer'); saveDatabase(); }
+  document.getElementById('btn-ar-preview').style.display = 'inline-flex';
+  document.getElementById('btn-ar-camera').style.display = 'none';
 }
 
-/* ============================================================
-   10. TEACHER DASHBOARD — fetches the full roster only when opened
-   ============================================================ */
-async function renderTeacherDashboard() {
-  const wrap = document.getElementById('teacher-table-wrap');
-  const tbody = document.getElementById('teacher-table-body');
-
-  if (!classCode) {
-    wrap.innerHTML = `<div class="dash-msg">No class code set — the dashboard needs a class code to read the shared roster.<br>Set one from the login screen (log out first, or clear "Class code" in your browser storage).</div>`;
-    return;
-  }
-  const roster = await cloudGetAll();
-  if (!roster) {
-    wrap.innerHTML = `<div class="dash-msg">Couldn't reach the class server (wrong code, or it's offline). Showing this device's own progress instead.</div>`;
-    renderTeacherRows({ [currentUser]: { data: localDB[currentUser] } });
-    return;
-  }
-  if (!wrap.querySelector('table')) location.reload(); // restore table markup if we previously swapped it for a message
-  renderTeacherRows(roster);
+// AR.js drops its webcam <video> outside our frame — pull it in so the
+// feed fills the stage. Bounded so it can't poll forever.
+function stealArVideo() {
+  clearInterval(videoPoll);
+  let tries = 0;
+  videoPoll = setInterval(() => {
+    const stage = document.getElementById('ar-stage');
+    const video = document.querySelector('video');
+    if (video && video.parentElement !== stage) stage.appendChild(video);
+    if (++tries > 200) clearInterval(videoPoll);
+  }, 100);
 }
-function renderTeacherRows(roster) {
-  const wrap = document.getElementById('teacher-table-wrap');
-  wrap.innerHTML = `<table><thead><tr><th>Name</th><th>Score</th><th>Era reached</th><th>Badges</th><th>Status</th></tr></thead><tbody id="teacher-table-body"></tbody></table>`;
+
+function teardownAr() {
+  clearInterval(videoPoll);
+  videoPoll = null;
+  cameraOn = false;
+  document.querySelectorAll('#ar-stage video').forEach(v => {
+    if (v.srcObject) v.srcObject.getTracks().forEach(t => t.stop());
+    v.remove();
+  });
+  document.querySelectorAll('#ar-stage a-scene').forEach(s => s.remove());
+  document.getElementById('ar-overlay-text').style.display = 'none';
+  document.getElementById('btn-ar-preview').style.display = 'none';
+  document.getElementById('btn-ar-camera').style.display = 'inline-flex';
+}
+
+function openCameraPrompt() {
+  document.getElementById('ar-perm-box').style.display = 'block';
+}
+
+function dismissPerm() {
+  document.getElementById('ar-perm-box').style.display = 'none';
+}
+
+function loadScriptOnce(src) {
+  return new Promise((resolve, reject) => {
+    const existing = document.querySelector(`script[src="${src}"]`);
+    if (existing) return resolve();
+    const script = document.createElement('script');
+    script.src = src;
+    script.onload = resolve;
+    script.onerror = reject;
+    document.head.appendChild(script);
+  });
+}
+
+async function confirmCamera() {
+  dismissPerm();
+  // ask for the camera up front so AR.js gets a clean stream
+  try {
+    const probe = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+    probe.getTracks().forEach(t => t.stop());
+  } catch (e) {
+    showToast('Camera blocked — check your browser permissions.', 'err');
+    return;
+  }
+  // AR.js grabs the webcam on load, so it's only pulled in here
+  setLoading(true, 'Starting camera AR…');
+  try {
+    await loadScriptOnce(ARJS_URL);
+  } catch (e) {
+    setLoading(false);
+    showToast('Couldn\'t load the AR engine — check your connection.', 'err');
+    return;
+  }
+  setLoading(false);
+  cameraOn = true;
+  buildCameraScene();
+  const record = currentRecord();
+  if (record && !record.arViewed) {
+    record.arViewed = true;
+    awardBadge('ar_explorer');
+    saveProgress();
+  }
+}
+
+function showPreview() {
+  teardownAr();
+  buildPreviewScene();
+}
+
+// QR codes
+function appLink(i) {
+  return location.href.split('#')[0] + '#artifact=' + i;
+}
+
+function b64Encode(text) {
+  return btoa(unescape(encodeURIComponent(text)));
+}
+
+// A complete miniature page with the artifact, base64-encoded into a
+// data: URL — scanning the QR opens the 3D model with no server involved.
+// Kept deliberately tiny: every byte here becomes QR modules.
+function standaloneSceneUrl(i) {
+  const art = ARTIFACTS[i];
+  const html = [
+    '<!DOCTYPE html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">',
+    '<title>' + art.name + '</title>',
+    '<body style="margin:0;background:#14110C;overflow:hidden">',
+    '<div style="position:fixed;top:12px;left:16px;font:600 15px system-ui;color:#E8C179">' + art.name + '</div>',
+    '<script src="https://aframe.io/releases/1.4.2/aframe.min.js"></scr' + 'ipt>',
+    '<a-scene vr-mode-ui="enabled:false" loading-screen="enabled:false">',
+    '<a-sky color="#14110C"></a-sky>',
+    '<a-entity light="type:ambient;color:#FFF4DE;intensity:.85"></a-entity>',
+    '<a-entity light="type:directional;intensity:.7" position="2 4 3"></a-entity>',
+    '<a-circle position="0 -0.85 0" rotation="-90 0 0" radius="1.5" color="#221A12"></a-circle>',
+    '<a-entity position="0 0.05 0" animation="property:rotation;to:0 360 0;loop:true;dur:16000">',
+    artifactParts(art, true),
+    '</a-entity>',
+    '<a-camera position="0 1.15 3.1" rotation="-10 0 0"></a-camera>',
+    '</a-scene>'
+  ].join('');
+  return 'data:text/html;base64,' + b64Encode(html);
+}
+
+function qrPayload() {
+  const mode = document.getElementById('qr-mode').value;
+  if (mode === 'demo') return standaloneSceneUrl(artifactIndex);
+  if (mode === 'custom') return document.getElementById('qr-custom').value.trim();
+  return appLink(artifactIndex);
+}
+
+function refreshQr() {
+  const mode = document.getElementById('qr-mode').value;
+  document.getElementById('qr-custom').style.display = mode === 'custom' ? 'block' : 'none';
+  const box = document.getElementById('qr-box');
+  const note = document.getElementById('qr-note');
+  box.innerHTML = '';
+
+  const payload = qrPayload();
+  if (!payload) {
+    note.innerText = 'Type a link above to generate the code.';
+    return;
+  }
+  // dense payloads (the standalone page) need bigger modules to stay scannable
+  const size = mode === 'demo' ? 380 : 250;
+  const tmp = document.createElement('div');
+  try {
+    new QRCode(tmp, {
+      text: payload,
+      width: size,
+      height: size,
+      colorDark: '#000000',
+      colorLight: '#FFFFFF',
+      correctLevel: mode === 'demo' ? QRCode.CorrectLevel.L : QRCode.CorrectLevel.M
+    });
+  } catch (err) {
+    note.innerText = 'That link is too long for a QR code — try the app link mode.';
+    return;
+  }
+
+  // qrcodejs draws edge to edge, and cameras need a white quiet zone
+  const source = tmp.querySelector('canvas') || tmp.querySelector('img');
+  const quiet = 26;
+  const canvas = document.createElement('canvas');
+  canvas.width = canvas.height = size + quiet * 2;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.drawImage(source, quiet, quiet, size, size);
+  canvas.style.maxWidth = '100%';
+  canvas.style.height = 'auto';
+  box.appendChild(canvas);
+
+  if (mode === 'demo') {
+    note.innerText = 'Scanning this opens a standalone 3D page of the ' + ARTIFACTS[artifactIndex].name + ' — no server needed. Some phone cameras only follow https links; dedicated QR scanner apps open this one fine.';
+  } else if (mode === 'custom') {
+    note.innerText = 'Encoded: ' + payload.slice(0, 90);
+  } else if (location.protocol === 'file:') {
+    note.innerText = 'This file is open from disk, so the link points at your local copy. Host the app on any static server and the same QR works on every phone. Encoded: ' + payload;
+  } else {
+    note.innerText = 'Encoded: ' + payload;
+  }
+}
+
+function downloadQr() {
+  const canvas = document.querySelector('#qr-box canvas');
+  const img = document.querySelector('#qr-box img');
+  const src = canvas ? canvas.toDataURL('image/png') : (img ? img.src : '');
+  if (!src) return showToast('Generate a QR code first.', 'err');
+  const a = document.createElement('a');
+  a.href = src;
+  a.download = `lahiquest-${ARTIFACTS[artifactIndex].slug}-qr.png`;
+  a.click();
+  showToast('QR code downloaded.', 'ok');
+}
+
+function printMarkerSheet() {
+  document.getElementById('ps-sub').innerText = `${ARTIFACTS[artifactIndex].name} · ${ARTIFACTS[artifactIndex].era}`;
+  document.getElementById('ps-marker').src = HIRO_MARKER;
+  const canvas = document.querySelector('#qr-box canvas');
+  const img = document.querySelector('#qr-box img');
+  document.getElementById('ps-qr').src = canvas ? canvas.toDataURL('image/png') : (img ? img.src : '');
+  window.print();
+}
+
+// ------------------------------------------------------------------
+// Teacher dashboard. The roster is fetched only when this page opens.
+// ------------------------------------------------------------------
+function rosterTableHtml() {
+  return `<table>
+    <thead><tr><th>Name</th><th>Score</th><th>Era reached</th><th>Badges</th><th>Status</th></tr></thead>
+    <tbody id="teacher-table-body"></tbody>
+  </table>`;
+}
+
+function fillRosterTable(roster) {
   const tbody = document.getElementById('teacher-table-body');
+  if (!tbody) return;
+  tbody.innerHTML = '';
   for (const [name, entry] of Object.entries(roster)) {
-    const data = ensureUserShape(entry.data || entry);
-    const totalScore = data.eraScores.reduce((a,b) => a+b, 0);
+    const data = withDefaults(entry.data || entry);
+    const totalScore = data.eraScores.reduce((a, b) => a + b, 0);
     let highestUnlocked = 0;
     data.unlockedQuests.forEach((u, i) => { if (u) highestUnlocked = i; });
+
     let statusHTML;
-    if (data.unlockedQuests.every((u,i) => data.eraScores[i] >= 3)) statusHTML = `<span style="color:var(--malachite); font-weight:700;">Completed</span>`;
-    else if (totalScore > 0) statusHTML = `<span style="color:var(--gold-deep); font-weight:700;">In progress</span>`;
-    else statusHTML = `<span style="color:var(--muted); font-weight:700;">Not started</span>`;
-    const pct = Math.min(100, (totalScore/20)*100);
+    if (data.eraScores.every(s => s >= 3)) statusHTML = '<span style="color:var(--malachite); font-weight:700;">Completed</span>';
+    else if (totalScore > 0) statusHTML = '<span style="color:var(--gold-deep); font-weight:700;">In progress</span>';
+    else statusHTML = '<span style="color:var(--muted); font-weight:700;">Not started</span>';
+
+    const pct = Math.min(100, (totalScore / 20) * 100);
     tbody.insertAdjacentHTML('beforeend', `<tr>
-      <td style="font-weight:700;">${name}</td>
+      <td style="font-weight:700;">${esc(name)}</td>
       <td class="bar-cell"><span style="font-family:var(--font-mono);">${totalScore}/20</span><div class="mini-bar"><div class="mini-bar-fill" style="width:${pct}%"></div></div></td>
-      <td>${ERA_NAMES[highestUnlocked]}</td>
+      <td>${esc(ERA_NAMES[highestUnlocked])}</td>
       <td style="font-family:var(--font-mono); font-size:.85rem;">${data.badges.length}</td>
       <td>${statusHTML}</td>
     </tr>`);
   }
 }
+
+async function renderDashboard() {
+  const wrap = document.getElementById('teacher-table-wrap');
+  if (!classCode) {
+    wrap.innerHTML = `<div class="dash-msg">No class code set — the dashboard needs a class code to read the shared roster.<br>Set one from the login screen (log out first, or clear "Class code" in your browser storage).</div>`;
+    lastRoster = null;
+    return;
+  }
+  const roster = await cloudGetAll();
+  if (!roster) {
+    wrap.innerHTML = `<div class="dash-msg">Couldn't reach the class server (wrong code, or it's offline). Showing this device's own progress instead.</div>${rosterTableHtml()}`;
+    lastRoster = { [playerName]: { data: currentRecord() } };
+  } else {
+    wrap.innerHTML = rosterTableHtml();
+    lastRoster = roster;
+  }
+  fillRosterTable(lastRoster);
+}
+
+function csvCell(value) {
+  const text = String(value).replace(/\n/g, ' ').trim();
+  return /[",]/.test(text) ? '"' + text.replace(/"/g, '""') + '"' : text;
+}
+
 function exportCSV() {
-  let csv = "Name,TotalScore,EraReached,Badges,Status\n";
-  document.querySelectorAll('#teacher-table-body tr').forEach(tr => {
-    const cells = [...tr.children].map(td => td.innerText.replace(/\n/g, ' ').trim());
-    csv += cells.join(',') + '\n';
-  });
+  const roster = lastRoster || { [playerName]: { data: currentRecord() } };
+  const rows = [['Name', 'TotalScore', 'EraReached', 'Badges', 'Status']];
+  for (const [name, entry] of Object.entries(roster)) {
+    const data = withDefaults(entry.data || entry);
+    const total = data.eraScores.reduce((a, b) => a + b, 0);
+    let reached = 0;
+    data.unlockedQuests.forEach((u, i) => { if (u) reached = i; });
+    const status = data.eraScores.every(s => s >= 3) ? 'Completed' : total > 0 ? 'In progress' : 'Not started';
+    rows.push([name, total, ERA_NAMES[reached], data.badges.length, status]);
+  }
+  const csv = rows.map(r => r.map(csvCell).join(',')).join('\n');
   const blob = new Blob([csv], { type: 'text/csv' });
   const url = URL.createObjectURL(blob);
-  const a = document.createElement('a'); a.href = url; a.download = 'lahiquest-progress.csv'; a.click();
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'lahiquest-progress.csv';
+  a.click();
   URL.revokeObjectURL(url);
 }
 
-/* ============================================================
-   11. INIT
-   ============================================================ */
+// ------------------------------------------------------------------
+// Boot.
+// ------------------------------------------------------------------
 window.addEventListener('load', () => {
   applyStoredTheme();
-  setTimeout(() => {
-    const p = document.getElementById('preloader');
-    if (p) { p.style.opacity = '0'; setTimeout(() => p.remove(), 500); }
-    checkLogin();
-  }, 1000);
+  document.getElementById('marker-img').src = HIRO_MARKER;
+
+  document.getElementById('student-name').addEventListener('keydown', e => {
+    if (e.key === 'Enter') document.getElementById('class-code-input').focus();
+  });
+  document.getElementById('class-code-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') login();
+  });
+  document.getElementById('mystery-guess').addEventListener('keydown', e => {
+    if (e.key === 'Enter') guessMystery();
+  });
+  document.getElementById('tutor-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') askTutor();
+  });
+  document.addEventListener('keydown', e => {
+    if (['INPUT', 'SELECT', 'TEXTAREA'].includes(e.target.tagName)) return;
+    const flashVisible = document.getElementById('mode-flash').classList.contains('active') &&
+      document.getElementById('flash-play').style.display !== 'none' && flashDeck.length;
+    if (!flashVisible) return;
+    if (e.code === 'Space') { e.preventDefault(); flipCard(); }
+    else if (e.key === '1') rateCard(false);
+    else if (e.key === '2') rateCard(true);
+  });
+
+  checkLogin();
 });
 </script>
 </body>
-  </html>
+        </html>
