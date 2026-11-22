@@ -311,9 +311,21 @@
     position: relative; background: #14110C; border: 1px solid var(--line);
     display: flex; align-items: center; justify-content: center;
   }
-  #ar-stage video, #ar-stage .a-canvas {
-    object-fit: cover !important; width: 100% !important; max-width: 100% !important; height: 100% !important;
-    top: 0 !important; left: 0 !important; position: absolute !important; z-index: 1;
+  /* camera stacking: AR.js forces its video to z-index -2 inline, which buries the
+     feed under the stage background — override with !important and align both layers */
+  #ar-stage > a-scene {
+    position: absolute !important; inset: 0 !important;
+    width: 100% !important; height: 100% !important; margin: 0 !important;
+  }
+  #ar-stage video {
+    position: absolute !important; inset: 0 !important;
+    width: 100% !important; max-width: 100% !important; height: 100% !important;
+    object-fit: cover !important; z-index: 0 !important;
+  }
+  #ar-stage .a-canvas {
+    position: absolute !important; inset: 0 !important;
+    width: 100% !important; max-width: 100% !important; height: 100% !important;
+    z-index: 1 !important;
   }
   #ar-stage canvas { max-width: 100% !important; }
   .ar-permissions-box {
@@ -659,6 +671,13 @@
       <button class="btn-ghost btn-sm" onclick="renderDashboard()">Refresh</button>
       <button class="btn-ghost btn-sm" onclick="exportCSV()">Export CSV</button>
     </div>
+    <div class="ar-card" style="max-width:640px; margin-bottom:18px;">
+      <h3>AI server</h3>
+      <p class="small">Point the app at your hosted API — paste your Render URL here and everything (quizzes, tutor, flashcards, sync) uses it. Leave empty if the API lives at the same address as this site.</p>
+      <input type="text" id="api-base-input" class="mystery-input" placeholder="https://your-service.onrender.com" autocomplete="off">
+      <button class="btn-main btn-sm" onclick="saveApiBase()">Save</button>
+      <p class="qr-note" id="api-base-note"></p>
+    </div>
     <div id="teacher-table-wrap" style="overflow-x:auto;"></div>
   </section>
 
@@ -902,8 +921,22 @@ const ARTIFACTS = [
 // App state. Progress lives in localStorage first (always available),
 // and mirrors to the class server when a class code is set.
 // ------------------------------------------------------------------
+// Endpoints are relative to the API base: empty = same origin as the site.
+// Point the base at a hosted API (e.g. a Render URL) from the Dashboard panel,
+// or arrive with ?api=https://your-service.onrender.com — it sticks.
 const ENDPOINTS = { ai: '/api/ai', db: '/api/db', search: '/api/search' };
 const ARJS_URL = 'https://cdn.jsdelivr.net/npm/@ar-js-org/ar.js@3.4.5/aframe/build/aframe-ar.js';
+
+function apiBase() { return (localStorage.getItem('LahiQuestApi') || '').replace(/\/$/, ''); }
+function apiUrl(name) { return apiBase() + ENDPOINTS[name]; }
+
+function saveApiBase() {
+  const value = document.getElementById('api-base-input').value.trim().replace(/\/$/, '');
+  localStorage.setItem('LahiQuestApi', value);
+  const note = document.getElementById('api-base-note');
+  note.innerText = value ? 'Saved — now talking to ' + value : 'Saved — using the address of this site.';
+  showToast('API server updated.', 'ok');
+}
 
 let playerName = 'Guest';
 let classCode = localStorage.getItem('LahiQuestClassCode') || '';
@@ -962,16 +995,22 @@ function shuffle(list) {
 // means built-in content and local-only progress.
 // ------------------------------------------------------------------
 async function aiText(prompt, temperature = 0.5) {
-  const res = await fetch(ENDPOINTS.ai, {
+  const res = await fetch(apiUrl('ai'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ prompt, temperature })
   });
   if (!res.ok) throw new Error('AI endpoint unavailable');
-  const data = await res.json();
-  if (!data.text) throw new Error('Empty AI response');
+  // hosted APIs wrap the answer differently — take whichever field carries text
+  const body = await res.text();
+  let out = body;
+  try {
+    const data = JSON.parse(body);
+    out = data.text || data.response || data.message || data.content || data.answer || body;
+  } catch (e) { /* plain-text response is fine too */ }
+  if (!String(out).trim()) throw new Error('Empty AI response');
   // the model sometimes wraps JSON in markdown fences despite instructions
-  return data.text.trim().replace(/^```(json)?/i, '').replace(/```$/, '').trim();
+  return String(out).trim().replace(/^```(json)?/i, '').replace(/```$/, '').trim();
 }
 
 function authHeaders(extra = {}) { return { ...extra, 'x-class-code': classCode }; }
@@ -986,7 +1025,7 @@ function setSyncState(on) {
 
 async function cloudGetUser(name) {
   try {
-    const res = await fetch(`${ENDPOINTS.db}?username=${encodeURIComponent(name)}`, { headers: authHeaders() });
+    const res = await fetch(`${apiUrl('db')}?username=${encodeURIComponent(name)}`, { headers: authHeaders() });
     if (!res.ok) { setSyncState(false); return null; }
     setSyncState(true);
     return await res.json(); // { data, updatedAt } or null
@@ -995,7 +1034,7 @@ async function cloudGetUser(name) {
 
 async function cloudGetAll() {
   try {
-    const res = await fetch(ENDPOINTS.db, { headers: authHeaders() });
+    const res = await fetch(apiUrl('db'), { headers: authHeaders() });
     if (!res.ok) { setSyncState(false); return null; }
     setSyncState(true);
     return await res.json(); // { name: { data, updatedAt } }
@@ -1004,7 +1043,7 @@ async function cloudGetAll() {
 
 async function cloudSaveUser(name, data) {
   try {
-    const res = await fetch(ENDPOINTS.db, {
+    const res = await fetch(apiUrl('db'), {
       method: 'POST',
       headers: authHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ username: name, data })
@@ -1016,7 +1055,7 @@ async function cloudSaveUser(name, data) {
 
 async function cloudSearch(q, type) {
   try {
-    const url = `${ENDPOINTS.search}?q=${encodeURIComponent(q)}${type ? `&type=${type}` : ''}`;
+    const url = `${apiUrl('search')}?q=${encodeURIComponent(q)}${type ? `&type=${type}` : ''}`;
     const res = await fetch(url, { headers: authHeaders() });
     if (!res.ok) return null;
     return await res.json();
@@ -1801,6 +1840,117 @@ function artifactParts(artifact, mini = false) {
     .join('');
 }
 
+// A revolved-profile geometry — pots and lids get real silhouettes instead of
+// stacked cylinders. Profile points are "radius,y" pairs separated by "|".
+if (typeof AFRAME !== 'undefined' && !AFRAME.geometries.vessel) {
+  AFRAME.registerGeometry('vessel', {
+    schema: { profile: { default: '' } },
+    init(data) {
+      const points = data.profile.split('|').map(pair => {
+        const [r, y] = pair.split(',').map(Number);
+        return new THREE.Vector2(r, y);
+      });
+      this.geometry = new THREE.LatheGeometry(points, 36);
+      this.geometry.computeVertexNormals();
+    }
+  });
+}
+
+// Gentle wave so the flag reads as cloth, not cardboard.
+if (typeof AFRAME !== 'undefined' && !AFRAME.components.cloth) {
+  AFRAME.registerComponent('cloth', {
+    init() {
+      const wave = () => {
+        const mesh = this.el.getObject3D('mesh');
+        if (!mesh || !mesh.geometry.attributes.position) return;
+        const pos = mesh.geometry.attributes.position;
+        for (let i = 0; i < pos.count; i++) {
+          const x = pos.getX(i), y = pos.getY(i);
+          pos.setZ(i, Math.sin(x * 2.2 + y * 1.4) * 0.09 + Math.cos(y * 3.2) * 0.02);
+        }
+        pos.needsUpdate = true;
+        mesh.geometry.computeVertexNormals();
+      };
+      this.el.addEventListener('object3dset', wave);
+      wave();
+    }
+  });
+}
+
+// The detailed models used by the preview and the camera AR. The simple
+// primitive versions in ARTIFACTS[].parts stay for the standalone QR page.
+const ARTIFACT_DETAILS = [
+  // Manunggul Jar — pale earthenware, painted bands, two boat figures on the lid
+  `<a-entity geometry="primitive: vessel; profile: 0.26,-0.78|0.34,-0.72|0.52,-0.42|0.62,-0.05|0.58,0.28|0.44,0.55|0.24,0.72|0.27,0.83" material="color:#D8C7A6; roughness:0.75; metalness:0.02"></a-entity>
+   <a-torus radius="0.605" tube="0.016" rotation="90 0 0" position="0 -0.12 0" material="color:#B4552D"></a-torus>
+   <a-torus radius="0.565" tube="0.016" rotation="90 0 0" position="0 0.24 0" material="color:#B4552D"></a-torus>
+   <a-entity geometry="primitive: vessel; profile: 0.27,0.83|0.31,0.9|0.17,1.0|0.04,1.03" material="color:#B39B75; roughness:0.7"></a-entity>
+   <a-box width="0.52" height="0.05" depth="0.15" position="0 1.03 0" material="color:#96703A; roughness:0.6"></a-box>
+   <a-cylinder radius="0.055" height="0.2" position="-0.13 1.13 0" material="color:#8F6425"></a-cylinder>
+   <a-sphere radius="0.1" position="-0.13 1.28 0" material="color:#8F6425"></a-sphere>
+   <a-cylinder radius="0.055" height="0.2" position="0.13 1.13 0" material="color:#8F6425"></a-cylinder>
+   <a-sphere radius="0.1" position="0.13 1.28 0" material="color:#8F6425"></a-sphere>
+   <a-box width="0.018" height="0.4" depth="0.018" rotation="0 0 30" position="-0.28 1.16 0.02" material="color:#8F6425"></a-box>
+   <a-box width="0.018" height="0.4" depth="0.018" rotation="0 0 -30" position="0.28 1.16 0.02" material="color:#8F6425"></a-box>`,
+
+  // Baybayin Tablet — carved stone slab with rows of script marks
+  `<a-box width="1.02" height="1.28" depth="0.12" material="color:#6E5F4E; roughness:0.9"></a-box>
+   <a-box width="0.86" height="1.1" depth="0.03" position="0 0 0.07" material="color:#7D6D5A; roughness:0.85"></a-box>
+   <a-box width="1.02" height="0.06" depth="0.15" position="0 0.6 0" material="color:#57493A"></a-box>
+   <a-box width="1.02" height="0.06" depth="0.15" position="0 -0.6 0" material="color:#57493A"></a-box>
+   <a-box width="0.05" height="1.2" depth="0.15" position="-0.485 0 0" material="color:#57493A"></a-box>
+   <a-box width="0.05" height="1.2" depth="0.15" position="0.485 0 0" material="color:#57493A"></a-box>
+   ${[-0.32, -0.105, 0.105, 0.32].map(x =>
+    [0.33, 0, -0.33].map(y =>
+      `<a-box width="0.032" height="0.15" depth="0.012" position="${x} ${y} 0.09" material="color:#D9B26F"></a-box>
+       <a-box width="0.095" height="0.028" depth="0.012" position="${x} ${y + 0.045} 0.09" material="color:#D9B26F"></a-box>`
+    ).join('')
+  ).join('')}`,
+
+  // Katipunan Flag — waving red cloth, sun with eight rays
+  `<a-cylinder radius="0.032" height="2.1" position="-0.82 0.12 0" material="color:#4A3826; roughness:0.8"></a-cylinder>
+   <a-sphere radius="0.058" position="-0.82 1.2 0" material="color:#B9873A; metalness:0.5; roughness:0.4"></a-sphere>
+   <a-entity geometry="primitive: plane; width:1.42; height:0.92; segmentsWidth:32; segmentsHeight:4" rotation="0 -10 0" position="0 0.62 0" material="color:#B23A2E; side:double; roughness:0.9" cloth></a-entity>
+   <a-circle radius="0.18" position="0 0.62 0.13" rotation="0 -10 0" material="color:#F2EAD8; side:double"></a-circle>
+   ${[0, 45, 90, 135, 180, 225, 270, 315].map(a => {
+    const rad = a * Math.PI / 180;
+    const x = (0.31 * Math.sin(rad)).toFixed(3), y = (0.62 + 0.31 * Math.cos(rad)).toFixed(3);
+    return `<a-box width="0.04" height="0.15" depth="0.01" rotation="0 -10 ${-a}" position="${x} ${y} 0.13" material="color:#F2EAD8"></a-box>`;
+  }).join('')}`,
+
+  // Guerrilla Radio — olive field set with dials, grille, whip antenna
+  `<a-box width="1.08" height="0.62" depth="0.42" position="0 -0.18 0" material="color:#5B5C46; roughness:0.85"></a-box>
+   <a-box width="1.1" height="0.05" depth="0.44" position="0 0.14 0" material="color:#4A4B38; roughness:0.8"></a-box>
+   <a-box width="0.92" height="0.46" depth="0.02" position="0 -0.18 0.215" material="color:#8A8B72; roughness:0.75"></a-box>
+   <a-box width="0.92" height="0.03" depth="0.02" position="0 -0.18 0.228" material="color:#3A3B2C"></a-box>
+   <a-cylinder radius="0.13" height="0.045" rotation="90 0 0" position="-0.3 -0.18 0.25" material="color:#D9B26F; metalness:0.5; roughness:0.4"></a-cylinder>
+   <a-cylinder radius="0.06" height="0.07" rotation="90 0 0" position="-0.3 -0.18 0.28" material="color:#221D17"></a-cylinder>
+   <a-cylinder radius="0.05" height="0.06" rotation="90 0 0" position="-0.06 -0.18 0.27" material="color:#221D17"></a-cylinder>
+   <a-cylinder radius="0.05" height="0.06" rotation="90 0 0" position="0.09 -0.18 0.27" material="color:#221D17"></a-cylinder>
+   ${[0.22, 0.32, 0.42].map(x =>
+    [-0.32, -0.18, -0.04].map(y =>
+      `<a-cylinder radius="0.02" height="0.02" rotation="90 0 0" position="${x} ${y} 0.24" material="color:#3A3B2C"></a-cylinder>`
+    ).join('')
+  ).join('')}
+   <a-torus radius="0.22" tube="0.026" position="0 0.14 0" material="color:#3A2F22; roughness:0.7"></a-torus>
+   <a-box width="0.06" height="0.05" depth="0.06" position="-0.5 -0.52 0.18" material="color:#2E2F26"></a-box>
+   <a-box width="0.06" height="0.05" depth="0.06" position="0.5 -0.52 0.18" material="color:#2E2F26"></a-box>
+   <a-cylinder radius="0.011" height="0.62" rotation="0 0 -10" position="0.36 0.42 0" material="color:#2A2620"></a-cylinder>
+   <a-cylinder radius="0.007" height="0.5" rotation="0 0 -16" position="0.5 0.84 0" material="color:#2A2620"></a-cylinder>
+   <a-sphere radius="0.02" position="0.56 1.08 0" material="color:#2A2620"></a-sphere>`,
+
+  // Banig Weave — straw mat with dyed strips and rolled edges
+  `<a-box width="1.5" height="0.05" depth="1.5" position="0 -0.5 0" material="color:#D2B98A; roughness:0.9"></a-box>
+   ${[['#9C4F2E', -0.56], ['#D2B98A', -0.28], ['#2E6E5E', 0], ['#D2B98A', 0.28], ['#8F6425', 0.56]].map(([c, z]) =>
+    `<a-box width="1.4" height="0.02" depth="0.12" position="0 -0.46 ${z}" material="color:${c}"></a-box>`
+  ).join('')}
+   ${[['#C08A4B', -0.56], ['#7A4A2A', -0.28], ['#C08A4B', 0], ['#2E6E5E', 0.28], ['#C08A4B', 0.56]].map(([c, x]) =>
+    `<a-box width="0.12" height="0.025" depth="1.4" position="${x} -0.43 0" material="color:${c}"></a-box>`
+  ).join('')}
+   <a-cylinder radius="0.05" height="1.5" rotation="90 0 0" position="0 -0.42 -0.76" material="color:#C08A4B; roughness:0.85"></a-cylinder>
+   <a-cylinder radius="0.05" height="1.5" rotation="90 0 0" position="0 -0.42 0.76" material="color:#C08A4B; roughness:0.85"></a-cylinder>`
+];
+
 function renderArtifactChips() {
   document.getElementById('artifact-chips').innerHTML = ARTIFACTS.map((a, i) =>
     `<button class="artifact-chip ${i === artifactIndex ? 'active' : ''}" onclick="selectArtifact(${i})">
@@ -1833,17 +1983,17 @@ function renderArSection() {
 function buildPreviewScene() {
   const stage = document.getElementById('ar-stage');
   stage.querySelectorAll('a-scene').forEach(s => s.remove());
-  const art = ARTIFACTS[artifactIndex];
   stage.insertAdjacentHTML('beforeend', `
     <a-scene embedded vr-mode-ui="enabled: false" loading-screen="enabled: false" renderer="antialias: true">
       <a-sky color="#14110C"></a-sky>
-      <a-entity light="type: ambient; color: #FFF4DE; intensity: 0.85"></a-entity>
-      <a-entity light="type: directional; color: #FFE3B3; intensity: 0.7" position="2 4 3"></a-entity>
-      <a-circle position="0 -0.85 0" rotation="-90 0 0" radius="1.5" color="#221A12"></a-circle>
+      <a-entity light="type: ambient; color: #FFF6E8; intensity: 0.75"></a-entity>
+      <a-entity light="type: directional; color: #FFEFD6; intensity: 0.85" position="2 4 3"></a-entity>
+      <a-entity light="type: directional; color: #B8C8E8; intensity: 0.35" position="-2 2 -2"></a-entity>
+      <a-circle position="0 -0.82 0" rotation="-90 0 0" radius="1.6" color="#201A12"></a-circle>
       <a-entity position="0 0.05 0" animation="property: rotation; to: 0 360 0; loop: true; dur: 16000; easing: linear">
-        ${artifactParts(art)}
+        ${ARTIFACT_DETAILS[artifactIndex]}
       </a-entity>
-      <a-camera position="0 1.15 3.1" rotation="-10 0 0" look-controls="enabled: false" wasd-controls="enabled: false"></a-camera>
+      <a-camera position="0 1.05 2.9" rotation="-8 0 0" look-controls="enabled: false" wasd-controls="enabled: false"></a-camera>
     </a-scene>`);
   document.getElementById('ar-overlay-text').style.display = 'none';
   document.getElementById('btn-ar-preview').style.display = 'none';
@@ -1853,12 +2003,11 @@ function buildPreviewScene() {
 function buildCameraScene() {
   const stage = document.getElementById('ar-stage');
   stage.querySelectorAll('a-scene').forEach(s => s.remove());
-  const art = ARTIFACTS[artifactIndex];
   stage.insertAdjacentHTML('beforeend', `
     <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false;" vr-mode-ui="enabled: false" loading-screen="enabled: false">
       <a-marker preset="hiro" smooth="true" smoothCount="6" smoothTolerance="0.05">
-        <a-entity position="0 0.55 0" scale="0.8 0.8 0.8" animation="property: rotation; to: 0 360 0; loop: true; dur: 14000; easing: linear">
-          ${artifactParts(art)}
+        <a-entity position="0 0.5 0" scale="0.75 0.75 0.75" animation="property: rotation; to: 0 360 0; loop: true; dur: 14000; easing: linear">
+          ${ARTIFACT_DETAILS[artifactIndex]}
         </a-entity>
       </a-marker>
       <a-entity camera></a-entity>
@@ -1870,7 +2019,8 @@ function buildCameraScene() {
 }
 
 // AR.js drops its webcam <video> outside our frame — pull it in so the
-// feed fills the stage. Bounded so it can't poll forever.
+// feed fills the stage. Bounded, and it gives up loudly instead of leaving
+// a black frame when the camera never starts.
 function stealArVideo() {
   clearInterval(videoPoll);
   let tries = 0;
@@ -1878,7 +2028,14 @@ function stealArVideo() {
     const stage = document.getElementById('ar-stage');
     const video = document.querySelector('video');
     if (video && video.parentElement !== stage) stage.appendChild(video);
-    if (++tries > 200) clearInterval(videoPoll);
+    if (video && video.videoWidth > 0) clearInterval(videoPoll);
+    if (++tries > 100) {
+      clearInterval(videoPoll);
+      if (!video || video.videoWidth === 0) {
+        showToast('Camera didn\'t start — check the browser camera permission.', 'err');
+        showPreview();
+      }
+    }
   }, 100);
 }
 
@@ -1918,12 +2075,9 @@ function loadScriptOnce(src) {
 
 async function confirmCamera() {
   dismissPerm();
-  // ask for the camera up front so AR.js gets a clean stream
-  try {
-    const probe = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-    probe.getTracks().forEach(t => t.stop());
-  } catch (e) {
-    showToast('Camera blocked — check your browser permissions.', 'err');
+  // no secure context, no camera: file:// and plain http on phones never get one
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    showToast('Camera unavailable here — open the app over http(s), see README.', 'err');
     return;
   }
   // AR.js grabs the webcam on load, so it's only pulled in here
@@ -2152,6 +2306,11 @@ function exportCSV() {
 window.addEventListener('load', () => {
   applyStoredTheme();
   document.getElementById('marker-img').src = HIRO_MARKER;
+
+  // ?api=https://your-service.onrender.com points every call at that server
+  const apiParam = new URLSearchParams(location.search).get('api');
+  if (apiParam) localStorage.setItem('LahiQuestApi', apiParam.trim().replace(/\/$/, ''));
+  document.getElementById('api-base-input').value = apiBase();
 
   document.getElementById('student-name').addEventListener('keydown', e => {
     if (e.key === 'Enter') document.getElementById('class-code-input').focus();
